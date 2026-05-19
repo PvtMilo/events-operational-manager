@@ -44,6 +44,7 @@ export type EventMinAggregateOutputType = {
   clientName: string | null
   clientPhone: string | null
   serviceTypeId: string | null
+  equipmentSetup: string | null
   salesId: string | null
   eventDate: Date | null
   startTime: string | null
@@ -69,6 +70,7 @@ export type EventMaxAggregateOutputType = {
   clientName: string | null
   clientPhone: string | null
   serviceTypeId: string | null
+  equipmentSetup: string | null
   salesId: string | null
   eventDate: Date | null
   startTime: string | null
@@ -94,6 +96,7 @@ export type EventCountAggregateOutputType = {
   clientName: number
   clientPhone: number
   serviceTypeId: number
+  equipmentSetup: number
   salesId: number
   eventDate: number
   startTime: number
@@ -133,6 +136,7 @@ export type EventMinAggregateInputType = {
   clientName?: true
   clientPhone?: true
   serviceTypeId?: true
+  equipmentSetup?: true
   salesId?: true
   eventDate?: true
   startTime?: true
@@ -158,6 +162,7 @@ export type EventMaxAggregateInputType = {
   clientName?: true
   clientPhone?: true
   serviceTypeId?: true
+  equipmentSetup?: true
   salesId?: true
   eventDate?: true
   startTime?: true
@@ -183,6 +188,7 @@ export type EventCountAggregateInputType = {
   clientName?: true
   clientPhone?: true
   serviceTypeId?: true
+  equipmentSetup?: true
   salesId?: true
   eventDate?: true
   startTime?: true
@@ -295,6 +301,7 @@ export type EventGroupByOutputType = {
   clientName: string
   clientPhone: string | null
   serviceTypeId: string
+  equipmentSetup: string
   salesId: string | null
   eventDate: Date
   startTime: string
@@ -343,6 +350,7 @@ export type EventWhereInput = {
   clientName?: Prisma.StringFilter<"Event"> | string
   clientPhone?: Prisma.StringNullableFilter<"Event"> | string | null
   serviceTypeId?: Prisma.StringFilter<"Event"> | string
+  equipmentSetup?: Prisma.StringFilter<"Event"> | string
   salesId?: Prisma.StringNullableFilter<"Event"> | string | null
   eventDate?: Prisma.DateTimeFilter<"Event"> | Date | string
   startTime?: Prisma.StringFilter<"Event"> | string
@@ -373,6 +381,7 @@ export type EventOrderByWithRelationInput = {
   clientName?: Prisma.SortOrder
   clientPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   serviceTypeId?: Prisma.SortOrder
+  equipmentSetup?: Prisma.SortOrder
   salesId?: Prisma.SortOrderInput | Prisma.SortOrder
   eventDate?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
@@ -406,6 +415,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   clientName?: Prisma.StringFilter<"Event"> | string
   clientPhone?: Prisma.StringNullableFilter<"Event"> | string | null
   serviceTypeId?: Prisma.StringFilter<"Event"> | string
+  equipmentSetup?: Prisma.StringFilter<"Event"> | string
   salesId?: Prisma.StringNullableFilter<"Event"> | string | null
   eventDate?: Prisma.DateTimeFilter<"Event"> | Date | string
   startTime?: Prisma.StringFilter<"Event"> | string
@@ -436,6 +446,7 @@ export type EventOrderByWithAggregationInput = {
   clientName?: Prisma.SortOrder
   clientPhone?: Prisma.SortOrderInput | Prisma.SortOrder
   serviceTypeId?: Prisma.SortOrder
+  equipmentSetup?: Prisma.SortOrder
   salesId?: Prisma.SortOrderInput | Prisma.SortOrder
   eventDate?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
@@ -469,6 +480,7 @@ export type EventScalarWhereWithAggregatesInput = {
   clientName?: Prisma.StringWithAggregatesFilter<"Event"> | string
   clientPhone?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   serviceTypeId?: Prisma.StringWithAggregatesFilter<"Event"> | string
+  equipmentSetup?: Prisma.StringWithAggregatesFilter<"Event"> | string
   salesId?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   eventDate?: Prisma.DateTimeWithAggregatesFilter<"Event"> | Date | string
   startTime?: Prisma.StringWithAggregatesFilter<"Event"> | string
@@ -493,6 +505,7 @@ export type EventCreateInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -522,6 +535,7 @@ export type EventUncheckedCreateInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -549,6 +563,7 @@ export type EventUpdateInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -578,6 +593,7 @@ export type EventUncheckedUpdateInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -606,6 +622,7 @@ export type EventCreateManyInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -630,6 +647,7 @@ export type EventUpdateManyMutationInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -654,6 +672,7 @@ export type EventUncheckedUpdateManyInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -689,6 +708,7 @@ export type EventCountOrderByAggregateInput = {
   clientName?: Prisma.SortOrder
   clientPhone?: Prisma.SortOrder
   serviceTypeId?: Prisma.SortOrder
+  equipmentSetup?: Prisma.SortOrder
   salesId?: Prisma.SortOrder
   eventDate?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
@@ -720,6 +740,7 @@ export type EventMaxOrderByAggregateInput = {
   clientName?: Prisma.SortOrder
   clientPhone?: Prisma.SortOrder
   serviceTypeId?: Prisma.SortOrder
+  equipmentSetup?: Prisma.SortOrder
   salesId?: Prisma.SortOrder
   eventDate?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
@@ -745,6 +766,7 @@ export type EventMinOrderByAggregateInput = {
   clientName?: Prisma.SortOrder
   clientPhone?: Prisma.SortOrder
   serviceTypeId?: Prisma.SortOrder
+  equipmentSetup?: Prisma.SortOrder
   salesId?: Prisma.SortOrder
   eventDate?: Prisma.SortOrder
   startTime?: Prisma.SortOrder
@@ -918,6 +940,7 @@ export type EventCreateWithoutSalesInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -946,6 +969,7 @@ export type EventUncheckedCreateWithoutSalesInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -1002,6 +1026,7 @@ export type EventScalarWhereInput = {
   clientName?: Prisma.StringFilter<"Event"> | string
   clientPhone?: Prisma.StringNullableFilter<"Event"> | string | null
   serviceTypeId?: Prisma.StringFilter<"Event"> | string
+  equipmentSetup?: Prisma.StringFilter<"Event"> | string
   salesId?: Prisma.StringNullableFilter<"Event"> | string | null
   eventDate?: Prisma.DateTimeFilter<"Event"> | Date | string
   startTime?: Prisma.StringFilter<"Event"> | string
@@ -1026,6 +1051,7 @@ export type EventCreateWithoutServiceTypeInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -1053,6 +1079,7 @@ export type EventUncheckedCreateWithoutServiceTypeInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -1106,6 +1133,7 @@ export type EventCreateWithoutAssignmentsInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -1134,6 +1162,7 @@ export type EventUncheckedCreateWithoutAssignmentsInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -1176,6 +1205,7 @@ export type EventUpdateWithoutAssignmentsInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1204,6 +1234,7 @@ export type EventUncheckedUpdateWithoutAssignmentsInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1230,6 +1261,7 @@ export type EventCreateWithoutEventEvaluationInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -1258,6 +1290,7 @@ export type EventUncheckedCreateWithoutEventEvaluationInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -1300,6 +1333,7 @@ export type EventUpdateWithoutEventEvaluationInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1328,6 +1362,7 @@ export type EventUncheckedUpdateWithoutEventEvaluationInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1354,6 +1389,7 @@ export type EventCreateWithoutStaffEvaluationsInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -1382,6 +1418,7 @@ export type EventUncheckedCreateWithoutStaffEvaluationsInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -1424,6 +1461,7 @@ export type EventUpdateWithoutStaffEvaluationsInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1452,6 +1490,7 @@ export type EventUncheckedUpdateWithoutStaffEvaluationsInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1479,6 +1518,7 @@ export type EventCreateManySalesInput = {
   clientName: string
   clientPhone?: string | null
   serviceTypeId: string
+  equipmentSetup?: string
   eventDate: Date | string
   startTime: string
   endTime: string
@@ -1502,6 +1542,7 @@ export type EventUpdateWithoutSalesInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1530,6 +1571,7 @@ export type EventUncheckedUpdateWithoutSalesInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1557,6 +1599,7 @@ export type EventUncheckedUpdateManyWithoutSalesInput = {
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1580,6 +1623,7 @@ export type EventCreateManyServiceTypeInput = {
   eventName: string
   clientName: string
   clientPhone?: string | null
+  equipmentSetup?: string
   salesId?: string | null
   eventDate: Date | string
   startTime: string
@@ -1604,6 +1648,7 @@ export type EventUpdateWithoutServiceTypeInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
   endTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1631,6 +1676,7 @@ export type EventUncheckedUpdateWithoutServiceTypeInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1658,6 +1704,7 @@ export type EventUncheckedUpdateManyWithoutServiceTypeInput = {
   eventName?: Prisma.StringFieldUpdateOperationsInput | string
   clientName?: Prisma.StringFieldUpdateOperationsInput | string
   clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
   salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startTime?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1723,6 +1770,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   clientName?: boolean
   clientPhone?: boolean
   serviceTypeId?: boolean
+  equipmentSetup?: boolean
   salesId?: boolean
   eventDate?: boolean
   startTime?: boolean
@@ -1754,6 +1802,7 @@ export type EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   clientName?: boolean
   clientPhone?: boolean
   serviceTypeId?: boolean
+  equipmentSetup?: boolean
   salesId?: boolean
   eventDate?: boolean
   startTime?: boolean
@@ -1781,6 +1830,7 @@ export type EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   clientName?: boolean
   clientPhone?: boolean
   serviceTypeId?: boolean
+  equipmentSetup?: boolean
   salesId?: boolean
   eventDate?: boolean
   startTime?: boolean
@@ -1808,6 +1858,7 @@ export type EventSelectScalar = {
   clientName?: boolean
   clientPhone?: boolean
   serviceTypeId?: boolean
+  equipmentSetup?: boolean
   salesId?: boolean
   eventDate?: boolean
   startTime?: boolean
@@ -1827,7 +1878,7 @@ export type EventSelectScalar = {
   updatedAt?: boolean
 }
 
-export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventName" | "clientName" | "clientPhone" | "serviceTypeId" | "salesId" | "eventDate" | "startTime" | "endTime" | "loadingDate" | "loadingTime" | "location" | "status" | "vehicleName" | "driverName" | "ribbonStart" | "ribbonEnd" | "ribbonUsed" | "vendorSewa" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
+export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventName" | "clientName" | "clientPhone" | "serviceTypeId" | "equipmentSetup" | "salesId" | "eventDate" | "startTime" | "endTime" | "loadingDate" | "loadingTime" | "location" | "status" | "vehicleName" | "driverName" | "ribbonStart" | "ribbonEnd" | "ribbonUsed" | "vendorSewa" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
 export type EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   serviceType?: boolean | Prisma.ServiceTypeDefaultArgs<ExtArgs>
   sales?: boolean | Prisma.Event$salesArgs<ExtArgs>
@@ -1860,6 +1911,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     clientName: string
     clientPhone: string | null
     serviceTypeId: string
+    equipmentSetup: string
     salesId: string | null
     eventDate: Date
     startTime: string
@@ -2310,6 +2362,7 @@ export interface EventFieldRefs {
   readonly clientName: Prisma.FieldRef<"Event", 'String'>
   readonly clientPhone: Prisma.FieldRef<"Event", 'String'>
   readonly serviceTypeId: Prisma.FieldRef<"Event", 'String'>
+  readonly equipmentSetup: Prisma.FieldRef<"Event", 'String'>
   readonly salesId: Prisma.FieldRef<"Event", 'String'>
   readonly eventDate: Prisma.FieldRef<"Event", 'DateTime'>
   readonly startTime: Prisma.FieldRef<"Event", 'String'>

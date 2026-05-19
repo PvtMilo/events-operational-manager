@@ -138,6 +138,7 @@ export const EventScalarFieldEnum = {
   clientName: 'clientName',
   clientPhone: 'clientPhone',
   serviceTypeId: 'serviceTypeId',
+  equipmentSetup: 'equipmentSetup',
   salesId: 'salesId',
   eventDate: 'eventDate',
   startTime: 'startTime',

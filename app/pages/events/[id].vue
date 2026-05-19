@@ -109,6 +109,7 @@ async function handleDeleteAssignment(assignmentId) {
       <h1>{{ eventData?.data?.eventName }}</h1>
       <p>Client: {{ eventData?.data?.clientName }}</p>
       <p>Service: {{ eventData?.data?.serviceType?.name || "-" }}</p>
+      <p>Equipment Setup: {{ eventData?.data?.equipmentSetup }}</p>
       <p>Sales: {{ eventData?.data?.sales?.name || "-" }}</p>
       <p>
         Date:

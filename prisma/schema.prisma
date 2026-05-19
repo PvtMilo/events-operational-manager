@@ -118,8 +118,9 @@ model Event {
   clientName  String
   clientPhone String?
 
-  serviceTypeId String
-  salesId       String?
+  serviceTypeId  String
+  equipmentSetup String  @default("Not specified")
+  salesId        String?
 
   eventDate   DateTime
   startTime   String

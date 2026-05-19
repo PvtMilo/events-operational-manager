@@ -8,6 +8,7 @@ const eventName = ref("");
 const clientName = ref("");
 const clientPhone = ref("");
 const serviceTypeId = ref("");
+const equipmentSetup = ref("");
 const salesId = ref("");
 const eventDate = ref("");
 const startTime = ref("");
@@ -50,6 +51,11 @@ async function handleCreate() {
     return;
   }
 
+  if (!equipmentSetup.value.trim()) {
+    errorMessage.value = "Equipment setup is required";
+    return;
+  }
+
   if (!eventDate.value || !startTime.value || !endTime.value) {
     errorMessage.value = "Event date, start time, and end time are required";
     return;
@@ -65,6 +71,7 @@ async function handleCreate() {
         clientName: clientName.value,
         clientPhone: clientPhone.value,
         serviceTypeId: serviceTypeId.value,
+        equipmentSetup: equipmentSetup.value,
         salesId: salesId.value || null,
         eventDate: eventDate.value,
         startTime: startTime.value,
@@ -83,6 +90,7 @@ async function handleCreate() {
     clientName.value = "";
     clientPhone.value = "";
     serviceTypeId.value = "";
+    equipmentSetup.value = "";
     salesId.value = "";
     eventDate.value = "";
     startTime.value = "";
@@ -182,6 +190,17 @@ async function handleDelete(id) {
             {{ item.name }}
           </option>
         </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Equipment Setup</label>
+        <br />
+        <textarea
+          v-model="equipmentSetup"
+          placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
+        ></textarea>
       </div>
 
       <br />
@@ -313,6 +332,7 @@ async function handleDelete(id) {
           <th>Event</th>
           <th>Client</th>
           <th>Service</th>
+          <th>Equipment Setup</th>
           <th>Sales</th>
           <th>Date</th>
           <th>Time</th>
@@ -328,6 +348,7 @@ async function handleDelete(id) {
           <td>{{ item.eventName }}</td>
           <td>{{ item.clientName }}</td>
           <td>{{ item.serviceType?.name || "-" }}</td>
+          <td>{{ item.equipmentSetup }}</td>
           <td>{{ item.sales?.name || "-" }}</td>
           <td>{{ new Date(item.eventDate).toLocaleDateString() }}</td>
           <td>{{ item.startTime }} - {{ item.endTime }}</td>

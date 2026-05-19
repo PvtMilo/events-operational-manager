@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
   const clientName = body?.clientName?.trim();
   const clientPhone = body?.clientPhone?.trim() || null;
   const serviceTypeId = body?.serviceTypeId;
+  const equipmentSetup = body?.equipmentSetup?.trim();
   const salesId = body?.salesId || null;
 
   const eventDate = body?.eventDate;
@@ -44,6 +45,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  if (!equipmentSetup) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Equipment setup is required",
+    });
+  }
+
   if (!eventDate) {
     throw createError({
       statusCode: 400,
@@ -64,6 +72,7 @@ export default defineEventHandler(async (event) => {
       clientName,
       clientPhone,
       serviceTypeId,
+      equipmentSetup,
       salesId,
       eventDate: new Date(eventDate),
       startTime,

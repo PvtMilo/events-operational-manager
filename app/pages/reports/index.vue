@@ -96,6 +96,7 @@ async function handleFilter() {
           <th>Failed</th>
           <th>PIC Count</th>
           <th>Success Rate</th>
+          <th>Action</th>
         </tr>
       </thead>
 
@@ -109,6 +110,13 @@ async function handleFilter() {
           <td>{{ item.totalFailed }}</td>
           <td>{{ item.totalPic }}</td>
           <td>{{ item.successRate }}%</td>
+          <td>
+            <NuxtLink
+              :to="`/reports/staff/${item.staffId}?year=${selectedYear}&month=${selectedMonth}`"
+            >
+              Detail
+            </NuxtLink>
+          </td>
         </tr>
       </tbody>
     </table>

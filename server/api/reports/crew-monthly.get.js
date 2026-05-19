@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   const assignments = await prisma.eventAssignment.findMany({
     where: {
       assignmentStatus: {
-        not: "CANCELLED",
+        in: ["ASSIGNED", "CONFIRMED"],
       },
       event: {
         eventDate: {

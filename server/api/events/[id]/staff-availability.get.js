@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
         not: eventId,
       },
       assignmentStatus: {
-        not: "CANCELLED",
+        in: ["ASSIGNED", "CONFIRMED"],
       },
     },
     include: {
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
   const monthlyAssignments = await prisma.eventAssignment.findMany({
     where: {
       assignmentStatus: {
-        not: "CANCELLED",
+        in: ["ASSIGNED", "CONFIRMED"],
       },
       event: {
         eventDate: {

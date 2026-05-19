@@ -45,6 +45,10 @@ const editNotes = ref("");
 const isUpdatingEvent = ref(false);
 const editEventErrorMessage = ref("");
 
+const assignmentForms = ref({});
+const savingAssignmentId = ref("");
+const assignmentErrorMessage = ref("");
+
 const {
   data: eventData,
   pending,
@@ -58,6 +62,14 @@ const { data: salesData } = await useFetch("/api/sales");
 const { data: availabilityData, refresh: refreshAvailability } = await useFetch(
   `/api/events/${eventId}/staff-availability`,
 );
+
+const activeAssignments = computed(() => {
+  return (
+    eventData.value?.data?.assignments?.filter((assignment) => {
+      return ["ASSIGNED", "CONFIRMED"].includes(assignment.assignmentStatus);
+    }) || []
+  );
+});
 
 const assignableStaff = computed(() => {
   const assignedStaffIds =
@@ -272,6 +284,34 @@ async function handleUpdateEvent() {
   }
 }
 
+async function handleUpdateAssignment(assignmentId) {
+  assignmentErrorMessage.value = "";
+  savingAssignmentId.value = assignmentId;
+
+  const form = assignmentForms.value[assignmentId];
+
+  try {
+    await $fetch(`/api/event-assignments/${assignmentId}`, {
+      method: "PATCH",
+      body: {
+        roleInEvent: form.roleInEvent,
+        assignmentStatus: form.assignmentStatus,
+        notes: form.notes,
+      },
+    });
+
+    await refresh();
+    await refreshAvailability();
+  } catch (error) {
+    assignmentErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update assignment";
+  } finally {
+    savingAssignmentId.value = "";
+  }
+}
+
 watchEffect(() => {
   const evaluation = eventData.value?.data?.eventEvaluation;
 
@@ -333,6 +373,20 @@ watchEffect(() => {
   editVehicleName.value = event.vehicleName || "";
   editDriverName.value = event.driverName || "";
   editNotes.value = event.notes || "";
+});
+
+watchEffect(() => {
+  const assignments = eventData.value?.data?.assignments || [];
+
+  for (const assignment of assignments) {
+    if (!assignmentForms.value[assignment.id]) {
+      assignmentForms.value[assignment.id] = {
+        roleInEvent: assignment.roleInEvent,
+        assignmentStatus: assignment.assignmentStatus,
+        notes: assignment.notes || "",
+      };
+    }
+  }
 });
 </script>
 
@@ -668,20 +722,56 @@ watchEffect(() => {
           >
             <td>{{ assignment.staff?.name }}</td>
             <td>{{ assignment.staff?.defaultRole }}</td>
-            <td>{{ assignment.roleInEvent }}</td>
-            <td>{{ assignment.assignmentStatus }}</td>
-            <td>{{ assignment.notes || "-" }}</td>
+
             <td>
+              <select v-model="assignmentForms[assignment.id].roleInEvent">
+                <option value="PIC">PIC</option>
+                <option value="CREW">CREW</option>
+              </select>
+            </td>
+
+            <td>
+              <select v-model="assignmentForms[assignment.id].assignmentStatus">
+                <option value="ASSIGNED">ASSIGNED</option>
+                <option value="CONFIRMED">CONFIRMED</option>
+                <option value="REPLACED">REPLACED</option>
+                <option value="CANCELLED">CANCELLED</option>
+              </select>
+            </td>
+
+            <td>
+              <textarea
+                v-model="assignmentForms[assignment.id].notes"
+                placeholder="Assignment notes"
+              ></textarea>
+            </td>
+
+            <td>
+              <button
+                type="button"
+                :disabled="savingAssignmentId === assignment.id"
+                @click="handleUpdateAssignment(assignment.id)"
+              >
+                {{
+                  savingAssignmentId === assignment.id ? "Saving..." : "Update"
+                }}
+              </button>
+
+              |
+
               <button
                 type="button"
                 @click="handleDeleteAssignment(assignment.id)"
               >
-                Remove
+                Delete
               </button>
             </td>
           </tr>
         </tbody>
       </table>
+      <p v-if="assignmentErrorMessage" style="color: red">
+        {{ assignmentErrorMessage }}
+      </p>
     </div>
     <hr />
 
@@ -734,8 +824,8 @@ watchEffect(() => {
 
     <h2>Staff Evaluation</h2>
 
-    <p v-if="!eventData?.data?.assignments?.length">
-      Assign staff first before evaluation.
+    <p v-if="!activeAssignments.length">
+      No active staff assignment for evaluation.
     </p>
 
     <p v-if="evaluationErrorMessage" style="color: red">
@@ -743,7 +833,7 @@ watchEffect(() => {
     </p>
 
     <div
-      v-for="assignment in eventData?.data?.assignments"
+      v-for="assignment in activeAssignments"
       :key="assignment.id"
       style="border: 1px solid #ccc; padding: 12px; margin-bottom: 12px"
     >

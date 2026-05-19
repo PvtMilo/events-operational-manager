@@ -62,7 +62,11 @@ export default defineEventHandler(async () => {
           not: "CANCELLED",
         },
         assignments: {
-          none: {},
+          none: {
+            assignmentStatus: {
+              in: ["ASSIGNED", "CONFIRMED"],
+            },
+          },
         },
       },
       select: {

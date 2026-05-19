@@ -37,6 +37,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  if (!["ASSIGNED", "CONFIRMED"].includes(assignment.assignmentStatus)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Only active assigned staff can be evaluated",
+    });
+  }
+
   const eventEvaluation = await prisma.eventEvaluation.findUnique({
     where: {
       eventId,

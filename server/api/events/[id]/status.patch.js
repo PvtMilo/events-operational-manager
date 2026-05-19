@@ -48,8 +48,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
+
   const activeAssignments = eventData.assignments.filter((assignment) => {
-    return assignment.assignmentStatus !== "CANCELLED";
+    return activeAssignmentStatuses.includes(assignment.assignmentStatus);
   });
 
   const hasAnyAssignment = activeAssignments.length > 0;

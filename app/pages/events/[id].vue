@@ -22,12 +22,38 @@ const evaluationErrorMessage = ref("");
 const isSavingEventEvaluation = ref(false);
 const savingStaffEvaluationId = ref("");
 
+const selectedStatus = ref("");
+const isUpdatingStatus = ref(false);
+const statusErrorMessage = ref("");
+
+const editEventName = ref("");
+const editClientName = ref("");
+const editClientPhone = ref("");
+const editServiceTypeId = ref("");
+const editEquipmentSetup = ref("");
+const editSalesId = ref("");
+const editEventDate = ref("");
+const editStartTime = ref("");
+const editEndTime = ref("");
+const editLoadingDate = ref("");
+const editLoadingTime = ref("");
+const editLocation = ref("");
+const editVehicleName = ref("");
+const editDriverName = ref("");
+const editNotes = ref("");
+
+const isUpdatingEvent = ref(false);
+const editEventErrorMessage = ref("");
+
 const {
   data: eventData,
   pending,
   error,
   refresh,
 } = await useFetch(`/api/events/${eventId}`);
+
+const { data: serviceTypesData } = await useFetch("/api/service-types");
+const { data: salesData } = await useFetch("/api/sales");
 
 const { data: availabilityData, refresh: refreshAvailability } = await useFetch(
   `/api/events/${eventId}/staff-availability`,
@@ -158,6 +184,94 @@ async function handleSaveStaffEvaluation(staffId) {
   }
 }
 
+async function handleUpdateStatus() {
+  statusErrorMessage.value = "";
+  isUpdatingStatus.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}/status`, {
+      method: "PATCH",
+      body: {
+        status: selectedStatus.value,
+      },
+    });
+
+    await refresh();
+  } catch (error) {
+    statusErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update event status";
+  } finally {
+    isUpdatingStatus.value = false;
+  }
+}
+
+async function handleUpdateEvent() {
+  editEventErrorMessage.value = "";
+
+  if (!editEventName.value.trim()) {
+    editEventErrorMessage.value = "Event name is required";
+    return;
+  }
+
+  if (!editClientName.value.trim()) {
+    editEventErrorMessage.value = "Client name is required";
+    return;
+  }
+
+  if (!editServiceTypeId.value) {
+    editEventErrorMessage.value = "Service type is required";
+    return;
+  }
+
+  if (!editEquipmentSetup.value.trim()) {
+    editEventErrorMessage.value = "Equipment setup is required";
+    return;
+  }
+
+  if (!editEventDate.value || !editStartTime.value || !editEndTime.value) {
+    editEventErrorMessage.value =
+      "Event date, start time, and end time are required";
+    return;
+  }
+
+  isUpdatingEvent.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}`, {
+      method: "PATCH",
+      body: {
+        eventName: editEventName.value,
+        clientName: editClientName.value,
+        clientPhone: editClientPhone.value,
+        serviceTypeId: editServiceTypeId.value,
+        equipmentSetup: editEquipmentSetup.value,
+        salesId: editSalesId.value || null,
+        eventDate: editEventDate.value,
+        startTime: editStartTime.value,
+        endTime: editEndTime.value,
+        loadingDate: editLoadingDate.value || null,
+        loadingTime: editLoadingTime.value || null,
+        location: editLocation.value,
+        vehicleName: editVehicleName.value,
+        driverName: editDriverName.value,
+        notes: editNotes.value,
+      },
+    });
+
+    await refresh();
+    await refreshAvailability();
+  } catch (error) {
+    editEventErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update event";
+  } finally {
+    isUpdatingEvent.value = false;
+  }
+}
+
 watchEffect(() => {
   const evaluation = eventData.value?.data?.eventEvaluation;
 
@@ -186,6 +300,40 @@ watchEffect(() => {
     }
   }
 });
+
+watchEffect(() => {
+  if (eventData.value?.data?.status) {
+    selectedStatus.value = eventData.value.data.status;
+  }
+});
+
+function formatDateInput(dateValue) {
+  if (!dateValue) return "";
+
+  return new Date(dateValue).toISOString().slice(0, 10);
+}
+
+watchEffect(() => {
+  const event = eventData.value?.data;
+
+  if (!event) return;
+
+  editEventName.value = event.eventName || "";
+  editClientName.value = event.clientName || "";
+  editClientPhone.value = event.clientPhone || "";
+  editServiceTypeId.value = event.serviceTypeId || "";
+  editEquipmentSetup.value = event.equipmentSetup || "";
+  editSalesId.value = event.salesId || "";
+  editEventDate.value = formatDateInput(event.eventDate);
+  editStartTime.value = event.startTime || "";
+  editEndTime.value = event.endTime || "";
+  editLoadingDate.value = formatDateInput(event.loadingDate);
+  editLoadingTime.value = event.loadingTime || "";
+  editLocation.value = event.location || "";
+  editVehicleName.value = event.vehicleName || "";
+  editDriverName.value = event.driverName || "";
+  editNotes.value = event.notes || "";
+});
 </script>
 
 <template>
@@ -211,12 +359,200 @@ watchEffect(() => {
         Time: {{ eventData?.data?.startTime }} - {{ eventData?.data?.endTime }}
       </p>
       <p>Status: {{ eventData?.data?.status }}</p>
+
+      <hr />
+
+      <h2>Edit Event</h2>
+
+      <form @submit.prevent="handleUpdateEvent">
+        <div>
+          <label>Event Name</label>
+          <br />
+          <input v-model="editEventName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Client Name</label>
+          <br />
+          <input v-model="editClientName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Client Phone</label>
+          <br />
+          <input v-model="editClientPhone" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Service Type</label>
+          <br />
+          <select v-model="editServiceTypeId">
+            <option value="">Select service type</option>
+            <option
+              v-for="item in serviceTypesData?.data"
+              :key="item.id"
+              :value="item.id"
+            >
+              {{ item.name }}
+            </option>
+          </select>
+        </div>
+
+        <br />
+
+        <div>
+          <label>Equipment Setup</label>
+          <br />
+          <textarea v-model="editEquipmentSetup"></textarea>
+        </div>
+
+        <br />
+
+        <div>
+          <label>Sales</label>
+          <br />
+          <select v-model="editSalesId">
+            <option value="">No sales / optional</option>
+            <option
+              v-for="item in salesData?.data"
+              :key="item.id"
+              :value="item.id"
+            >
+              {{ item.name }}
+            </option>
+          </select>
+        </div>
+
+        <br />
+
+        <div>
+          <label>Event Date</label>
+          <br />
+          <input v-model="editEventDate" type="date" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Start Time</label>
+          <br />
+          <input v-model="editStartTime" type="time" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>End Time</label>
+          <br />
+          <input v-model="editEndTime" type="time" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Loading Date</label>
+          <br />
+          <input v-model="editLoadingDate" type="date" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Loading Time</label>
+          <br />
+          <input v-model="editLoadingTime" type="time" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Location</label>
+          <br />
+          <input v-model="editLocation" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Vehicle Name</label>
+          <br />
+          <input v-model="editVehicleName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Driver Name</label>
+          <br />
+          <input v-model="editDriverName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Notes</label>
+          <br />
+          <textarea v-model="editNotes"></textarea>
+        </div>
+
+        <br />
+
+        <p v-if="editEventErrorMessage" style="color: red">
+          {{ editEventErrorMessage }}
+        </p>
+
+        <button type="submit" :disabled="isUpdatingEvent">
+          {{ isUpdatingEvent ? "Updating..." : "Update Event" }}
+        </button>
+      </form>
+
+      <hr />
+
+      <h2>Update Event Status</h2>
+      <form @submit.prevent="handleUpdateStatus">
+        <div>
+          <label>Current Status</label>
+          <br />
+          <strong>{{ eventData?.data?.status }}</strong>
+        </div>
+
+        <br />
+
+        <div>
+          <label>Change Status</label>
+          <br />
+          <select v-model="selectedStatus">
+            <option value="DRAFTED">DRAFTED</option>
+            <option value="SCHEDULED">SCHEDULED</option>
+            <option value="READY">READY</option>
+            <option value="ONGOING">ONGOING</option>
+            <option value="PENDING_EVALUATION">PENDING_EVALUATION</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </div>
+
+        <br />
+
+        <p v-if="statusErrorMessage" style="color: red">
+          {{ statusErrorMessage }}
+        </p>
+
+        <button type="submit" :disabled="isUpdatingStatus">
+          {{ isUpdatingStatus ? "Updating..." : "Update Status" }}
+        </button>
+      </form>
       <p>Location: {{ eventData?.data?.location || "-" }}</p>
 
       <hr />
 
       <h2>Assign Staff</h2>
-
       <form @submit.prevent="handleAssignStaff">
         <div>
           <label>Staff</label>
@@ -310,11 +646,9 @@ watchEffect(() => {
       <hr />
 
       <h2>Assigned Team</h2>
-
       <p v-if="eventData?.data?.assignments?.length === 0">
         No staff assigned yet.
       </p>
-
       <table v-else border="1" cellpadding="8" cellspacing="0">
         <thead>
           <tr>
@@ -352,7 +686,6 @@ watchEffect(() => {
     <hr />
 
     <h2>Event Evaluation</h2>
-
     <form @submit.prevent="handleSaveEventEvaluation">
       <div>
         <label>

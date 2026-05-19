@@ -10,9 +10,17 @@ const eventId = route.params.id;
 const staffId = ref("");
 const roleInEvent = ref("CREW");
 const assignmentNotes = ref("");
-
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+
+const clientSatisfactionOk = ref(false);
+const clientFeedback = ref("");
+const eventEvaluationNotes = ref("");
+
+const staffEvaluationForms = ref({});
+const evaluationErrorMessage = ref("");
+const isSavingEventEvaluation = ref(false);
+const savingStaffEvaluationId = ref("");
 
 const {
   data: eventData,
@@ -94,6 +102,90 @@ async function handleDeleteAssignment(assignmentId) {
     );
   }
 }
+
+async function handleSaveEventEvaluation() {
+  evaluationErrorMessage.value = "";
+  isSavingEventEvaluation.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}/evaluation`, {
+      method: "POST",
+      body: {
+        clientSatisfactionOk: clientSatisfactionOk.value,
+        clientFeedback: clientFeedback.value,
+        notes: eventEvaluationNotes.value,
+      },
+    });
+
+    await refresh();
+  } catch (error) {
+    evaluationErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to save event evaluation";
+  } finally {
+    isSavingEventEvaluation.value = false;
+  }
+}
+
+async function handleSaveStaffEvaluation(staffId) {
+  evaluationErrorMessage.value = "";
+  savingStaffEvaluationId.value = staffId;
+
+  const form = staffEvaluationForms.value[staffId];
+
+  try {
+    await $fetch(`/api/events/${eventId}/staff-evaluations`, {
+      method: "POST",
+      body: {
+        staffId,
+        sopOk: form.sopOk,
+        warehouseOk: form.warehouseOk,
+        groomingOk: form.groomingOk,
+        dataCollectionOk: form.dataCollectionOk,
+        notes: form.notes,
+      },
+    });
+
+    await refresh();
+  } catch (error) {
+    evaluationErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to save staff evaluation";
+  } finally {
+    savingStaffEvaluationId.value = "";
+  }
+}
+
+watchEffect(() => {
+  const evaluation = eventData.value?.data?.eventEvaluation;
+
+  if (evaluation) {
+    clientSatisfactionOk.value = evaluation.clientSatisfactionOk;
+    clientFeedback.value = evaluation.clientFeedback || "";
+    eventEvaluationNotes.value = evaluation.notes || "";
+  }
+
+  const assignedTeam = eventData.value?.data?.assignments || [];
+  const existingEvaluations = eventData.value?.data?.staffEvaluations || [];
+
+  for (const assignment of assignedTeam) {
+    const existing = existingEvaluations.find((item) => {
+      return item.staffId === assignment.staffId;
+    });
+
+    if (!staffEvaluationForms.value[assignment.staffId]) {
+      staffEvaluationForms.value[assignment.staffId] = {
+        sopOk: existing?.sopOk || false,
+        warehouseOk: existing?.warehouseOk || false,
+        groomingOk: existing?.groomingOk || false,
+        dataCollectionOk: existing?.dataCollectionOk || false,
+        notes: existing?.notes || "",
+      };
+    }
+  }
+});
 </script>
 
 <template>
@@ -256,6 +348,151 @@ async function handleDeleteAssignment(assignmentId) {
           </tr>
         </tbody>
       </table>
+    </div>
+    <hr />
+
+    <h2>Event Evaluation</h2>
+
+    <form @submit.prevent="handleSaveEventEvaluation">
+      <div>
+        <label>
+          <input v-model="clientSatisfactionOk" type="checkbox" />
+          Client Satisfaction OK
+        </label>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Client Feedback</label>
+        <br />
+        <textarea
+          v-model="clientFeedback"
+          placeholder="Client feedback"
+        ></textarea>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Evaluation Notes</label>
+        <br />
+        <textarea
+          v-model="eventEvaluationNotes"
+          placeholder="Internal notes"
+        ></textarea>
+      </div>
+
+      <br />
+
+      <button type="submit" :disabled="isSavingEventEvaluation">
+        {{ isSavingEventEvaluation ? "Saving..." : "Save Event Evaluation" }}
+      </button>
+    </form>
+
+    <p v-if="eventData?.data?.eventEvaluation">
+      Current Client Satisfaction:
+      {{
+        eventData?.data?.eventEvaluation?.clientSatisfactionOk ? "OK" : "NOT OK"
+      }}
+    </p>
+
+    <hr />
+
+    <h2>Staff Evaluation</h2>
+
+    <p v-if="!eventData?.data?.assignments?.length">
+      Assign staff first before evaluation.
+    </p>
+
+    <p v-if="evaluationErrorMessage" style="color: red">
+      {{ evaluationErrorMessage }}
+    </p>
+
+    <div
+      v-for="assignment in eventData?.data?.assignments"
+      :key="assignment.id"
+      style="border: 1px solid #ccc; padding: 12px; margin-bottom: 12px"
+    >
+      <h3>{{ assignment.staff?.name }} - {{ assignment.roleInEvent }}</h3>
+
+      <div>
+        <label>
+          <input
+            v-model="staffEvaluationForms[assignment.staffId].sopOk"
+            type="checkbox"
+          />
+          SOP OK
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input
+            v-model="staffEvaluationForms[assignment.staffId].warehouseOk"
+            type="checkbox"
+          />
+          Warehouse OK
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input
+            v-model="staffEvaluationForms[assignment.staffId].groomingOk"
+            type="checkbox"
+          />
+          Grooming OK
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input
+            v-model="staffEvaluationForms[assignment.staffId].dataCollectionOk"
+            type="checkbox"
+          />
+          Data Collection OK
+        </label>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Notes</label>
+        <br />
+        <textarea
+          v-model="staffEvaluationForms[assignment.staffId].notes"
+          placeholder="Staff evaluation notes"
+        ></textarea>
+      </div>
+
+      <br />
+
+      <button
+        type="button"
+        :disabled="savingStaffEvaluationId === assignment.staffId"
+        @click="handleSaveStaffEvaluation(assignment.staffId)"
+      >
+        {{
+          savingStaffEvaluationId === assignment.staffId
+            ? "Saving..."
+            : "Save Staff Evaluation"
+        }}
+      </button>
+
+      <p>
+        Result:
+        <strong>
+          {{
+            eventData?.data?.staffEvaluations?.find(
+              (item) => item.staffId === assignment.staffId,
+            )?.isSuccess
+              ? "SUCCESS"
+              : "NOT SUCCESS / NOT EVALUATED"
+          }}
+        </strong>
+      </p>
     </div>
   </section>
 </template>

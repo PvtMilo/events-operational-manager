@@ -25,6 +25,15 @@ export default defineEventHandler(async (event) => {
           createdAt: "asc",
         },
       },
+      eventEvaluation: true,
+      staffEvaluations: {
+        include: {
+          staff: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      },
     },
   });
 

@@ -135,8 +135,11 @@ async function handleDeleteAssignment(assignmentId) {
               v-for="staff in assignableStaff"
               :key="staff.id"
               :value="staff.id"
+              :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
             >
-              {{ staff.name }} - {{ staff.defaultRole }}
+              {{ staff.name }} - {{ staff.defaultRole }} -
+              {{ staff.availabilityStatus }} -
+              {{ staff.monthlyEventCount }} event bulan ini
             </option>
           </select>
           <p>
@@ -144,6 +147,39 @@ async function handleDeleteAssignment(assignmentId) {
             lain di hari yang sama tapi tidak bentrok waktu. TIME_CONFLICT =
             tidak bisa dipilih.
           </p>
+          <h3>Staff Recommendation</h3>
+
+          <table border="1" cellpadding="8" cellspacing="0">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Default Role</th>
+                <th>Availability</th>
+                <th>Monthly Event Count</th>
+                <th>Monthly PIC Count</th>
+                <th>Recommendation</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="staff in assignableStaff" :key="staff.id">
+                <td>{{ staff.name }}</td>
+                <td>{{ staff.defaultRole }}</td>
+                <td>{{ staff.availabilityStatus }}</td>
+                <td>{{ staff.monthlyEventCount }}</td>
+                <td>{{ staff.monthlyPicCount }}</td>
+                <td>
+                  <span v-if="staff.availabilityStatus === 'TIME_CONFLICT'">
+                    Not recommended
+                  </span>
+                  <span v-else-if="staff.monthlyEventCount === 0">
+                    Highly recommended
+                  </span>
+                  <span v-else> Recommended </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <br />

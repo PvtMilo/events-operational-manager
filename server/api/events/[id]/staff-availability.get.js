@@ -5,6 +5,18 @@ import {
   isTimeOverlap,
 } from "../../../utils/availability";
 
+function getMonthRange(dateValue) {
+  const date = new Date(dateValue);
+
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+
+  return {
+    start,
+    end,
+  };
+}
+
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
 
@@ -31,6 +43,10 @@ export default defineEventHandler(async (event) => {
   const { dutyStart: targetStart, dutyEnd: targetEnd } =
     getEventDutyWindow(targetEvent);
 
+  const { start: monthStart, end: monthEnd } = getMonthRange(
+    targetEvent.eventDate,
+  );
+
   const staffList = await prisma.staff.findMany({
     where: {
       status: "ACTIVE",
@@ -55,10 +71,37 @@ export default defineEventHandler(async (event) => {
     },
   });
 
+  const monthlyAssignments = await prisma.eventAssignment.findMany({
+    where: {
+      assignmentStatus: {
+        not: "CANCELLED",
+      },
+      event: {
+        eventDate: {
+          gte: monthStart,
+          lt: monthEnd,
+        },
+      },
+    },
+    include: {
+      event: true,
+    },
+  });
+
   const result = staffList.map((staff) => {
     const staffAssignments = existingAssignments.filter((assignment) => {
       return assignment.staffId === staff.id;
     });
+
+    const staffMonthlyAssignments = monthlyAssignments.filter((assignment) => {
+      return assignment.staffId === staff.id;
+    });
+
+    const monthlyEventCount = staffMonthlyAssignments.length;
+
+    const monthlyPicCount = staffMonthlyAssignments.filter((assignment) => {
+      return assignment.roleInEvent === "PIC";
+    }).length;
 
     let availabilityStatus = "AVAILABLE";
     let conflictEvent = null;
@@ -110,7 +153,29 @@ export default defineEventHandler(async (event) => {
       availabilityStatus,
       conflictEvent,
       sameDayEvent,
+      monthlyEventCount,
+      monthlyPicCount,
     };
+  });
+
+  result.sort((a, b) => {
+    if (a.availabilityStatus === "TIME_CONFLICT" && b.availabilityStatus !== "TIME_CONFLICT") {
+      return 1;
+    }
+
+    if (a.availabilityStatus !== "TIME_CONFLICT" && b.availabilityStatus === "TIME_CONFLICT") {
+      return -1;
+    }
+
+    if (a.monthlyEventCount !== b.monthlyEventCount) {
+      return a.monthlyEventCount - b.monthlyEventCount;
+    }
+
+    if (a.monthlyPicCount !== b.monthlyPicCount) {
+      return a.monthlyPicCount - b.monthlyPicCount;
+    }
+
+    return a.name.localeCompare(b.name);
   });
 
   return {

@@ -9,6 +9,12 @@ const description = ref("");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const editingId = ref("");
+const editName = ref("");
+const editDescription = ref("");
+const isUpdating = ref(false);
+const editErrorMessage = ref("");
+
 const {
   data,
   pending,
@@ -46,6 +52,51 @@ async function handleCreate() {
       "Failed to create service type";
   } finally {
     isSubmitting.value = false;
+  }
+}
+
+function startEdit(item) {
+  editingId.value = item.id;
+  editName.value = item.name;
+  editDescription.value = item.description || "";
+  editErrorMessage.value = "";
+}
+
+function cancelEdit() {
+  editingId.value = "";
+  editName.value = "";
+  editDescription.value = "";
+  editErrorMessage.value = "";
+}
+
+async function handleUpdate() {
+  editErrorMessage.value = "";
+
+  if (!editName.value.trim()) {
+    editErrorMessage.value = "Name is required";
+    return;
+  }
+
+  isUpdating.value = true;
+
+  try {
+    await $fetch(`/api/service-types/${editingId.value}`, {
+      method: "PATCH",
+      body: {
+        name: editName.value,
+        description: editDescription.value,
+      },
+    });
+
+    cancelEdit();
+    await refresh();
+  } catch (error) {
+    editErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update service type";
+  } finally {
+    isUpdating.value = false;
   }
 }
 
@@ -114,6 +165,42 @@ async function handleDelete(id) {
 
     <hr />
 
+    <div v-if="editingId">
+      <h2>Edit Service Type</h2>
+
+      <form @submit.prevent="handleUpdate">
+        <div>
+          <label>Name</label>
+          <br />
+          <input v-model="editName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Description</label>
+          <br />
+          <textarea v-model="editDescription"></textarea>
+        </div>
+
+        <br />
+
+        <p v-if="editErrorMessage" style="color: red">
+          {{ editErrorMessage }}
+        </p>
+
+        <button type="submit" :disabled="isUpdating">
+          {{ isUpdating ? "Updating..." : "Update" }}
+        </button>
+
+        <button type="button" @click="cancelEdit">
+          Cancel
+        </button>
+      </form>
+    </div>
+
+    <hr />
+
     <h2>Service Type List</h2>
 
     <p v-if="pending">Loading...</p>
@@ -135,7 +222,9 @@ async function handleDelete(id) {
           <td>{{ item.description || "-" }}</td>
           <td>{{ new Date(item.createdAt).toLocaleString() }}</td>
           <td>
-            <button @click="handleDelete(item.id)">Delete</button>
+            <button type="button" @click="startEdit(item)">Edit</button>
+            |
+            <button type="button" @click="handleDelete(item.id)">Delete</button>
           </td>
         </tr>
       </tbody>

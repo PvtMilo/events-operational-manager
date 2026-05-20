@@ -1,66 +1,74 @@
 import { prisma } from "../../utils/prisma";
 
-function getTodayStart() {
+function getCurrentMonthRange() {
   const now = new Date();
 
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  return {
+    start,
+    end,
+  };
 }
 
 export default defineEventHandler(async () => {
-  const todayStart = getTodayStart();
+  const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
+
+  const baseThisMonthWhere = {
+    eventDate: {
+      gte: monthStart,
+      lt: monthEnd,
+    },
+    status: {
+      not: "CANCELLED",
+    },
+  };
 
   const [
     totalEvents,
     upcomingEvents,
     completedEvents,
     pendingEvaluationEvents,
-    activeStaff,
-    activeSales,
     eventsWithoutAssignment,
     recentEvents,
   ] = await Promise.all([
-    prisma.event.count(),
+    prisma.event.count({
+      where: baseThisMonthWhere,
+    }),
 
     prisma.event.count({
       where: {
-        eventDate: {
-          gte: todayStart,
-        },
+        ...baseThisMonthWhere,
         status: {
-          not: "CANCELLED",
+          notIn: ["CANCELLED", "COMPLETED"],
         },
       },
     }),
 
     prisma.event.count({
       where: {
+        eventDate: {
+          gte: monthStart,
+          lt: monthEnd,
+        },
         status: "COMPLETED",
       },
     }),
 
     prisma.event.count({
       where: {
+        eventDate: {
+          gte: monthStart,
+          lt: monthEnd,
+        },
         status: "PENDING_EVALUATION",
-      },
-    }),
-
-    prisma.staff.count({
-      where: {
-        status: "ACTIVE",
-      },
-    }),
-
-    prisma.sales.count({
-      where: {
-        status: "ACTIVE",
       },
     }),
 
     prisma.event.findMany({
       where: {
-        status: {
-          not: "CANCELLED",
-        },
+        ...baseThisMonthWhere,
         assignments: {
           none: {
             assignmentStatus: {
@@ -82,11 +90,17 @@ export default defineEventHandler(async () => {
     }),
 
     prisma.event.findMany({
+      where: baseThisMonthWhere,
       take: 5,
       include: {
         serviceType: true,
         sales: true,
         assignments: {
+          where: {
+            assignmentStatus: {
+              in: ["ASSIGNED", "CONFIRMED"],
+            },
+          },
           include: {
             staff: true,
           },
@@ -101,12 +115,12 @@ export default defineEventHandler(async () => {
   return {
     success: true,
     data: {
+      monthStart,
+      monthEnd,
       totalEvents,
       upcomingEvents,
       completedEvents,
       pendingEvaluationEvents,
-      activeStaff,
-      activeSales,
       eventsNeedAssignment: eventsWithoutAssignment.length,
       eventsWithoutAssignment,
       recentEvents,

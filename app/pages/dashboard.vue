@@ -12,8 +12,6 @@ const summary = computed(() => {
     upcomingEvents: 0,
     completedEvents: 0,
     pendingEvaluationEvents: 0,
-    activeStaff: 0,
-    activeSales: 0,
     eventsNeedAssignment: 0,
     eventsWithoutAssignment: [],
     recentEvents: [],
@@ -24,7 +22,7 @@ const summary = computed(() => {
 <template>
   <section>
     <h1>Dashboard</h1>
-    <p>Operational summary from database.</p>
+    <p>Operational summary for this month.</p>
 
     <button type="button" @click="refresh">Refresh</button>
 
@@ -53,14 +51,6 @@ const summary = computed(() => {
           <tr>
             <td>Pending Evaluation</td>
             <td>{{ summary.pendingEvaluationEvents }}</td>
-          </tr>
-          <tr>
-            <td>Active Staff</td>
-            <td>{{ summary.activeStaff }}</td>
-          </tr>
-          <tr>
-            <td>Active Sales</td>
-            <td>{{ summary.activeSales }}</td>
           </tr>
           <tr>
             <td>Events Need Assignment</td>

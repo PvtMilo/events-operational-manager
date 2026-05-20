@@ -1,7 +1,7 @@
 <script setup>
 definePageMeta({
   layout: "dashboard",
-  middleware: "auth",
+  middleware: ["auth", "no-staff-report"],
 });
 
 const now = new Date();

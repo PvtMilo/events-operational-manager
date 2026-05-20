@@ -1,4 +1,5 @@
 import { prisma } from "../../../utils/prisma";
+import { denyStaff } from "../../../utils/permission";
 
 function getMonthRange(year, month) {
   const start = new Date(year, month - 1, 1);
@@ -11,6 +12,8 @@ function getMonthRange(year, month) {
 }
 
 export default defineEventHandler(async (event) => {
+  await denyStaff(event);
+
   const staffId = getRouterParam(event, "id");
   const query = getQuery(event);
 

@@ -8,9 +8,11 @@ datasource db {
 }
 
 enum UserRole {
+  DEVELOPER
   ADMIN
   SCHEDULE_MAKER
   HEAD_OPERATIONAL
+  STAFF
 }
 
 enum AccountStatus {

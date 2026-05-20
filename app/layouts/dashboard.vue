@@ -36,6 +36,9 @@ async function handleLogout() {
           <li>
             <NuxtLink to="/reports">Reports</NuxtLink>
           </li>
+          <li>
+            <NuxtLink to="/users">Users</NuxtLink>
+          </li>
         </ul>
       </nav>
     </aside>

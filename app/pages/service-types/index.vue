@@ -6,6 +6,7 @@ definePageMeta({
 
 const name = ref("");
 const description = ref("");
+const requiresRibbonTracking = ref(false);
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
@@ -24,6 +25,7 @@ const serviceTypesUrl = computed(() => {
 const editingId = ref("");
 const editName = ref("");
 const editDescription = ref("");
+const editRequiresRibbonTracking = ref(false);
 const isUpdating = ref(false);
 const editErrorMessage = ref("");
 
@@ -54,11 +56,13 @@ async function handleCreate() {
       body: {
         name: name.value,
         description: description.value,
+        requiresRibbonTracking: requiresRibbonTracking.value,
       },
     });
 
     name.value = "";
     description.value = "";
+    requiresRibbonTracking.value = false;
 
     await refresh();
   } catch (error) {
@@ -75,6 +79,7 @@ function startEdit(item) {
   editingId.value = item.id;
   editName.value = item.name;
   editDescription.value = item.description || "";
+  editRequiresRibbonTracking.value = item.requiresRibbonTracking || false;
   editErrorMessage.value = "";
 }
 
@@ -82,6 +87,7 @@ function cancelEdit() {
   editingId.value = "";
   editName.value = "";
   editDescription.value = "";
+  editRequiresRibbonTracking.value = false;
   editErrorMessage.value = "";
 }
 
@@ -101,6 +107,7 @@ async function handleUpdate() {
       body: {
         name: editName.value,
         description: editDescription.value,
+        requiresRibbonTracking: editRequiresRibbonTracking.value,
       },
     });
 
@@ -170,6 +177,15 @@ async function handleDelete(id) {
 
       <br />
 
+      <div>
+        <label>
+          <input v-model="requiresRibbonTracking" type="checkbox" />
+          Requires Ribbon Tracking
+        </label>
+      </div>
+
+      <br />
+
       <p v-if="errorMessage" style="color: red">
         {{ errorMessage }}
       </p>
@@ -197,6 +213,15 @@ async function handleDelete(id) {
           <label>Description</label>
           <br />
           <textarea v-model="editDescription"></textarea>
+        </div>
+
+        <br />
+
+        <div>
+          <label>
+            <input v-model="editRequiresRibbonTracking" type="checkbox" />
+            Requires Ribbon Tracking
+          </label>
         </div>
 
         <br />
@@ -247,6 +272,7 @@ async function handleDelete(id) {
       <thead>
         <tr>
           <th>Name</th>
+          <th>Ribbon Tracking</th>
           <th>Description</th>
           <th>Created At</th>
           <th>Action</th>
@@ -256,6 +282,7 @@ async function handleDelete(id) {
       <tbody>
         <tr v-for="item in data?.data" :key="item.id">
           <td>{{ item.name }}</td>
+          <td>{{ item.requiresRibbonTracking ? "Yes" : "No" }}</td>
           <td>{{ item.description || "-" }}</td>
           <td>{{ new Date(item.createdAt).toLocaleString() }}</td>
           <td>

@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
       id: eventId,
     },
     include: {
+      serviceType: true,
       assignments: true,
       eventEvaluation: true,
       staffEvaluations: true,
@@ -126,16 +127,21 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (
-      eventData.ribbonStart === null ||
-      eventData.ribbonEnd === null ||
-      eventData.ribbonUsed === null
-    ) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          "Ribbon awal, ribbon akhir, dan total penggunaan wajib diisi before set to COMPLETED",
-      });
+    const requiresRibbonTracking =
+      eventData.serviceType?.requiresRibbonTracking === true;
+
+    if (requiresRibbonTracking) {
+      if (
+        eventData.ribbonStart === null ||
+        eventData.ribbonEnd === null ||
+        eventData.ribbonUsed === null
+      ) {
+        throw createError({
+          statusCode: 400,
+          statusMessage:
+            "Ribbon awal, ribbon akhir, dan total penggunaan wajib diisi untuk service type ini before set to COMPLETED",
+        });
+      }
     }
 
     const evaluatedStaffIds = eventData.staffEvaluations.map((evaluation) => {

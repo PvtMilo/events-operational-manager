@@ -6,6 +6,7 @@ export default defineEventHandler(async (event) => {
 
   const name = body?.name?.trim();
   const description = body?.description?.trim() || null;
+  const requiresRibbonTracking = Boolean(body?.requiresRibbonTracking);
 
   if (!id) {
     throw createError({
@@ -41,6 +42,7 @@ export default defineEventHandler(async (event) => {
     data: {
       name,
       description,
+      requiresRibbonTracking,
     },
   });
 

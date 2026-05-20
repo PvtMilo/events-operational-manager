@@ -125,6 +125,7 @@ export const ServiceTypeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
+  requiresRibbonTracking: 'requiresRibbonTracking',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

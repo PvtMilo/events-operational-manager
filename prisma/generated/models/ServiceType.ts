@@ -28,6 +28,7 @@ export type ServiceTypeMinAggregateOutputType = {
   id: string | null
   name: string | null
   description: string | null
+  requiresRibbonTracking: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -36,6 +37,7 @@ export type ServiceTypeMaxAggregateOutputType = {
   id: string | null
   name: string | null
   description: string | null
+  requiresRibbonTracking: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,6 +46,7 @@ export type ServiceTypeCountAggregateOutputType = {
   id: number
   name: number
   description: number
+  requiresRibbonTracking: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -54,6 +57,7 @@ export type ServiceTypeMinAggregateInputType = {
   id?: true
   name?: true
   description?: true
+  requiresRibbonTracking?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -62,6 +66,7 @@ export type ServiceTypeMaxAggregateInputType = {
   id?: true
   name?: true
   description?: true
+  requiresRibbonTracking?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -70,6 +75,7 @@ export type ServiceTypeCountAggregateInputType = {
   id?: true
   name?: true
   description?: true
+  requiresRibbonTracking?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -151,6 +157,7 @@ export type ServiceTypeGroupByOutputType = {
   id: string
   name: string
   description: string | null
+  requiresRibbonTracking: boolean
   createdAt: Date
   updatedAt: Date
   _count: ServiceTypeCountAggregateOutputType | null
@@ -180,6 +187,7 @@ export type ServiceTypeWhereInput = {
   id?: Prisma.StringFilter<"ServiceType"> | string
   name?: Prisma.StringFilter<"ServiceType"> | string
   description?: Prisma.StringNullableFilter<"ServiceType"> | string | null
+  requiresRibbonTracking?: Prisma.BoolFilter<"ServiceType"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ServiceType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ServiceType"> | Date | string
   events?: Prisma.EventListRelationFilter
@@ -189,6 +197,7 @@ export type ServiceTypeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiresRibbonTracking?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   events?: Prisma.EventOrderByRelationAggregateInput
@@ -201,6 +210,7 @@ export type ServiceTypeWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ServiceTypeWhereInput[]
   NOT?: Prisma.ServiceTypeWhereInput | Prisma.ServiceTypeWhereInput[]
   description?: Prisma.StringNullableFilter<"ServiceType"> | string | null
+  requiresRibbonTracking?: Prisma.BoolFilter<"ServiceType"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ServiceType"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ServiceType"> | Date | string
   events?: Prisma.EventListRelationFilter
@@ -210,6 +220,7 @@ export type ServiceTypeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiresRibbonTracking?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ServiceTypeCountOrderByAggregateInput
@@ -224,6 +235,7 @@ export type ServiceTypeScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"ServiceType"> | string
   name?: Prisma.StringWithAggregatesFilter<"ServiceType"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"ServiceType"> | string | null
+  requiresRibbonTracking?: Prisma.BoolWithAggregatesFilter<"ServiceType"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ServiceType"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ServiceType"> | Date | string
 }
@@ -232,6 +244,7 @@ export type ServiceTypeCreateInput = {
   id?: string
   name: string
   description?: string | null
+  requiresRibbonTracking?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   events?: Prisma.EventCreateNestedManyWithoutServiceTypeInput
@@ -241,6 +254,7 @@ export type ServiceTypeUncheckedCreateInput = {
   id?: string
   name: string
   description?: string | null
+  requiresRibbonTracking?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   events?: Prisma.EventUncheckedCreateNestedManyWithoutServiceTypeInput
@@ -250,6 +264,7 @@ export type ServiceTypeUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiresRibbonTracking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   events?: Prisma.EventUpdateManyWithoutServiceTypeNestedInput
@@ -259,6 +274,7 @@ export type ServiceTypeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiresRibbonTracking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   events?: Prisma.EventUncheckedUpdateManyWithoutServiceTypeNestedInput
@@ -268,6 +284,7 @@ export type ServiceTypeCreateManyInput = {
   id?: string
   name: string
   description?: string | null
+  requiresRibbonTracking?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -276,6 +293,7 @@ export type ServiceTypeUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiresRibbonTracking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -284,6 +302,7 @@ export type ServiceTypeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiresRibbonTracking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -292,6 +311,7 @@ export type ServiceTypeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  requiresRibbonTracking?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -300,6 +320,7 @@ export type ServiceTypeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  requiresRibbonTracking?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -308,6 +329,7 @@ export type ServiceTypeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  requiresRibbonTracking?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -335,6 +357,7 @@ export type ServiceTypeCreateWithoutEventsInput = {
   id?: string
   name: string
   description?: string | null
+  requiresRibbonTracking?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -343,6 +366,7 @@ export type ServiceTypeUncheckedCreateWithoutEventsInput = {
   id?: string
   name: string
   description?: string | null
+  requiresRibbonTracking?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -367,6 +391,7 @@ export type ServiceTypeUpdateWithoutEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiresRibbonTracking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -375,6 +400,7 @@ export type ServiceTypeUncheckedUpdateWithoutEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiresRibbonTracking?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -414,6 +440,7 @@ export type ServiceTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   id?: boolean
   name?: boolean
   description?: boolean
+  requiresRibbonTracking?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   events?: boolean | Prisma.ServiceType$eventsArgs<ExtArgs>
@@ -424,6 +451,7 @@ export type ServiceTypeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   name?: boolean
   description?: boolean
+  requiresRibbonTracking?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["serviceType"]>
@@ -432,6 +460,7 @@ export type ServiceTypeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   name?: boolean
   description?: boolean
+  requiresRibbonTracking?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["serviceType"]>
@@ -440,11 +469,12 @@ export type ServiceTypeSelectScalar = {
   id?: boolean
   name?: boolean
   description?: boolean
+  requiresRibbonTracking?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ServiceTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceType"]>
+export type ServiceTypeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "requiresRibbonTracking" | "createdAt" | "updatedAt", ExtArgs["result"]["serviceType"]>
 export type ServiceTypeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   events?: boolean | Prisma.ServiceType$eventsArgs<ExtArgs>
   _count?: boolean | Prisma.ServiceTypeCountOutputTypeDefaultArgs<ExtArgs>
@@ -461,6 +491,7 @@ export type $ServiceTypePayload<ExtArgs extends runtime.Types.Extensions.Interna
     id: string
     name: string
     description: string | null
+    requiresRibbonTracking: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["serviceType"]>
@@ -890,6 +921,7 @@ export interface ServiceTypeFieldRefs {
   readonly id: Prisma.FieldRef<"ServiceType", 'String'>
   readonly name: Prisma.FieldRef<"ServiceType", 'String'>
   readonly description: Prisma.FieldRef<"ServiceType", 'String'>
+  readonly requiresRibbonTracking: Prisma.FieldRef<"ServiceType", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ServiceType", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ServiceType", 'DateTime'>
 }

@@ -100,9 +100,10 @@ model Staff {
 }
 
 model ServiceType {
-  id          String  @id @default(cuid())
-  name        String  @unique
-  description String?
+  id                     String  @id @default(cuid())
+  name                   String  @unique
+  description            String?
+  requiresRibbonTracking Boolean @default(false)
 
   events Event[]
 

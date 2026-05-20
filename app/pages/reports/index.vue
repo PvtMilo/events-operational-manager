@@ -39,6 +39,12 @@ const years = computed(() => {
 async function handleFilter() {
   await refresh();
 }
+
+function handleExportCompletedEvents() {
+  const url = `/api/reports/completed-events/export?year=${selectedYear.value}&month=${selectedMonth.value}`;
+
+  window.open(url, "_blank");
+}
 </script>
 
 <template>
@@ -78,6 +84,10 @@ async function handleFilter() {
       <br />
 
       <button type="submit">Apply Filter</button>
+
+      <button type="button" @click="handleExportCompletedEvents">
+        Export Completed Events CSV
+      </button>
     </form>
 
     <hr />

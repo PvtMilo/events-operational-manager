@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
   const location = body?.location?.trim() || null;
   const vehicleName = body?.vehicleName?.trim() || null;
   const driverName = body?.driverName?.trim() || null;
+  const vendorSewa = body?.vendorSewa?.trim() || null;
   const notes = body?.notes?.trim() || null;
 
   if (!eventName) {
@@ -104,6 +105,7 @@ export default defineEventHandler(async (event) => {
       location,
       vehicleName,
       driverName,
+      vendorSewa,
       notes,
     },
   });

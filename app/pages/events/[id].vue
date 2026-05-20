@@ -40,6 +40,7 @@ const editLoadingTime = ref("");
 const editLocation = ref("");
 const editVehicleName = ref("");
 const editDriverName = ref("");
+const editVendorSewa = ref("");
 const editNotes = ref("");
 
 const isUpdatingEvent = ref(false);
@@ -284,6 +285,7 @@ async function handleUpdateEvent() {
         location: editLocation.value,
         vehicleName: editVehicleName.value,
         driverName: editDriverName.value,
+        vendorSewa: editVendorSewa.value,
         notes: editNotes.value,
       },
     });
@@ -429,6 +431,7 @@ watchEffect(() => {
   editLocation.value = event.location || "";
   editVehicleName.value = event.vehicleName || "";
   editDriverName.value = event.driverName || "";
+  editVendorSewa.value = event.vendorSewa || "";
   editNotes.value = event.notes || "";
 
   postRibbonStart.value = event.ribbonStart ?? "";
@@ -473,6 +476,7 @@ watchEffect(() => {
         Time: {{ eventData?.data?.startTime }} - {{ eventData?.data?.endTime }}
       </p>
       <p>Status: {{ eventData?.data?.status }}</p>
+      <p>Vendor Sewa: {{ eventData?.data?.vendorSewa || "-" }}</p>
 
       <hr />
 
@@ -605,6 +609,14 @@ watchEffect(() => {
           <label>Driver Name</label>
           <br />
           <input v-model="editDriverName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Vendor Sewa</label>
+          <br />
+          <input v-model="editVendorSewa" type="text" placeholder="Optional vendor rental info" />
         </div>
 
         <br />

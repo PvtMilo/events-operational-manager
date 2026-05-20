@@ -22,6 +22,7 @@ export default defineEventHandler(async (event) => {
 
   const vehicleName = body?.vehicleName?.trim() || null;
   const driverName = body?.driverName?.trim() || null;
+  const vendorSewa = body?.vendorSewa?.trim() || null;
   const notes = body?.notes?.trim() || null;
 
   if (!eventName) {
@@ -83,6 +84,7 @@ export default defineEventHandler(async (event) => {
       status,
       vehicleName,
       driverName,
+      vendorSewa,
       notes,
     },
   });

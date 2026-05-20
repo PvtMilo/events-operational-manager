@@ -19,6 +19,7 @@ const location = ref("");
 const status = ref("DRAFTED");
 const vehicleName = ref("");
 const driverName = ref("");
+const vendorSewa = ref("");
 const notes = ref("");
 
 const isSubmitting = ref(false);
@@ -156,6 +157,7 @@ async function handleCreate() {
         status: status.value,
         vehicleName: vehicleName.value,
         driverName: driverName.value,
+        vendorSewa: vendorSewa.value,
         notes: notes.value,
       },
     });
@@ -175,6 +177,7 @@ async function handleCreate() {
     status.value = "DRAFTED";
     vehicleName.value = "";
     driverName.value = "";
+    vendorSewa.value = "";
     notes.value = "";
 
     await refresh();
@@ -377,6 +380,18 @@ async function handleDelete(id) {
       <br />
 
       <div>
+        <label>Vendor Sewa</label>
+        <br />
+        <input
+          v-model="vendorSewa"
+          type="text"
+          placeholder="Optional vendor rental info"
+        />
+      </div>
+
+      <br />
+
+      <div>
         <label>Notes</label>
         <br />
         <textarea v-model="notes" placeholder="Optional notes"></textarea>
@@ -496,6 +511,7 @@ async function handleDelete(id) {
           <th>Date</th>
           <th>Time</th>
           <th>Loading</th>
+          <th>Vendor Sewa</th>
           <th>Status</th>
           <th>Location</th>
           <th>Action</th>
@@ -518,6 +534,7 @@ async function handleDelete(id) {
             </span>
             <span v-else>-</span>
           </td>
+          <td>{{ item.vendorSewa || "-" }}</td>
           <td>{{ item.status }}</td>
           <td>{{ item.location || "-" }}</td>
           <td>

@@ -1,5 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { hashAppPassword } from "../utils/password";
+import { denyStaffUsers } from "../utils/permission";
 
 const allowedRoles = [
   "DEVELOPER",
@@ -10,6 +11,8 @@ const allowedRoles = [
 ];
 
 export default defineEventHandler(async (event) => {
+  await denyStaffUsers(event);
+
   const body = await readBody(event);
 
   const name = body?.name?.trim();

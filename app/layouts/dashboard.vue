@@ -36,7 +36,7 @@ async function handleLogout() {
           <li v-if="user?.role !== 'STAFF'">
             <NuxtLink to="/reports">Reports</NuxtLink>
           </li>
-          <li>
+          <li v-if="user?.role !== 'STAFF'">
             <NuxtLink to="/users">Users</NuxtLink>
           </li>
           <li>

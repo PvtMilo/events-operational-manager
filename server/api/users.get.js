@@ -1,6 +1,9 @@
 import { prisma } from "../utils/prisma";
+import { denyStaffUsers } from "../utils/permission";
 
 export default defineEventHandler(async (event) => {
+  await denyStaffUsers(event);
+
   const query = getQuery(event);
 
   const search = query.search?.toString().trim() || "";

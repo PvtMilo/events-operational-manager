@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { denyStaffUsers } from "../../utils/permission";
 
 const allowedRoles = [
   "DEVELOPER",
@@ -11,6 +12,8 @@ const allowedRoles = [
 const allowedStatuses = ["ACTIVE", "INACTIVE"];
 
 export default defineEventHandler(async (event) => {
+  await denyStaffUsers(event);
+
   const id = getRouterParam(event, "id");
   const body = await readBody(event);
 

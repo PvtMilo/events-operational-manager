@@ -17,3 +17,23 @@ export async function denyStaff(event) {
 
   return session.user;
 }
+
+export async function denyStaffUsers(event) {
+  const session = await getUserSession(event);
+
+  if (!session?.user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Unauthorized",
+    });
+  }
+
+  if (session.user.role === "STAFF") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Staff cannot access user management",
+    });
+  }
+
+  return session.user;
+}

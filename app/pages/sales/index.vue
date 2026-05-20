@@ -12,6 +12,14 @@ const status = ref("ACTIVE");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const editingId = ref("");
+const editName = ref("");
+const editPhone = ref("");
+const editNotes = ref("");
+const editStatus = ref("ACTIVE");
+const isUpdating = ref(false);
+const editErrorMessage = ref("");
+
 const { data, pending, error, refresh } = await useFetch("/api/sales");
 
 async function handleCreate() {
@@ -48,6 +56,57 @@ async function handleCreate() {
       "Failed to create sales";
   } finally {
     isSubmitting.value = false;
+  }
+}
+
+function startEdit(item) {
+  editingId.value = item.id;
+  editName.value = item.name;
+  editPhone.value = item.phone || "";
+  editNotes.value = item.notes || "";
+  editStatus.value = item.status || "ACTIVE";
+  editErrorMessage.value = "";
+}
+
+function cancelEdit() {
+  editingId.value = "";
+  editName.value = "";
+  editPhone.value = "";
+  editNotes.value = "";
+  editStatus.value = "ACTIVE";
+  editErrorMessage.value = "";
+}
+
+async function handleUpdate() {
+  editErrorMessage.value = "";
+
+  if (!editName.value.trim()) {
+    editErrorMessage.value = "Name is required";
+    return;
+  }
+
+  isUpdating.value = true;
+
+  try {
+    await $fetch(`/api/sales/${editingId.value}`, {
+      method: "PATCH",
+      body: {
+        name: editName.value,
+        phone: editPhone.value,
+        notes: editNotes.value,
+        status: editStatus.value,
+      },
+    });
+
+    cancelEdit();
+    await refresh();
+  } catch (error) {
+    editErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update sales";
+  } finally {
+    isUpdating.value = false;
   }
 }
 
@@ -128,6 +187,61 @@ async function handleDelete(id) {
 
     <hr />
 
+    <div v-if="editingId">
+      <h2>Edit Sales</h2>
+
+      <form @submit.prevent="handleUpdate">
+        <div>
+          <label>Name</label>
+          <br />
+          <input v-model="editName" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Phone</label>
+          <br />
+          <input v-model="editPhone" type="text" />
+        </div>
+
+        <br />
+
+        <div>
+          <label>Status</label>
+          <br />
+          <select v-model="editStatus">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+          </select>
+        </div>
+
+        <br />
+
+        <div>
+          <label>Notes</label>
+          <br />
+          <textarea v-model="editNotes"></textarea>
+        </div>
+
+        <br />
+
+        <p v-if="editErrorMessage" style="color: red">
+          {{ editErrorMessage }}
+        </p>
+
+        <button type="submit" :disabled="isUpdating">
+          {{ isUpdating ? "Updating..." : "Update" }}
+        </button>
+
+        <button type="button" @click="cancelEdit">
+          Cancel
+        </button>
+      </form>
+    </div>
+
+    <hr />
+
     <h2>Sales List</h2>
 
     <p v-if="pending">Loading...</p>
@@ -153,7 +267,9 @@ async function handleDelete(id) {
           <td>{{ item.notes || "-" }}</td>
           <td>{{ new Date(item.createdAt).toLocaleString() }}</td>
           <td>
-            <button @click="handleDelete(item.id)">Delete</button>
+            <button type="button" @click="startEdit(item)">Edit</button>
+            |
+            <button type="button" @click="handleDelete(item.id)">Delete</button>
           </td>
         </tr>
       </tbody>

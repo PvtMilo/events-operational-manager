@@ -14,6 +14,26 @@ const notes = ref("");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const search = ref("");
+const filterDefaultRole = ref("");
+const filterStatus = ref("");
+const filterCanBeAssigned = ref("");
+
+const staffUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  if (search.value) params.set("search", search.value);
+  if (filterDefaultRole.value) params.set("defaultRole", filterDefaultRole.value);
+  if (filterStatus.value) params.set("status", filterStatus.value);
+  if (filterCanBeAssigned.value) {
+    params.set("canBeAssigned", filterCanBeAssigned.value);
+  }
+
+  const queryString = params.toString();
+
+  return queryString ? `/api/staff?${queryString}` : "/api/staff";
+});
+
 const editingId = ref("");
 const editName = ref("");
 const editPhone = ref("");
@@ -24,7 +44,20 @@ const editNotes = ref("");
 const isUpdating = ref(false);
 const editErrorMessage = ref("");
 
-const { data, pending, error, refresh } = await useFetch("/api/staff");
+const { data, pending, error, refresh } = await useFetch(staffUrl);
+
+async function handleApplyFilter() {
+  await refresh();
+}
+
+async function handleResetFilter() {
+  search.value = "";
+  filterDefaultRole.value = "";
+  filterStatus.value = "";
+  filterCanBeAssigned.value = "";
+
+  await refresh();
+}
 
 async function handleCreate() {
   errorMessage.value = "";
@@ -297,6 +330,65 @@ async function handleDelete(id) {
         </button>
       </form>
     </div>
+
+    <hr />
+
+    <h2>Filter Staff</h2>
+
+    <form @submit.prevent="handleApplyFilter">
+      <div>
+        <label>Search</label>
+        <br />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search name, phone, notes"
+        />
+      </div>
+
+      <br />
+
+      <div>
+        <label>Default Role</label>
+        <br />
+        <select v-model="filterDefaultRole">
+          <option value="">All Roles</option>
+          <option value="PIC">PIC</option>
+          <option value="SENIOR_CREW">SENIOR_CREW</option>
+          <option value="JUNIOR_CREW">JUNIOR_CREW</option>
+          <option value="INHOUSE">INHOUSE</option>
+        </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Status</label>
+        <br />
+        <select v-model="filterStatus">
+          <option value="">All Status</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="INACTIVE">INACTIVE</option>
+        </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Can Be Assigned</label>
+        <br />
+        <select v-model="filterCanBeAssigned">
+          <option value="">All</option>
+          <option value="true">Can be assigned</option>
+          <option value="false">Cannot be assigned</option>
+        </select>
+      </div>
+
+      <br />
+
+      <button type="submit">Apply Filter</button>
+      <button type="button" @click="handleResetFilter">Reset</button>
+    </form>
 
     <hr />
 

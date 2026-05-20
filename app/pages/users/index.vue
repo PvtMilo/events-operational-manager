@@ -19,6 +19,13 @@ const editStatus = ref("ACTIVE");
 const isUpdating = ref(false);
 const editErrorMessage = ref("");
 
+const resetPasswordUserId = ref("");
+const resetPasswordUserName = ref("");
+const newPassword = ref("");
+const isResettingPassword = ref(false);
+const resetPasswordErrorMessage = ref("");
+const resetPasswordSuccessMessage = ref("");
+
 const { data, pending, error, refresh } = await useFetch("/api/users");
 
 function startEdit(user) {
@@ -35,6 +42,54 @@ function cancelEdit() {
   editRole.value = "STAFF";
   editStatus.value = "ACTIVE";
   editErrorMessage.value = "";
+}
+
+function startResetPassword(user) {
+  resetPasswordUserId.value = user.id;
+  resetPasswordUserName.value = user.name;
+  newPassword.value = "";
+  resetPasswordErrorMessage.value = "";
+  resetPasswordSuccessMessage.value = "";
+}
+
+function cancelResetPassword() {
+  resetPasswordUserId.value = "";
+  resetPasswordUserName.value = "";
+  newPassword.value = "";
+  resetPasswordErrorMessage.value = "";
+  resetPasswordSuccessMessage.value = "";
+}
+
+async function handleResetPassword() {
+  resetPasswordErrorMessage.value = "";
+  resetPasswordSuccessMessage.value = "";
+
+  if (!newPassword.value || newPassword.value.length < 8) {
+    resetPasswordErrorMessage.value =
+      "New password must be at least 8 characters";
+    return;
+  }
+
+  isResettingPassword.value = true;
+
+  try {
+    await $fetch(`/api/users/${resetPasswordUserId.value}/reset-password`, {
+      method: "PATCH",
+      body: {
+        newPassword: newPassword.value,
+      },
+    });
+
+    resetPasswordSuccessMessage.value = "Password reset successfully";
+    newPassword.value = "";
+  } catch (error) {
+    resetPasswordErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to reset password";
+  } finally {
+    isResettingPassword.value = false;
+  }
 }
 
 async function handleCreate() {
@@ -229,6 +284,38 @@ async function handleUpdate() {
       <hr />
     </div>
 
+    <div v-if="resetPasswordUserId">
+      <h2>Reset Password</h2>
+
+      <p>User: {{ resetPasswordUserName }}</p>
+
+      <form @submit.prevent="handleResetPassword">
+        <div>
+          <label>New Password</label>
+          <br />
+          <input v-model="newPassword" type="password" />
+        </div>
+
+        <br />
+
+        <p v-if="resetPasswordErrorMessage" style="color: red">
+          {{ resetPasswordErrorMessage }}
+        </p>
+
+        <p v-if="resetPasswordSuccessMessage" style="color: green">
+          {{ resetPasswordSuccessMessage }}
+        </p>
+
+        <button type="submit" :disabled="isResettingPassword">
+          {{ isResettingPassword ? "Resetting..." : "Reset Password" }}
+        </button>
+
+        <button type="button" @click="cancelResetPassword">
+          Cancel
+        </button>
+      </form>
+    </div>
+
     <h2>User List</h2>
 
     <p v-if="pending">Loading users...</p>
@@ -256,6 +343,12 @@ async function handleUpdate() {
           <td>
             <button type="button" @click="startEdit(user)">
               Edit
+            </button>
+
+            |
+
+            <button type="button" @click="startResetPassword(user)">
+              Reset Password
             </button>
           </td>
         </tr>

@@ -22,18 +22,18 @@ async function handleLogout() {
             <NuxtLink to="/dashboard">Dashboard</NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/service-types">Service Types</NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/sales">Sales</NuxtLink>
+            <NuxtLink to="/events">Events</NuxtLink>
           </li>
           <li>
             <NuxtLink to="/staff">Staff</NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/events">Events</NuxtLink>
+            <NuxtLink to="/sales">Sales</NuxtLink>
           </li>
           <li>
+            <NuxtLink to="/service-types">Service Types</NuxtLink>
+          </li>
+          <li v-if="user?.role !== 'STAFF'">
             <NuxtLink to="/reports">Reports</NuxtLink>
           </li>
           <li>

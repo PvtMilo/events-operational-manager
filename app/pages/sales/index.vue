@@ -12,6 +12,20 @@ const status = ref("ACTIVE");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const search = ref("");
+const filterStatus = ref("");
+
+const salesUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  if (search.value) params.set("search", search.value);
+  if (filterStatus.value) params.set("status", filterStatus.value);
+
+  const queryString = params.toString();
+
+  return queryString ? `/api/sales?${queryString}` : "/api/sales";
+});
+
 const editingId = ref("");
 const editName = ref("");
 const editPhone = ref("");
@@ -20,7 +34,18 @@ const editStatus = ref("ACTIVE");
 const isUpdating = ref(false);
 const editErrorMessage = ref("");
 
-const { data, pending, error, refresh } = await useFetch("/api/sales");
+const { data, pending, error, refresh } = await useFetch(salesUrl);
+
+async function handleApplyFilter() {
+  await refresh();
+}
+
+async function handleResetFilter() {
+  search.value = "";
+  filterStatus.value = "";
+
+  await refresh();
+}
 
 async function handleCreate() {
   errorMessage.value = "";
@@ -239,6 +264,39 @@ async function handleDelete(id) {
         </button>
       </form>
     </div>
+
+    <hr />
+
+    <h2>Filter Sales</h2>
+
+    <form @submit.prevent="handleApplyFilter">
+      <div>
+        <label>Search</label>
+        <br />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search name, phone, notes"
+        />
+      </div>
+
+      <br />
+
+      <div>
+        <label>Status</label>
+        <br />
+        <select v-model="filterStatus">
+          <option value="">All Status</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="INACTIVE">INACTIVE</option>
+        </select>
+      </div>
+
+      <br />
+
+      <button type="submit">Apply Filter</button>
+      <button type="button" @click="handleResetFilter">Reset</button>
+    </form>
 
     <hr />
 

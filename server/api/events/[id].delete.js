@@ -10,14 +10,27 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await prisma.event.delete({
-    where: {
-      id,
+  const eventData = await prisma.event.findUnique({
+    where: { id },
+  });
+
+  if (!eventData) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Event not found",
+    });
+  }
+
+  const updatedEvent = await prisma.event.update({
+    where: { id },
+    data: {
+      status: "CANCELLED",
     },
   });
 
   return {
     success: true,
-    message: "Event deleted successfully",
+    message: "Event cancelled successfully",
+    data: updatedEvent,
   };
 });

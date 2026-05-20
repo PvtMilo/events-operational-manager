@@ -10,14 +10,28 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await prisma.staff.delete({
-    where: {
-      id,
+  const staff = await prisma.staff.findUnique({
+    where: { id },
+  });
+
+  if (!staff) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "Staff not found",
+    });
+  }
+
+  const updatedStaff = await prisma.staff.update({
+    where: { id },
+    data: {
+      status: "INACTIVE",
+      canBeAssignedToEvent: false,
     },
   });
 
   return {
     success: true,
-    message: "Staff deleted successfully",
+    message: "Staff deactivated successfully",
+    data: updatedStaff,
   };
 });

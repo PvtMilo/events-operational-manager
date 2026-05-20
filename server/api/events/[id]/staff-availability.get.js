@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
       },
       event: {
         status: {
-          not: "CANCELLED",
+          notIn: ["CANCELLED", "COMPLETED"],
         },
       },
     },

@@ -28,6 +28,41 @@ function escapeCsv(value) {
   return `"${escaped}"`;
 }
 
+function getEventSuccessStatus(eventData) {
+  const activeAssignments = eventData.assignments || [];
+  const staffEvaluations = eventData.staffEvaluations || [];
+
+  if (!eventData.eventEvaluation) {
+    return "NOT EVALUATED";
+  }
+
+  if (activeAssignments.length === 0) {
+    return "NO ACTIVE STAFF";
+  }
+
+  const evaluatedStaffIds = staffEvaluations.map((evaluation) => {
+    return evaluation.staffId;
+  });
+
+  const allStaffEvaluated = activeAssignments.every((assignment) => {
+    return evaluatedStaffIds.includes(assignment.staffId);
+  });
+
+  if (!allStaffEvaluated) {
+    return "NOT FULLY EVALUATED";
+  }
+
+  const allSuccess = activeAssignments.every((assignment) => {
+    const staffEvaluation = staffEvaluations.find((evaluation) => {
+      return evaluation.staffId === assignment.staffId;
+    });
+
+    return staffEvaluation?.isSuccess === true;
+  });
+
+  return allSuccess ? "SUCCESS" : "NOT SUCCESS";
+}
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
@@ -85,8 +120,6 @@ export default defineEventHandler(async (event) => {
     "Equipment Setup",
     "Sales",
     "Petugas",
-    "Role In Event",
-    "Assignment Status",
     "Event Date",
     "Start Time",
     "End Time",
@@ -96,56 +129,50 @@ export default defineEventHandler(async (event) => {
     "Status",
     "Vehicle Name",
     "Driver Name",
-    "SOP",
-    "Gudang",
+    "Vendor Sewa",
+    "Ribbon Awal",
+    "Ribbon Akhir",
+    "Total Penggunaan",
     "Kepuasan Client",
-    "Grooming",
-    "Pendataan",
     "Is Success",
-    "Staff Evaluation Notes",
     "Client Feedback",
     "Event Notes",
   ];
 
-  const rows = [];
+  const rows = events.map((eventData) => {
+    const petugas = eventData.assignments
+      .map((assignment) => {
+        return `${assignment.staff?.name || "-"} (${assignment.roleInEvent})`;
+      })
+      .join(", ");
 
-  for (const eventData of events) {
-    for (const assignment of eventData.assignments) {
-      const staffEvaluation = eventData.staffEvaluations.find((evaluation) => {
-        return evaluation.staffId === assignment.staffId;
-      });
-
-      rows.push([
-        eventData.eventName,
-        eventData.clientName,
-        eventData.clientPhone,
-        eventData.serviceType?.name,
-        eventData.equipmentSetup,
-        eventData.sales?.name,
-        assignment.staff?.name,
-        assignment.roleInEvent,
-        assignment.assignmentStatus,
-        formatDate(eventData.eventDate),
-        eventData.startTime,
-        eventData.endTime,
-        formatDate(eventData.loadingDate),
-        eventData.loadingTime,
-        eventData.location,
-        eventData.status,
-        eventData.vehicleName,
-        eventData.driverName,
-        formatBoolean(staffEvaluation?.sopOk),
-        formatBoolean(staffEvaluation?.warehouseOk),
-        formatBoolean(eventData.eventEvaluation?.clientSatisfactionOk),
-        formatBoolean(staffEvaluation?.groomingOk),
-        formatBoolean(staffEvaluation?.dataCollectionOk),
-        staffEvaluation?.isSuccess ? "SUCCESS" : "NOT SUCCESS",
-        staffEvaluation?.notes,
-        eventData.eventEvaluation?.clientFeedback,
-        eventData.notes,
-      ]);
-    }
-  }
+    return [
+      eventData.eventName,
+      eventData.clientName,
+      eventData.clientPhone,
+      eventData.serviceType?.name,
+      eventData.equipmentSetup,
+      eventData.sales?.name,
+      petugas,
+      formatDate(eventData.eventDate),
+      eventData.startTime,
+      eventData.endTime,
+      formatDate(eventData.loadingDate),
+      eventData.loadingTime,
+      eventData.location,
+      eventData.status,
+      eventData.vehicleName,
+      eventData.driverName,
+      eventData.vendorSewa,
+      eventData.ribbonStart,
+      eventData.ribbonEnd,
+      eventData.ribbonUsed,
+      formatBoolean(eventData.eventEvaluation?.clientSatisfactionOk),
+      getEventSuccessStatus(eventData),
+      eventData.eventEvaluation?.clientFeedback,
+      eventData.notes,
+    ];
+  });
 
   const csv = [
     headers.map(escapeCsv).join(","),
@@ -156,7 +183,7 @@ export default defineEventHandler(async (event) => {
   setHeader(
     event,
     "Content-Disposition",
-    `attachment; filename="completed-events-${year}-${month}.csv"`,
+    `attachment; filename="completed-events-summary-${year}-${month}.csv"`,
   );
 
   return csv;

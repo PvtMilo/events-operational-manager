@@ -40,8 +40,14 @@ async function handleFilter() {
   await refresh();
 }
 
-function handleExportCompletedEvents() {
+function handleExportStaffEvaluation() {
   const url = `/api/reports/completed-events/export?year=${selectedYear.value}&month=${selectedMonth.value}`;
+
+  window.open(url, "_blank");
+}
+
+function handleExportEventSummary() {
+  const url = `/api/reports/completed-events/event-summary-export?year=${selectedYear.value}&month=${selectedMonth.value}`;
 
   window.open(url, "_blank");
 }
@@ -85,8 +91,12 @@ function handleExportCompletedEvents() {
 
       <button type="submit">Apply Filter</button>
 
-      <button type="button" @click="handleExportCompletedEvents">
-        Export Completed Events CSV
+      <button type="button" @click="handleExportStaffEvaluation">
+        Export Staff Evaluation CSV
+      </button>
+
+      <button type="button" @click="handleExportEventSummary">
+        Export Event Summary CSV
       </button>
     </form>
 

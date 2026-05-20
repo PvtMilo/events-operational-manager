@@ -24,12 +24,66 @@ const notes = ref("");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const search = ref("");
+const filterStatus = ref("");
+const filterServiceTypeId = ref("");
+const filterYear = ref("");
+const filterMonth = ref("");
+
+const eventUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  if (search.value) params.set("search", search.value);
+  if (filterStatus.value) params.set("status", filterStatus.value);
+  if (filterServiceTypeId.value) {
+    params.set("serviceTypeId", filterServiceTypeId.value);
+  }
+  if (filterYear.value) params.set("year", filterYear.value);
+  if (filterMonth.value) params.set("month", filterMonth.value);
+
+  const queryString = params.toString();
+
+  return queryString ? `/api/events?${queryString}` : "/api/events";
+});
+
+const months = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+
+const currentYear = new Date().getFullYear();
+const years = [currentYear - 1, currentYear, currentYear + 1];
+
+async function handleApplyFilter() {
+  await refresh();
+}
+
+async function handleResetFilter() {
+  search.value = "";
+  filterStatus.value = "";
+  filterServiceTypeId.value = "";
+  filterYear.value = "";
+  filterMonth.value = "";
+
+  await refresh();
+}
+
 const {
   data: eventsData,
   pending,
   error,
   refresh,
-} = await useFetch("/api/events");
+} = await useFetch(eventUrl);
 const { data: serviceTypesData } = await useFetch("/api/service-types");
 const { data: salesData } = await useFetch("/api/sales");
 
@@ -317,6 +371,91 @@ async function handleDelete(id) {
       <button type="submit" :disabled="isSubmitting">
         {{ isSubmitting ? "Saving..." : "Save" }}
       </button>
+    </form>
+
+    <hr />
+
+    <h2>Filter Events</h2>
+
+    <form @submit.prevent="handleApplyFilter">
+      <div>
+        <label>Search</label>
+        <br />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search event, client, phone, location, equipment"
+        />
+      </div>
+
+      <br />
+
+      <div>
+        <label>Status</label>
+        <br />
+        <select v-model="filterStatus">
+          <option value="">All Status</option>
+          <option value="DRAFTED">DRAFTED</option>
+          <option value="SCHEDULED">SCHEDULED</option>
+          <option value="READY">READY</option>
+          <option value="ONGOING">ONGOING</option>
+          <option value="PENDING_EVALUATION">PENDING_EVALUATION</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
+        </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Service Type</label>
+        <br />
+        <select v-model="filterServiceTypeId">
+          <option value="">All Service Types</option>
+          <option
+            v-for="item in serviceTypesData?.data"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{ item.name }}
+          </option>
+        </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Month</label>
+        <br />
+        <select v-model="filterMonth">
+          <option value="">All Months</option>
+          <option
+            v-for="month in months"
+            :key="month.value"
+            :value="month.value"
+          >
+            {{ month.label }}
+          </option>
+        </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Year</label>
+        <br />
+        <select v-model="filterYear">
+          <option value="">All Years</option>
+          <option v-for="year in years" :key="year" :value="year">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+
+      <br />
+
+      <button type="submit">Apply Filter</button>
+      <button type="button" @click="handleResetFilter">Reset</button>
     </form>
 
     <hr />

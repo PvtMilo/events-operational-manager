@@ -65,6 +65,11 @@ export default defineEventHandler(async (event) => {
       assignmentStatus: {
         in: ["ASSIGNED", "CONFIRMED"],
       },
+      event: {
+        status: {
+          not: "CANCELLED",
+        },
+      },
     },
     include: {
       event: true,
@@ -77,6 +82,9 @@ export default defineEventHandler(async (event) => {
         in: ["ASSIGNED", "CONFIRMED"],
       },
       event: {
+        status: {
+          not: "CANCELLED",
+        },
         eventDate: {
           gte: monthStart,
           lt: monthEnd,

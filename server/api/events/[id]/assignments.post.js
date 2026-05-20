@@ -89,7 +89,12 @@ export default defineEventHandler(async (event) => {
         not: eventId,
       },
       assignmentStatus: {
-        not: "CANCELLED",
+        in: ["ASSIGNED", "CONFIRMED"],
+      },
+      event: {
+        status: {
+          not: "CANCELLED",
+        },
       },
     },
     include: {

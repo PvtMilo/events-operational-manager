@@ -9,18 +9,34 @@ const description = ref("");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const search = ref("");
+
+const serviceTypesUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  if (search.value) params.set("search", search.value);
+
+  const queryString = params.toString();
+
+  return queryString ? `/api/service-types?${queryString}` : "/api/service-types";
+});
+
 const editingId = ref("");
 const editName = ref("");
 const editDescription = ref("");
 const isUpdating = ref(false);
 const editErrorMessage = ref("");
 
-const {
-  data,
-  pending,
-  error,
-  refresh,
-} = await useFetch("/api/service-types");
+const { data, pending, error, refresh } = await useFetch(serviceTypesUrl);
+
+async function handleApplyFilter() {
+  await refresh();
+}
+
+async function handleResetFilter() {
+  search.value = "";
+  await refresh();
+}
 
 async function handleCreate() {
   errorMessage.value = "";
@@ -198,6 +214,27 @@ async function handleDelete(id) {
         </button>
       </form>
     </div>
+
+    <hr />
+
+    <h2>Filter Service Types</h2>
+
+    <form @submit.prevent="handleApplyFilter">
+      <div>
+        <label>Search</label>
+        <br />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search name or description"
+        />
+      </div>
+
+      <br />
+
+      <button type="submit">Apply Filter</button>
+      <button type="button" @click="handleResetFilter">Reset</button>
+    </form>
 
     <hr />
 

@@ -45,6 +45,22 @@ const editNotes = ref("");
 const isUpdatingEvent = ref(false);
 const editEventErrorMessage = ref("");
 
+const postRibbonStart = ref("");
+const postRibbonEnd = ref("");
+const postEventErrorMessage = ref("");
+const isSavingPostEventData = ref(false);
+
+const postRibbonUsed = computed(() => {
+  const start = Number(postRibbonStart.value);
+  const end = Number(postRibbonEnd.value);
+
+  if (Number.isNaN(start) || Number.isNaN(end)) {
+    return "";
+  }
+
+  return start - end;
+});
+
 const assignmentForms = ref({});
 const savingAssignmentId = ref("");
 const assignmentErrorMessage = ref("");
@@ -284,6 +300,47 @@ async function handleUpdateEvent() {
   }
 }
 
+async function handleSavePostEventData() {
+  postEventErrorMessage.value = "";
+
+  if (postRibbonStart.value === "") {
+    postEventErrorMessage.value = "Ribbon awal is required";
+    return;
+  }
+
+  if (postRibbonEnd.value === "") {
+    postEventErrorMessage.value = "Ribbon akhir is required";
+    return;
+  }
+
+  if (Number(postRibbonUsed.value) < 0) {
+    postEventErrorMessage.value =
+      "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.";
+    return;
+  }
+
+  isSavingPostEventData.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}/post-event-data`, {
+      method: "PATCH",
+      body: {
+        ribbonStart: postRibbonStart.value,
+        ribbonEnd: postRibbonEnd.value,
+      },
+    });
+
+    await refresh();
+  } catch (error) {
+    postEventErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to save post event data";
+  } finally {
+    isSavingPostEventData.value = false;
+  }
+}
+
 async function handleUpdateAssignment(assignmentId) {
   assignmentErrorMessage.value = "";
   savingAssignmentId.value = assignmentId;
@@ -373,6 +430,9 @@ watchEffect(() => {
   editVehicleName.value = event.vehicleName || "";
   editDriverName.value = event.driverName || "";
   editNotes.value = event.notes || "";
+
+  postRibbonStart.value = event.ribbonStart ?? "";
+  postRibbonEnd.value = event.ribbonEnd ?? "";
 });
 
 watchEffect(() => {
@@ -773,6 +833,44 @@ watchEffect(() => {
         {{ assignmentErrorMessage }}
       </p>
     </div>
+    <hr />
+
+    <h2>Post Event Data</h2>
+
+    <form @submit.prevent="handleSavePostEventData">
+      <div>
+        <label>Ribbon Awal</label>
+        <br />
+        <input v-model="postRibbonStart" type="number" />
+      </div>
+
+      <br />
+
+      <div>
+        <label>Ribbon Akhir</label>
+        <br />
+        <input v-model="postRibbonEnd" type="number" />
+      </div>
+
+      <br />
+
+      <div>
+        <label>Total Penggunaan</label>
+        <br />
+        <input :value="postRibbonUsed" type="number" disabled />
+      </div>
+
+      <br />
+
+      <p v-if="postEventErrorMessage" style="color: red">
+        {{ postEventErrorMessage }}
+      </p>
+
+      <button type="submit" :disabled="isSavingPostEventData">
+        {{ isSavingPostEventData ? "Saving..." : "Save Post Event Data" }}
+      </button>
+    </form>
+
     <hr />
 
     <h2>Event Evaluation</h2>

@@ -126,6 +126,18 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    if (
+      eventData.ribbonStart === null ||
+      eventData.ribbonEnd === null ||
+      eventData.ribbonUsed === null
+    ) {
+      throw createError({
+        statusCode: 400,
+        statusMessage:
+          "Ribbon awal, ribbon akhir, dan total penggunaan wajib diisi before set to COMPLETED",
+      });
+    }
+
     const evaluatedStaffIds = eventData.staffEvaluations.map((evaluation) => {
       return evaluation.staffId;
     });

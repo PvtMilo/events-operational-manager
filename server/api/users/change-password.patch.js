@@ -1,22 +1,9 @@
-import { prisma } from "../../../utils/prisma";
-import { hashAppPassword } from "../../../utils/password";
-
-function canResetPassword(actorRole, targetRole) {
-  if (actorRole === "DEVELOPER") {
-    return true;
-  }
-
-  if (actorRole === "ADMIN") {
-    return targetRole !== "DEVELOPER";
-  }
-
-  return false;
-}
+import { prisma } from "../../utils/prisma";
+import { hashAppPassword, verifyAppPassword } from "../../utils/password";
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, "id");
-  const body = await readBody(event);
   const session = await getUserSession(event);
+  const body = await readBody(event);
 
   if (!session?.user) {
     throw createError({
@@ -25,12 +12,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const currentPassword = body?.currentPassword;
   const newPassword = body?.newPassword;
 
-  if (!id) {
+  if (!currentPassword) {
     throw createError({
       statusCode: 400,
-      statusMessage: "User id is required",
+      statusMessage: "Current password is required",
     });
   }
 
@@ -41,23 +29,28 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const targetUser = await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
-      id,
+      id: session.user.id,
     },
   });
 
-  if (!targetUser) {
+  if (!user) {
     throw createError({
       statusCode: 404,
       statusMessage: "User not found",
     });
   }
 
-  if (!canResetPassword(session.user.role, targetUser.role)) {
+  const isCurrentPasswordValid = await verifyAppPassword(
+    currentPassword,
+    user.passwordHash,
+  );
+
+  if (!isCurrentPasswordValid) {
     throw createError({
-      statusCode: 403,
-      statusMessage: "You are not allowed to reset this user's password",
+      statusCode: 400,
+      statusMessage: "Current password is incorrect",
     });
   }
 
@@ -65,7 +58,7 @@ export default defineEventHandler(async (event) => {
 
   await prisma.user.update({
     where: {
-      id,
+      id: user.id,
     },
     data: {
       passwordHash,
@@ -74,6 +67,6 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    message: "Password reset successfully",
+    message: "Password changed successfully",
   };
 });

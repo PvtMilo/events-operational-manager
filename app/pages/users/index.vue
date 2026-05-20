@@ -26,7 +26,35 @@ const isResettingPassword = ref(false);
 const resetPasswordErrorMessage = ref("");
 const resetPasswordSuccessMessage = ref("");
 
-const { data, pending, error, refresh } = await useFetch("/api/users");
+const search = ref("");
+const filterRole = ref("");
+const filterStatus = ref("");
+
+const usersUrl = computed(() => {
+  const params = new URLSearchParams();
+
+  if (search.value) params.set("search", search.value);
+  if (filterRole.value) params.set("role", filterRole.value);
+  if (filterStatus.value) params.set("status", filterStatus.value);
+
+  const queryString = params.toString();
+
+  return queryString ? `/api/users?${queryString}` : "/api/users";
+});
+
+const { data, pending, error, refresh } = await useFetch(usersUrl);
+
+async function handleApplyFilter() {
+  await refresh();
+}
+
+async function handleResetFilter() {
+  search.value = "";
+  filterRole.value = "";
+  filterStatus.value = "";
+
+  await refresh();
+}
 
 function startEdit(user) {
   editingId.value = user.id;
@@ -315,6 +343,54 @@ async function handleUpdate() {
         </button>
       </form>
     </div>
+
+    <hr />
+
+    <h2>Filter Users</h2>
+
+    <form @submit.prevent="handleApplyFilter">
+      <div>
+        <label>Search</label>
+        <br />
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search name or email"
+        />
+      </div>
+
+      <br />
+
+      <div>
+        <label>Role</label>
+        <br />
+        <select v-model="filterRole">
+          <option value="">All Roles</option>
+          <option value="DEVELOPER">DEVELOPER</option>
+          <option value="ADMIN">ADMIN</option>
+          <option value="SCHEDULE_MAKER">SCHEDULE_MAKER</option>
+          <option value="HEAD_OPERATIONAL">HEAD_OPERATIONAL</option>
+          <option value="STAFF">STAFF</option>
+        </select>
+      </div>
+
+      <br />
+
+      <div>
+        <label>Status</label>
+        <br />
+        <select v-model="filterStatus">
+          <option value="">All Status</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="INACTIVE">INACTIVE</option>
+        </select>
+      </div>
+
+      <br />
+
+      <button type="submit">Apply Filter</button>
+      <button type="button" @click="handleResetFilter">Reset</button>
+    </form>
 
     <h2>User List</h2>
 

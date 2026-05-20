@@ -24,6 +24,8 @@ const notes = ref("");
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
+const page = ref(1);
+
 const search = ref("");
 const filterStatus = ref("");
 const filterServiceTypeId = ref("");
@@ -40,6 +42,8 @@ const eventUrl = computed(() => {
   }
   if (filterYear.value) params.set("year", filterYear.value);
   if (filterMonth.value) params.set("month", filterMonth.value);
+
+  params.set("page", page.value);
 
   const queryString = params.toString();
 
@@ -65,6 +69,7 @@ const currentYear = new Date().getFullYear();
 const years = [currentYear - 1, currentYear, currentYear + 1];
 
 async function handleApplyFilter() {
+  page.value = 1;
   await refresh();
 }
 
@@ -74,7 +79,22 @@ async function handleResetFilter() {
   filterServiceTypeId.value = "";
   filterYear.value = "";
   filterMonth.value = "";
+  page.value = 1;
 
+  await refresh();
+}
+
+async function goToPreviousPage() {
+  if (page.value <= 1) return;
+
+  page.value -= 1;
+  await refresh();
+}
+
+async function goToNextPage() {
+  if (page.value >= eventsData.value?.pagination?.totalPages) return;
+
+  page.value += 1;
   await refresh();
 }
 
@@ -510,5 +530,30 @@ async function handleDelete(id) {
     </table>
 
     <p v-if="eventsData?.data?.length === 0">No events yet.</p>
+
+    <div v-if="eventsData?.pagination">
+      <p>
+        Page {{ eventsData.pagination.page }} of
+        {{ eventsData.pagination.totalPages }}
+        —
+        Total {{ eventsData.pagination.totalItems }} events
+      </p>
+
+      <button
+        type="button"
+        :disabled="eventsData.pagination.page <= 1"
+        @click="goToPreviousPage"
+      >
+        Previous
+      </button>
+
+      <button
+        type="button"
+        :disabled="eventsData.pagination.page >= eventsData.pagination.totalPages"
+        @click="goToNextPage"
+      >
+        Next
+      </button>
+    </div>
   </section>
 </template>

@@ -72,24 +72,44 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  const events = await prisma.event.findMany({
-    where,
-    include: {
-      serviceType: true,
-      sales: true,
-      assignments: {
-        include: {
-          staff: true,
+  const page = Number(query.page || 1);
+  const limit = 20;
+  const skip = (page - 1) * limit;
+
+  const [events, totalItems] = await Promise.all([
+    prisma.event.findMany({
+      where,
+      skip,
+      take: limit,
+      include: {
+        serviceType: true,
+        sales: true,
+        assignments: {
+          include: {
+            staff: true,
+          },
         },
       },
-    },
-    orderBy: {
-      eventDate: "desc",
-    },
-  });
+      orderBy: {
+        eventDate: "desc",
+      },
+    }),
+
+    prisma.event.count({
+      where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
 
   return {
     success: true,
     data: events,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
   };
 });

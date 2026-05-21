@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { createEventLog } from "../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -86,6 +87,16 @@ export default defineEventHandler(async (event) => {
       driverName,
       vendorSewa,
       notes,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId: createdEvent.id,
+    action: "EVENT_CREATED",
+    description: "Event created",
+    metadata: {
+      eventName: createdEvent.eventName,
+      clientName: createdEvent.clientName,
     },
   });
 

@@ -81,3 +81,8 @@ export type EventEvaluation = Prisma.EventEvaluationModel
  * 
  */
 export type StaffEventEvaluation = Prisma.StaffEventEvaluationModel
+/**
+ * Model EventActivityLog
+ * 
+ */
+export type EventActivityLog = Prisma.EventActivityLogModel

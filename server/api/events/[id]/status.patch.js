@@ -1,4 +1,5 @@
 import { prisma } from "../../../utils/prisma";
+import { createEventLog } from "../../../utils/event-log";
 
 const allowedStatuses = [
   "DRAFTED",
@@ -48,6 +49,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Event not found",
     });
   }
+
+  const previousStatus = eventData.status;
 
   const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 
@@ -167,6 +170,16 @@ export default defineEventHandler(async (event) => {
     },
     data: {
       status,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId,
+    action: "EVENT_STATUS_UPDATED",
+    description: `Event status changed from ${previousStatus} to ${status}`,
+    metadata: {
+      previousStatus,
+      newStatus: status,
     },
   });
 

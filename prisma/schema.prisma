@@ -59,6 +59,7 @@ model User {
 
   eventEvaluations      EventEvaluation[]
   staffEventEvaluations StaffEventEvaluation[]
+  eventActivityLogs     EventActivityLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,6 +151,7 @@ model Event {
   assignments      EventAssignment[]
   eventEvaluation  EventEvaluation?
   staffEvaluations StaffEventEvaluation[]
+  activityLogs     EventActivityLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -215,4 +217,20 @@ model StaffEventEvaluation {
 
   @@unique([eventId, staffId])
   @@map("staff_event_evaluations")
+}
+
+model EventActivityLog {
+  id          String  @id @default(cuid())
+  eventId     String
+  userId      String?
+  action      String
+  description String?
+  metadata    Json?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("event_activity_logs")
 }

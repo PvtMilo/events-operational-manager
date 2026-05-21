@@ -1,4 +1,5 @@
 import { prisma } from "../../../utils/prisma";
+import { createEventLog } from "../../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -55,6 +56,17 @@ export default defineEventHandler(async (event) => {
       id: eventId,
     },
     data: {
+      ribbonStart,
+      ribbonEnd,
+      ribbonUsed,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId,
+    action: "POST_EVENT_DATA_SAVED",
+    description: "Post event data saved",
+    metadata: {
       ribbonStart,
       ribbonEnd,
       ribbonUsed,

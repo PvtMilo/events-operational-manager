@@ -1062,5 +1062,33 @@ watchEffect(() => {
         </strong>
       </p>
     </div>
+
+    <hr />
+
+    <h2>Activity Log</h2>
+
+    <p v-if="!eventData?.data?.activityLogs?.length">
+      No activity log yet.
+    </p>
+
+    <table v-else border="1" cellpadding="8" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr v-for="log in eventData?.data?.activityLogs" :key="log.id">
+          <td>{{ new Date(log.createdAt).toLocaleString() }}</td>
+          <td>{{ log.user?.name || "-" }}</td>
+          <td>{{ log.action }}</td>
+          <td>{{ log.description || "-" }}</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 </template>

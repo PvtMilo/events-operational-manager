@@ -1,4 +1,5 @@
 import { prisma } from "../../../utils/prisma";
+import { createEventLog } from "../../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -71,6 +72,16 @@ export default defineEventHandler(async (event) => {
       },
     });
   }
+
+  await createEventLog(event, {
+    eventId,
+    action: "EVENT_EVALUATION_SAVED",
+    description: "Event evaluation saved",
+    metadata: {
+      clientSatisfactionOk,
+      clientFeedback,
+    },
+  });
 
   return {
     success: true,

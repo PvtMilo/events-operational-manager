@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { createEventLog } from "../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -107,6 +108,16 @@ export default defineEventHandler(async (event) => {
       driverName,
       vendorSewa,
       notes,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId,
+    action: "EVENT_UPDATED",
+    description: "Event updated",
+    metadata: {
+      eventName: updatedEvent.eventName,
+      clientName: updatedEvent.clientName,
     },
   });
 

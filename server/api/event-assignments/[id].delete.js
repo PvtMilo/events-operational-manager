@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { createEventLog } from "../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -12,6 +13,9 @@ export default defineEventHandler(async (event) => {
 
   const assignment = await prisma.eventAssignment.findUnique({
     where: { id },
+    include: {
+      staff: true,
+    },
   });
 
   if (!assignment) {
@@ -28,6 +32,18 @@ export default defineEventHandler(async (event) => {
     },
     include: {
       staff: true,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId: updatedAssignment.eventId,
+    action: "ASSIGNMENT_CANCELLED",
+    description: `${updatedAssignment.staff?.name} assignment cancelled`,
+    metadata: {
+      staffId: updatedAssignment.staffId,
+      staffName: updatedAssignment.staff?.name,
+      roleInEvent: updatedAssignment.roleInEvent,
+      assignmentStatus: updatedAssignment.assignmentStatus,
     },
   });
 

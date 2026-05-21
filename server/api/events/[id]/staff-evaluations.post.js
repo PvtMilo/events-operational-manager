@@ -1,4 +1,5 @@
 import { prisma } from "../../../utils/prisma";
+import { createEventLog } from "../../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -27,6 +28,9 @@ export default defineEventHandler(async (event) => {
         eventId,
         staffId,
       },
+    },
+    include: {
+      staff: true,
     },
   });
 
@@ -91,6 +95,21 @@ export default defineEventHandler(async (event) => {
       dataCollectionOk,
       isSuccess,
       notes,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId,
+    action: "STAFF_EVALUATION_SAVED",
+    description: `${assignment.staff?.name} evaluation saved`,
+    metadata: {
+      staffId,
+      staffName: assignment.staff?.name,
+      sopOk,
+      warehouseOk,
+      groomingOk,
+      dataCollectionOk,
+      isSuccess,
     },
   });
 

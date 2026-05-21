@@ -391,7 +391,8 @@ export const ModelName = {
   Event: 'Event',
   EventAssignment: 'EventAssignment',
   EventEvaluation: 'EventEvaluation',
-  StaffEventEvaluation: 'StaffEventEvaluation'
+  StaffEventEvaluation: 'StaffEventEvaluation',
+  EventActivityLog: 'EventActivityLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "sales" | "staff" | "serviceType" | "event" | "eventAssignment" | "eventEvaluation" | "staffEventEvaluation"
+    modelProps: "user" | "sales" | "staff" | "serviceType" | "event" | "eventAssignment" | "eventEvaluation" | "staffEventEvaluation" | "eventActivityLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1003,6 +1004,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EventActivityLog: {
+      payload: Prisma.$EventActivityLogPayload<ExtArgs>
+      fields: Prisma.EventActivityLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EventActivityLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EventActivityLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>
+        }
+        findFirst: {
+          args: Prisma.EventActivityLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EventActivityLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>
+        }
+        findMany: {
+          args: Prisma.EventActivityLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>[]
+        }
+        create: {
+          args: Prisma.EventActivityLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>
+        }
+        createMany: {
+          args: Prisma.EventActivityLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EventActivityLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>[]
+        }
+        delete: {
+          args: Prisma.EventActivityLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>
+        }
+        update: {
+          args: Prisma.EventActivityLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.EventActivityLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EventActivityLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EventActivityLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.EventActivityLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EventActivityLogPayload>
+        }
+        aggregate: {
+          args: Prisma.EventActivityLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEventActivityLog>
+        }
+        groupBy: {
+          args: Prisma.EventActivityLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EventActivityLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EventActivityLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EventActivityLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1173,12 +1248,33 @@ export const StaffEventEvaluationScalarFieldEnum = {
 export type StaffEventEvaluationScalarFieldEnum = (typeof StaffEventEvaluationScalarFieldEnum)[keyof typeof StaffEventEvaluationScalarFieldEnum]
 
 
+export const EventActivityLogScalarFieldEnum = {
+  id: 'id',
+  eventId: 'eventId',
+  userId: 'userId',
+  action: 'action',
+  description: 'description',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+} as const
+
+export type EventActivityLogScalarFieldEnum = (typeof EventActivityLogScalarFieldEnum)[keyof typeof EventActivityLogScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1195,6 +1291,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -1337,6 +1442,20 @@ export type ListEnumAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1467,6 +1586,7 @@ export type GlobalOmitConfig = {
   eventAssignment?: Prisma.EventAssignmentOmit
   eventEvaluation?: Prisma.EventEvaluationOmit
   staffEventEvaluation?: Prisma.StaffEventEvaluationOmit
+  eventActivityLog?: Prisma.EventActivityLogOmit
 }
 
 /* Types for Logging */

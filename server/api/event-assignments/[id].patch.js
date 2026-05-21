@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { createEventLog } from "../../utils/event-log";
 
 const allowedRoles = ["PIC", "CREW"];
 
@@ -42,6 +43,9 @@ export default defineEventHandler(async (event) => {
     where: {
       id,
     },
+    include: {
+      staff: true,
+    },
   });
 
   if (!assignment) {
@@ -62,6 +66,18 @@ export default defineEventHandler(async (event) => {
     },
     include: {
       staff: true,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId: updatedAssignment.eventId,
+    action: "ASSIGNMENT_UPDATED",
+    description: `${updatedAssignment.staff?.name} assignment updated`,
+    metadata: {
+      staffId: updatedAssignment.staffId,
+      staffName: updatedAssignment.staff?.name,
+      roleInEvent,
+      assignmentStatus,
     },
   });
 

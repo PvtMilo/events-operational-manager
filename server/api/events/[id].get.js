@@ -34,6 +34,21 @@ export default defineEventHandler(async (event) => {
           createdAt: "asc",
         },
       },
+      activityLogs: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
   });
 

@@ -373,6 +373,7 @@ export type EventWhereInput = {
   assignments?: Prisma.EventAssignmentListRelationFilter
   eventEvaluation?: Prisma.XOR<Prisma.EventEvaluationNullableScalarRelationFilter, Prisma.EventEvaluationWhereInput> | null
   staffEvaluations?: Prisma.StaffEventEvaluationListRelationFilter
+  activityLogs?: Prisma.EventActivityLogListRelationFilter
 }
 
 export type EventOrderByWithRelationInput = {
@@ -404,6 +405,7 @@ export type EventOrderByWithRelationInput = {
   assignments?: Prisma.EventAssignmentOrderByRelationAggregateInput
   eventEvaluation?: Prisma.EventEvaluationOrderByWithRelationInput
   staffEvaluations?: Prisma.StaffEventEvaluationOrderByRelationAggregateInput
+  activityLogs?: Prisma.EventActivityLogOrderByRelationAggregateInput
 }
 
 export type EventWhereUniqueInput = Prisma.AtLeast<{
@@ -438,6 +440,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   assignments?: Prisma.EventAssignmentListRelationFilter
   eventEvaluation?: Prisma.XOR<Prisma.EventEvaluationNullableScalarRelationFilter, Prisma.EventEvaluationWhereInput> | null
   staffEvaluations?: Prisma.StaffEventEvaluationListRelationFilter
+  activityLogs?: Prisma.EventActivityLogListRelationFilter
 }, "id">
 
 export type EventOrderByWithAggregationInput = {
@@ -527,6 +530,7 @@ export type EventCreateInput = {
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateInput = {
@@ -556,6 +560,7 @@ export type EventUncheckedCreateInput = {
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventUpdateInput = {
@@ -585,6 +590,7 @@ export type EventUpdateInput = {
   assignments?: Prisma.EventAssignmentUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateInput = {
@@ -614,6 +620,7 @@ export type EventUncheckedUpdateInput = {
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateManyInput = {
@@ -935,6 +942,20 @@ export type EventUpdateOneRequiredWithoutStaffEvaluationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EventUpdateToOneWithWhereWithoutStaffEvaluationsInput, Prisma.EventUpdateWithoutStaffEvaluationsInput>, Prisma.EventUncheckedUpdateWithoutStaffEvaluationsInput>
 }
 
+export type EventCreateNestedOneWithoutActivityLogsInput = {
+  create?: Prisma.XOR<Prisma.EventCreateWithoutActivityLogsInput, Prisma.EventUncheckedCreateWithoutActivityLogsInput>
+  connectOrCreate?: Prisma.EventCreateOrConnectWithoutActivityLogsInput
+  connect?: Prisma.EventWhereUniqueInput
+}
+
+export type EventUpdateOneRequiredWithoutActivityLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.EventCreateWithoutActivityLogsInput, Prisma.EventUncheckedCreateWithoutActivityLogsInput>
+  connectOrCreate?: Prisma.EventCreateOrConnectWithoutActivityLogsInput
+  upsert?: Prisma.EventUpsertWithoutActivityLogsInput
+  connect?: Prisma.EventWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EventUpdateToOneWithWhereWithoutActivityLogsInput, Prisma.EventUpdateWithoutActivityLogsInput>, Prisma.EventUncheckedUpdateWithoutActivityLogsInput>
+}
+
 export type EventCreateWithoutSalesInput = {
   id?: string
   eventName: string
@@ -961,6 +982,7 @@ export type EventCreateWithoutSalesInput = {
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutSalesInput = {
@@ -989,6 +1011,7 @@ export type EventUncheckedCreateWithoutSalesInput = {
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutSalesInput = {
@@ -1072,6 +1095,7 @@ export type EventCreateWithoutServiceTypeInput = {
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutServiceTypeInput = {
@@ -1100,6 +1124,7 @@ export type EventUncheckedCreateWithoutServiceTypeInput = {
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutServiceTypeInput = {
@@ -1154,6 +1179,7 @@ export type EventCreateWithoutAssignmentsInput = {
   sales?: Prisma.SalesCreateNestedOneWithoutEventsInput
   eventEvaluation?: Prisma.EventEvaluationCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutAssignmentsInput = {
@@ -1182,6 +1208,7 @@ export type EventUncheckedCreateWithoutAssignmentsInput = {
   updatedAt?: Date | string
   eventEvaluation?: Prisma.EventEvaluationUncheckedCreateNestedOneWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutAssignmentsInput = {
@@ -1226,6 +1253,7 @@ export type EventUpdateWithoutAssignmentsInput = {
   sales?: Prisma.SalesUpdateOneWithoutEventsNestedInput
   eventEvaluation?: Prisma.EventEvaluationUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutAssignmentsInput = {
@@ -1254,6 +1282,7 @@ export type EventUncheckedUpdateWithoutAssignmentsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   eventEvaluation?: Prisma.EventEvaluationUncheckedUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateWithoutEventEvaluationInput = {
@@ -1282,6 +1311,7 @@ export type EventCreateWithoutEventEvaluationInput = {
   sales?: Prisma.SalesCreateNestedOneWithoutEventsInput
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutEventEvaluationInput = {
@@ -1310,6 +1340,7 @@ export type EventUncheckedCreateWithoutEventEvaluationInput = {
   updatedAt?: Date | string
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutEventInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutEventEvaluationInput = {
@@ -1354,6 +1385,7 @@ export type EventUpdateWithoutEventEvaluationInput = {
   sales?: Prisma.SalesUpdateOneWithoutEventsNestedInput
   assignments?: Prisma.EventAssignmentUpdateManyWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutEventEvaluationInput = {
@@ -1382,6 +1414,7 @@ export type EventUncheckedUpdateWithoutEventEvaluationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateWithoutStaffEvaluationsInput = {
@@ -1410,6 +1443,7 @@ export type EventCreateWithoutStaffEvaluationsInput = {
   sales?: Prisma.SalesCreateNestedOneWithoutEventsInput
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationCreateNestedOneWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogCreateNestedManyWithoutEventInput
 }
 
 export type EventUncheckedCreateWithoutStaffEvaluationsInput = {
@@ -1438,6 +1472,7 @@ export type EventUncheckedCreateWithoutStaffEvaluationsInput = {
   updatedAt?: Date | string
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutEventInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedCreateNestedOneWithoutEventInput
+  activityLogs?: Prisma.EventActivityLogUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type EventCreateOrConnectWithoutStaffEvaluationsInput = {
@@ -1482,6 +1517,7 @@ export type EventUpdateWithoutStaffEvaluationsInput = {
   sales?: Prisma.SalesUpdateOneWithoutEventsNestedInput
   assignments?: Prisma.EventAssignmentUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUpdateOneWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutStaffEvaluationsInput = {
@@ -1510,6 +1546,139 @@ export type EventUncheckedUpdateWithoutStaffEvaluationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedUpdateOneWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUncheckedUpdateManyWithoutEventNestedInput
+}
+
+export type EventCreateWithoutActivityLogsInput = {
+  id?: string
+  eventName: string
+  clientName: string
+  clientPhone?: string | null
+  equipmentSetup?: string
+  eventDate: Date | string
+  startTime: string
+  endTime: string
+  loadingDate?: Date | string | null
+  loadingTime?: string | null
+  location?: string | null
+  status?: $Enums.EventStatus
+  vehicleName?: string | null
+  driverName?: string | null
+  ribbonStart?: number | null
+  ribbonEnd?: number | null
+  ribbonUsed?: number | null
+  vendorSewa?: string | null
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  serviceType: Prisma.ServiceTypeCreateNestedOneWithoutEventsInput
+  sales?: Prisma.SalesCreateNestedOneWithoutEventsInput
+  assignments?: Prisma.EventAssignmentCreateNestedManyWithoutEventInput
+  eventEvaluation?: Prisma.EventEvaluationCreateNestedOneWithoutEventInput
+  staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutEventInput
+}
+
+export type EventUncheckedCreateWithoutActivityLogsInput = {
+  id?: string
+  eventName: string
+  clientName: string
+  clientPhone?: string | null
+  serviceTypeId: string
+  equipmentSetup?: string
+  salesId?: string | null
+  eventDate: Date | string
+  startTime: string
+  endTime: string
+  loadingDate?: Date | string | null
+  loadingTime?: string | null
+  location?: string | null
+  status?: $Enums.EventStatus
+  vehicleName?: string | null
+  driverName?: string | null
+  ribbonStart?: number | null
+  ribbonEnd?: number | null
+  ribbonUsed?: number | null
+  vendorSewa?: string | null
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutEventInput
+  eventEvaluation?: Prisma.EventEvaluationUncheckedCreateNestedOneWithoutEventInput
+  staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutEventInput
+}
+
+export type EventCreateOrConnectWithoutActivityLogsInput = {
+  where: Prisma.EventWhereUniqueInput
+  create: Prisma.XOR<Prisma.EventCreateWithoutActivityLogsInput, Prisma.EventUncheckedCreateWithoutActivityLogsInput>
+}
+
+export type EventUpsertWithoutActivityLogsInput = {
+  update: Prisma.XOR<Prisma.EventUpdateWithoutActivityLogsInput, Prisma.EventUncheckedUpdateWithoutActivityLogsInput>
+  create: Prisma.XOR<Prisma.EventCreateWithoutActivityLogsInput, Prisma.EventUncheckedCreateWithoutActivityLogsInput>
+  where?: Prisma.EventWhereInput
+}
+
+export type EventUpdateToOneWithWhereWithoutActivityLogsInput = {
+  where?: Prisma.EventWhereInput
+  data: Prisma.XOR<Prisma.EventUpdateWithoutActivityLogsInput, Prisma.EventUncheckedUpdateWithoutActivityLogsInput>
+}
+
+export type EventUpdateWithoutActivityLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  eventName?: Prisma.StringFieldUpdateOperationsInput | string
+  clientName?: Prisma.StringFieldUpdateOperationsInput | string
+  clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
+  eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.StringFieldUpdateOperationsInput | string
+  endTime?: Prisma.StringFieldUpdateOperationsInput | string
+  loadingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ribbonEnd?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ribbonUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  vendorSewa?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  serviceType?: Prisma.ServiceTypeUpdateOneRequiredWithoutEventsNestedInput
+  sales?: Prisma.SalesUpdateOneWithoutEventsNestedInput
+  assignments?: Prisma.EventAssignmentUpdateManyWithoutEventNestedInput
+  eventEvaluation?: Prisma.EventEvaluationUpdateOneWithoutEventNestedInput
+  staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutEventNestedInput
+}
+
+export type EventUncheckedUpdateWithoutActivityLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  eventName?: Prisma.StringFieldUpdateOperationsInput | string
+  clientName?: Prisma.StringFieldUpdateOperationsInput | string
+  clientPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serviceTypeId?: Prisma.StringFieldUpdateOperationsInput | string
+  equipmentSetup?: Prisma.StringFieldUpdateOperationsInput | string
+  salesId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startTime?: Prisma.StringFieldUpdateOperationsInput | string
+  endTime?: Prisma.StringFieldUpdateOperationsInput | string
+  loadingDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ribbonEnd?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  ribbonUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  vendorSewa?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutEventNestedInput
+  eventEvaluation?: Prisma.EventEvaluationUncheckedUpdateOneWithoutEventNestedInput
+  staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventCreateManySalesInput = {
@@ -1563,6 +1732,7 @@ export type EventUpdateWithoutSalesInput = {
   assignments?: Prisma.EventAssignmentUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutSalesInput = {
@@ -1591,6 +1761,7 @@ export type EventUncheckedUpdateWithoutSalesInput = {
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateManyWithoutSalesInput = {
@@ -1669,6 +1840,7 @@ export type EventUpdateWithoutServiceTypeInput = {
   assignments?: Prisma.EventAssignmentUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateWithoutServiceTypeInput = {
@@ -1697,6 +1869,7 @@ export type EventUncheckedUpdateWithoutServiceTypeInput = {
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutEventNestedInput
   eventEvaluation?: Prisma.EventEvaluationUncheckedUpdateOneWithoutEventNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutEventNestedInput
+  activityLogs?: Prisma.EventActivityLogUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type EventUncheckedUpdateManyWithoutServiceTypeInput = {
@@ -1732,11 +1905,13 @@ export type EventUncheckedUpdateManyWithoutServiceTypeInput = {
 export type EventCountOutputType = {
   assignments: number
   staffEvaluations: number
+  activityLogs: number
 }
 
 export type EventCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | EventCountOutputTypeCountAssignmentsArgs
   staffEvaluations?: boolean | EventCountOutputTypeCountStaffEvaluationsArgs
+  activityLogs?: boolean | EventCountOutputTypeCountActivityLogsArgs
 }
 
 /**
@@ -1761,6 +1936,13 @@ export type EventCountOutputTypeCountAssignmentsArgs<ExtArgs extends runtime.Typ
  */
 export type EventCountOutputTypeCountStaffEvaluationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.StaffEventEvaluationWhereInput
+}
+
+/**
+ * EventCountOutputType without action
+ */
+export type EventCountOutputTypeCountActivityLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EventActivityLogWhereInput
 }
 
 
@@ -1793,6 +1975,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   assignments?: boolean | Prisma.Event$assignmentsArgs<ExtArgs>
   eventEvaluation?: boolean | Prisma.Event$eventEvaluationArgs<ExtArgs>
   staffEvaluations?: boolean | Prisma.Event$staffEvaluationsArgs<ExtArgs>
+  activityLogs?: boolean | Prisma.Event$activityLogsArgs<ExtArgs>
   _count?: boolean | Prisma.EventCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["event"]>
 
@@ -1885,6 +2068,7 @@ export type EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   assignments?: boolean | Prisma.Event$assignmentsArgs<ExtArgs>
   eventEvaluation?: boolean | Prisma.Event$eventEvaluationArgs<ExtArgs>
   staffEvaluations?: boolean | Prisma.Event$staffEvaluationsArgs<ExtArgs>
+  activityLogs?: boolean | Prisma.Event$activityLogsArgs<ExtArgs>
   _count?: boolean | Prisma.EventCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EventIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1904,6 +2088,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     assignments: Prisma.$EventAssignmentPayload<ExtArgs>[]
     eventEvaluation: Prisma.$EventEvaluationPayload<ExtArgs> | null
     staffEvaluations: Prisma.$StaffEventEvaluationPayload<ExtArgs>[]
+    activityLogs: Prisma.$EventActivityLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2328,6 +2513,7 @@ export interface Prisma__EventClient<T, Null = never, ExtArgs extends runtime.Ty
   assignments<T extends Prisma.Event$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   eventEvaluation<T extends Prisma.Event$eventEvaluationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$eventEvaluationArgs<ExtArgs>>): Prisma.Prisma__EventEvaluationClient<runtime.Types.Result.GetResult<Prisma.$EventEvaluationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   staffEvaluations<T extends Prisma.Event$staffEvaluationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$staffEvaluationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StaffEventEvaluationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  activityLogs<T extends Prisma.Event$activityLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Event$activityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2864,6 +3050,30 @@ export type Event$staffEvaluationsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.StaffEventEvaluationScalarFieldEnum | Prisma.StaffEventEvaluationScalarFieldEnum[]
+}
+
+/**
+ * Event.activityLogs
+ */
+export type Event$activityLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EventActivityLog
+   */
+  select?: Prisma.EventActivityLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EventActivityLog
+   */
+  omit?: Prisma.EventActivityLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EventActivityLogInclude<ExtArgs> | null
+  where?: Prisma.EventActivityLogWhereInput
+  orderBy?: Prisma.EventActivityLogOrderByWithRelationInput | Prisma.EventActivityLogOrderByWithRelationInput[]
+  cursor?: Prisma.EventActivityLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EventActivityLogScalarFieldEnum | Prisma.EventActivityLogScalarFieldEnum[]
 }
 
 /**

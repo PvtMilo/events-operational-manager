@@ -1,5 +1,6 @@
 import { prisma } from "../../../utils/prisma";
 import { getEventDutyWindow, isTimeOverlap } from "../../../utils/availability";
+import { createEventLog } from "../../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -133,6 +134,17 @@ export default defineEventHandler(async (event) => {
     },
     include: {
       staff: true,
+    },
+  });
+
+  await createEventLog(event, {
+    eventId,
+    action: "STAFF_ASSIGNED",
+    description: `${assignment.staff?.name} assigned as ${assignment.roleInEvent}`,
+    metadata: {
+      staffId,
+      staffName: assignment.staff?.name,
+      roleInEvent,
     },
   });
 

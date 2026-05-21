@@ -32,7 +32,7 @@ const summary = computed(() => {
     <p v-else-if="error">Failed to load dashboard summary.</p>
 
     <div v-else>
-      <h2>Summary</h2>
+      <h2>Summary this month</h2>
 
       <table border="1" cellpadding="8" cellspacing="0">
         <tbody>

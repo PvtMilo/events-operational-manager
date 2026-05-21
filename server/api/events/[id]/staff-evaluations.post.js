@@ -22,6 +22,12 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const staff = await prisma.staff.findUnique({
+    where: {
+      id: staffId,
+    },
+  });
+
   const assignment = await prisma.eventAssignment.findUnique({
     where: {
       eventId_staffId: {
@@ -100,11 +106,11 @@ export default defineEventHandler(async (event) => {
 
   await createEventLog(event, {
     eventId,
-    action: "STAFF_EVALUATION_SAVED",
-    description: `${assignment.staff?.name} evaluation saved`,
+    action: "STAFF_EVALUATION_UPDATED",
+    description: `${staff?.name || "Staff"} evaluation updated`,
     metadata: {
       staffId,
-      staffName: assignment.staff?.name,
+      staffName: staff?.name,
       sopOk,
       warehouseOk,
       groomingOk,

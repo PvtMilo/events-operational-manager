@@ -75,11 +75,12 @@ export default defineEventHandler(async (event) => {
 
   await createEventLog(event, {
     eventId,
-    action: "EVENT_EVALUATION_SAVED",
-    description: "Event evaluation saved",
+    action: "EVENT_EVALUATION_UPDATED",
+    description: "Event evaluation updated",
     metadata: {
       clientSatisfactionOk,
       clientFeedback,
+      notes,
     },
   });
 

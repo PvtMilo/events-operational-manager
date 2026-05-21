@@ -36,14 +36,15 @@ export default defineEventHandler(async (event) => {
   });
 
   await createEventLog(event, {
-    eventId: updatedAssignment.eventId,
+    eventId: assignment.eventId,
     action: "ASSIGNMENT_CANCELLED",
-    description: `${updatedAssignment.staff?.name} assignment cancelled`,
+    description: `${assignment.staff?.name || "Staff"} assignment cancelled`,
     metadata: {
-      staffId: updatedAssignment.staffId,
-      staffName: updatedAssignment.staff?.name,
-      roleInEvent: updatedAssignment.roleInEvent,
-      assignmentStatus: updatedAssignment.assignmentStatus,
+      assignmentId: id,
+      staffId: assignment.staffId,
+      staffName: assignment.staff?.name,
+      previousStatus: assignment.assignmentStatus,
+      newStatus: "CANCELLED",
     },
   });
 

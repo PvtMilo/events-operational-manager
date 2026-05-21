@@ -64,8 +64,8 @@ export default defineEventHandler(async (event) => {
 
   await createEventLog(event, {
     eventId,
-    action: "POST_EVENT_DATA_SAVED",
-    description: "Post event data saved",
+    action: "POST_EVENT_DATA_UPDATED",
+    description: "Post event data updated",
     metadata: {
       ribbonStart,
       ribbonEnd,

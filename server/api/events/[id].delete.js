@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { createEventLog } from "../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -25,6 +26,16 @@ export default defineEventHandler(async (event) => {
     where: { id },
     data: {
       status: "CANCELLED",
+    },
+  });
+
+  await createEventLog(event, {
+    eventId: id,
+    action: "EVENT_CANCELLED",
+    description: "Event cancelled",
+    metadata: {
+      previousStatus: eventData.status,
+      newStatus: "CANCELLED",
     },
   });
 

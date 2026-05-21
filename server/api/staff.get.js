@@ -7,6 +7,9 @@ export default defineEventHandler(async (event) => {
   const defaultRole = query.defaultRole?.toString() || "";
   const status = query.status?.toString() || "";
   const canBeAssigned = query.canBeAssigned?.toString() || "";
+  const page = Number(query.page || 1);
+  const limit = 20;
+  const skip = (page - 1) * limit;
 
   const where = {};
 
@@ -49,15 +52,31 @@ export default defineEventHandler(async (event) => {
     where.canBeAssignedToEvent = false;
   }
 
-  const staff = await prisma.staff.findMany({
-    where,
-    orderBy: {
-      name: "asc",
-    },
-  });
+  const [staff, totalItems] = await Promise.all([
+    prisma.staff.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        name: "asc",
+      },
+    }),
+
+    prisma.staff.count({
+      where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
 
   return {
     success: true,
     data: staff,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
   };
 });

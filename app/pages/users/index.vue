@@ -29,6 +29,7 @@ const resetPasswordSuccessMessage = ref("");
 const search = ref("");
 const filterRole = ref("");
 const filterStatus = ref("");
+const page = ref(1);
 
 const usersUrl = computed(() => {
   const params = new URLSearchParams();
@@ -36,6 +37,7 @@ const usersUrl = computed(() => {
   if (search.value) params.set("search", search.value);
   if (filterRole.value) params.set("role", filterRole.value);
   if (filterStatus.value) params.set("status", filterStatus.value);
+  params.set("page", page.value);
 
   const queryString = params.toString();
 
@@ -45,6 +47,7 @@ const usersUrl = computed(() => {
 const { data, pending, error, refresh } = await useFetch(usersUrl);
 
 async function handleApplyFilter() {
+  page.value = 1;
   await refresh();
 }
 
@@ -52,7 +55,22 @@ async function handleResetFilter() {
   search.value = "";
   filterRole.value = "";
   filterStatus.value = "";
+  page.value = 1;
 
+  await refresh();
+}
+
+async function goToPreviousPage() {
+  if (page.value <= 1) return;
+
+  page.value -= 1;
+  await refresh();
+}
+
+async function goToNextPage() {
+  if (page.value >= data.value?.pagination?.totalPages) return;
+
+  page.value += 1;
   await refresh();
 }
 
@@ -432,5 +450,29 @@ async function handleUpdate() {
     </table>
 
     <p v-if="data?.data?.length === 0">No users yet.</p>
+
+    <div v-if="data?.pagination">
+      <p>
+        Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
+        —
+        Total {{ data.pagination.totalItems }} users
+      </p>
+
+      <button
+        type="button"
+        :disabled="data.pagination.page <= 1"
+        @click="goToPreviousPage"
+      >
+        Previous
+      </button>
+
+      <button
+        type="button"
+        :disabled="data.pagination.page >= data.pagination.totalPages"
+        @click="goToNextPage"
+      >
+        Next
+      </button>
+    </div>
   </section>
 </template>

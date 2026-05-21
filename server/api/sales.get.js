@@ -5,6 +5,9 @@ export default defineEventHandler(async (event) => {
 
   const search = query.search?.toString().trim() || "";
   const status = query.status?.toString() || "";
+  const page = Number(query.page || 1);
+  const limit = 20;
+  const skip = (page - 1) * limit;
 
   const where = {};
 
@@ -35,15 +38,31 @@ export default defineEventHandler(async (event) => {
     where.status = status;
   }
 
-  const sales = await prisma.sales.findMany({
-    where,
-    orderBy: {
-      name: "asc",
-    },
-  });
+  const [sales, totalItems] = await Promise.all([
+    prisma.sales.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        name: "asc",
+      },
+    }),
+
+    prisma.sales.count({
+      where,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalItems / limit);
 
   return {
     success: true,
     data: sales,
+    pagination: {
+      page,
+      limit,
+      totalItems,
+      totalPages,
+    },
   };
 });

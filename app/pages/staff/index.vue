@@ -20,6 +20,7 @@ const search = ref("");
 const filterDefaultRole = ref("");
 const filterStatus = ref("");
 const filterCanBeAssigned = ref("");
+const page = ref(1);
 
 const staffUrl = computed(() => {
   const params = new URLSearchParams();
@@ -30,6 +31,7 @@ const staffUrl = computed(() => {
   if (filterCanBeAssigned.value) {
     params.set("canBeAssigned", filterCanBeAssigned.value);
   }
+  params.set("page", page.value);
 
   const queryString = params.toString();
 
@@ -49,6 +51,7 @@ const editErrorMessage = ref("");
 const { data, pending, error, refresh } = await useFetch(staffUrl);
 
 async function handleApplyFilter() {
+  page.value = 1;
   await refresh();
 }
 
@@ -57,7 +60,22 @@ async function handleResetFilter() {
   filterDefaultRole.value = "";
   filterStatus.value = "";
   filterCanBeAssigned.value = "";
+  page.value = 1;
 
+  await refresh();
+}
+
+async function goToPreviousPage() {
+  if (page.value <= 1) return;
+
+  page.value -= 1;
+  await refresh();
+}
+
+async function goToNextPage() {
+  if (page.value >= data.value?.pagination?.totalPages) return;
+
+  page.value += 1;
   await refresh();
 }
 
@@ -460,5 +478,29 @@ async function handleHardDeleteStaff(id) {
     </table>
 
     <p v-if="data?.data?.length === 0">No staff yet.</p>
+
+    <div v-if="data?.pagination">
+      <p>
+        Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
+        —
+        Total {{ data.pagination.totalItems }} staff
+      </p>
+
+      <button
+        type="button"
+        :disabled="data.pagination.page <= 1"
+        @click="goToPreviousPage"
+      >
+        Previous
+      </button>
+
+      <button
+        type="button"
+        :disabled="data.pagination.page >= data.pagination.totalPages"
+        @click="goToNextPage"
+      >
+        Next
+      </button>
+    </div>
   </section>
 </template>

@@ -87,6 +87,26 @@ async function handleResetFilter() {
   await refresh();
 }
 
+function handleExportEvents() {
+  const params = new URLSearchParams();
+
+  if (search.value) params.set("search", search.value);
+  if (filterStatus.value) params.set("status", filterStatus.value);
+  if (filterServiceTypeId.value) {
+    params.set("serviceTypeId", filterServiceTypeId.value);
+  }
+  if (filterYear.value) params.set("year", filterYear.value);
+  if (filterMonth.value) params.set("month", filterMonth.value);
+
+  const queryString = params.toString();
+
+  const url = queryString
+    ? `/api/events/export?${queryString}`
+    : "/api/events/export";
+
+  window.open(url, "_blank");
+}
+
 async function goToPreviousPage() {
   if (page.value <= 1) return;
 
@@ -515,6 +535,9 @@ async function handleHardDeleteEvent(id) {
 
       <button type="submit">Apply Filter</button>
       <button type="button" @click="handleResetFilter">Reset</button>
+      <button type="button" @click="handleExportEvents">
+        Export Event List CSV
+      </button>
     </form>
 
     <hr />

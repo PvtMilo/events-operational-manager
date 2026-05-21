@@ -4,6 +4,8 @@ definePageMeta({
   middleware: "auth",
 });
 
+const { user } = useUserSession();
+
 const name = ref("");
 const phone = ref("");
 const notes = ref("");
@@ -151,6 +153,28 @@ async function handleDelete(id) {
       error?.data?.statusMessage ||
         error?.statusMessage ||
         "Failed to delete sales"
+    );
+  }
+}
+
+async function handleHardDeleteSales(id) {
+  const confirmed = confirm(
+    "HARD DELETE this sales? This action cannot be undone.",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await $fetch(`/api/developer/sales/${id}`, {
+      method: "DELETE",
+    });
+
+    await refresh();
+  } catch (error) {
+    alert(
+      error?.data?.statusMessage ||
+        error?.statusMessage ||
+        "Failed to hard delete sales",
     );
   }
 }
@@ -328,6 +352,12 @@ async function handleDelete(id) {
             <button type="button" @click="startEdit(item)">Edit</button>
             |
             <button type="button" @click="handleDelete(item.id)">Delete</button>
+            <template v-if="user?.role === 'DEVELOPER'">
+              |
+              <button type="button" @click="handleHardDeleteSales(item.id)">
+                Hard Delete
+              </button>
+            </template>
           </td>
         </tr>
       </tbody>

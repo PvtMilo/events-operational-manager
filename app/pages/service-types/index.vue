@@ -4,6 +4,8 @@ definePageMeta({
   middleware: "auth",
 });
 
+const { user } = useUserSession();
+
 const name = ref("");
 const description = ref("");
 const requiresRibbonTracking = ref(false);
@@ -139,6 +141,28 @@ async function handleDelete(id) {
       error?.data?.statusMessage ||
         error?.statusMessage ||
         "Failed to delete service type"
+    );
+  }
+}
+
+async function handleHardDeleteServiceType(id) {
+  const confirmed = confirm(
+    "HARD DELETE this service type? This action cannot be undone.",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await $fetch(`/api/developer/service-types/${id}`, {
+      method: "DELETE",
+    });
+
+    await refresh();
+  } catch (error) {
+    alert(
+      error?.data?.statusMessage ||
+        error?.statusMessage ||
+        "Failed to hard delete service type",
     );
   }
 }
@@ -289,6 +313,15 @@ async function handleDelete(id) {
             <button type="button" @click="startEdit(item)">Edit</button>
             |
             <button type="button" @click="handleDelete(item.id)">Delete</button>
+            <template v-if="user?.role === 'DEVELOPER'">
+              |
+              <button
+                type="button"
+                @click="handleHardDeleteServiceType(item.id)"
+              >
+                Hard Delete
+              </button>
+            </template>
           </td>
         </tr>
       </tbody>

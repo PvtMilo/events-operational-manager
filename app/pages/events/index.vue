@@ -4,6 +4,8 @@ definePageMeta({
   middleware: "auth",
 });
 
+const { user } = useUserSession();
+
 const eventName = ref("");
 const clientName = ref("");
 const clientPhone = ref("");
@@ -207,6 +209,28 @@ async function handleDelete(id) {
       error?.data?.statusMessage ||
         error?.statusMessage ||
         "Failed to delete event",
+    );
+  }
+}
+
+async function handleHardDeleteEvent(id) {
+  const confirmed = confirm(
+    "HARD DELETE this event? This action cannot be undone.",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await $fetch(`/api/developer/events/${id}`, {
+      method: "DELETE",
+    });
+
+    await refresh();
+  } catch (error) {
+    alert(
+      error?.data?.statusMessage ||
+        error?.statusMessage ||
+        "Failed to hard delete event",
     );
   }
 }
@@ -541,6 +565,12 @@ async function handleDelete(id) {
             <NuxtLink :to="`/events/${item.id}`">Detail</NuxtLink>
             |
             <button @click="handleDelete(item.id)">Delete</button>
+            <template v-if="user?.role === 'DEVELOPER'">
+              |
+              <button type="button" @click="handleHardDeleteEvent(item.id)">
+                Hard Delete
+              </button>
+            </template>
           </td>
         </tr>
       </tbody>

@@ -6,6 +6,7 @@ definePageMeta({
 
 const route = useRoute();
 const eventId = route.params.id;
+const { user } = useUserSession();
 
 const staffId = ref("");
 const roleInEvent = ref("CREW");
@@ -154,6 +155,29 @@ async function handleDeleteAssignment(assignmentId) {
       error?.data?.statusMessage ||
         error?.statusMessage ||
         "Failed to remove assignment",
+    );
+  }
+}
+
+async function handleHardDeleteAssignment(assignmentId) {
+  const confirmed = confirm(
+    "HARD DELETE this assignment? This action cannot be undone.",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await $fetch(`/api/developer/event-assignments/${assignmentId}`, {
+      method: "DELETE",
+    });
+
+    await refresh();
+    await refreshAvailability();
+  } catch (error) {
+    alert(
+      error?.data?.statusMessage ||
+        error?.statusMessage ||
+        "Failed to hard delete assignment",
     );
   }
 }
@@ -837,6 +861,17 @@ watchEffect(() => {
               >
                 Delete
               </button>
+
+              <template v-if="user?.role === 'DEVELOPER'">
+                |
+
+                <button
+                  type="button"
+                  @click="handleHardDeleteAssignment(assignment.id)"
+                >
+                  Hard Delete
+                </button>
+              </template>
             </td>
           </tr>
         </tbody>

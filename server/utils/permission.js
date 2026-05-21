@@ -37,3 +37,23 @@ export async function denyStaffUsers(event) {
 
   return session.user;
 }
+
+export async function requireDeveloper(event) {
+  const session = await getUserSession(event);
+
+  if (!session?.user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Unauthorized",
+    });
+  }
+
+  if (session.user.role !== "DEVELOPER") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Only developer can perform this action",
+    });
+  }
+
+  return session.user;
+}

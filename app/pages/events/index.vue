@@ -9,9 +9,9 @@ const { user } = useUserSession();
 const eventName = ref("");
 const clientName = ref("");
 const clientPhone = ref("");
-const serviceTypeId = ref("");
+const serviceTypeId = ref(null);
 const equipmentSetup = ref("");
-const salesId = ref("");
+const salesId = ref("NONE");
 const eventDate = ref("");
 const startTime = ref("");
 const endTime = ref("");
@@ -26,83 +26,160 @@ const notes = ref("");
 
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+const isCreateEventModalOpen = ref(false);
+const isFilterModalOpen = ref(false);
 
 const page = ref(1);
 
 const search = ref("");
-const filterStatus = ref("");
-const filterServiceTypeId = ref("");
-const filterYear = ref("");
-const filterMonth = ref("");
+const filterStatus = ref("ALL");
+const filterServiceTypeId = ref("ALL");
+const filterYear = ref("ALL");
+const filterMonth = ref("ALL");
 
 const eventUrl = computed(() => {
   const params = new URLSearchParams();
 
   if (search.value) params.set("search", search.value);
-  if (filterStatus.value) params.set("status", filterStatus.value);
-  if (filterServiceTypeId.value) {
-    params.set("serviceTypeId", filterServiceTypeId.value);
-  }
-  if (filterYear.value) params.set("year", filterYear.value);
-  if (filterMonth.value) params.set("month", filterMonth.value);
+  if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
+  if (filterServiceTypeId.value !== "ALL") params.set("serviceTypeId", filterServiceTypeId.value);
+  if (filterYear.value !== "ALL") params.set("year", filterYear.value);
+  if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
 
   params.set("page", page.value);
 
-  const queryString = params.toString();
-
-  return queryString ? `/api/events?${queryString}` : "/api/events";
+  return `/api/events?${params.toString()}`;
 });
 
-const months = [
-  { value: 1, label: "January" },
-  { value: 2, label: "February" },
-  { value: 3, label: "March" },
-  { value: 4, label: "April" },
-  { value: 5, label: "May" },
-  { value: 6, label: "June" },
-  { value: 7, label: "July" },
-  { value: 8, label: "August" },
-  { value: 9, label: "September" },
-  { value: 10, label: "October" },
-  { value: 11, label: "November" },
-  { value: 12, label: "December" },
+const statusOptions = [
+  { label: "All Status", value: "ALL" },
+  { label: "DRAFTED", value: "DRAFTED" },
+  { label: "SCHEDULED", value: "SCHEDULED" },
+  { label: "READY", value: "READY" },
+  { label: "ONGOING", value: "ONGOING" },
+  { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
+  { label: "COMPLETED", value: "COMPLETED" },
+  { label: "CANCELLED", value: "CANCELLED" },
 ];
 
-const currentYear = new Date().getFullYear();
-const years = [currentYear - 1, currentYear, currentYear + 1];
+const eventStatusOptions = [
+  { label: "DRAFTED", value: "DRAFTED" },
+  { label: "SCHEDULED", value: "SCHEDULED" },
+  { label: "READY", value: "READY" },
+  { label: "ONGOING", value: "ONGOING" },
+  { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
+  { label: "COMPLETED", value: "COMPLETED" },
+  { label: "CANCELLED", value: "CANCELLED" },
+];
+
+const serviceTypeOptions = computed(() => [
+  { label: "All Service Types", value: "ALL" },
+  ...(serviceTypesData.value?.data || []).map((item) => ({
+    label: item.name,
+    value: item.id,
+  })),
+]);
+
+const createServiceTypeOptions = computed(() =>
+  (serviceTypesData.value?.data || []).map((item) => ({
+    label: item.name,
+    value: item.id,
+  }))
+);
+
+const salesOptions = computed(() => [
+  { label: "No sales / optional", value: "NONE" },
+  ...(salesData.value?.data || []).map((item) => ({
+    label: item.name,
+    value: item.id,
+  })),
+]);
+
+const monthOptions = [
+  { label: "All Months", value: "ALL" },
+  { label: "January", value: "1" },
+  { label: "February", value: "2" },
+  { label: "March", value: "3" },
+  { label: "April", value: "4" },
+  { label: "May", value: "5" },
+  { label: "June", value: "6" },
+  { label: "July", value: "7" },
+  { label: "August", value: "8" },
+  { label: "September", value: "9" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+];
+
+const yearOptions = computed(() => {
+  const currentYear = new Date().getFullYear();
+  return [
+    { label: "All Years", value: "ALL" },
+    { label: String(currentYear - 1), value: String(currentYear - 1) },
+    { label: String(currentYear), value: String(currentYear) },
+    { label: String(currentYear + 1), value: String(currentYear + 1) },
+  ];
+});
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filterStatus.value !== "ALL") count += 1;
+  if (filterServiceTypeId.value !== "ALL") count += 1;
+  if (filterYear.value !== "ALL") count += 1;
+  if (filterMonth.value !== "ALL") count += 1;
+  return count;
+});
+
+function getStatusColor(status) {
+  if (status === "COMPLETED") return "success";
+  if (status === "CANCELLED") return "error";
+  if (status === "PENDING_EVALUATION") return "warning";
+  if (status === "ONGOING") return "primary";
+  if (status === "READY") return "info";
+  return "neutral";
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return "-";
+  return new Date(dateValue).toLocaleDateString();
+}
+
+function getEventStaff(event) {
+  if (!event.assignments?.length) return "-";
+  return event.assignments
+    .map((a) => `${a.staff?.name || "-"} (${a.roleInEvent})`)
+    .join(", ");
+}
 
 async function handleApplyFilter() {
   page.value = 1;
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
   search.value = "";
-  filterStatus.value = "";
-  filterServiceTypeId.value = "";
-  filterYear.value = "";
-  filterMonth.value = "";
+  filterStatus.value = "ALL";
+  filterServiceTypeId.value = "ALL";
+  filterYear.value = "ALL";
+  filterMonth.value = "ALL";
   page.value = 1;
 
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 function handleExportEvents() {
   const params = new URLSearchParams();
 
   if (search.value) params.set("search", search.value);
-  if (filterStatus.value) params.set("status", filterStatus.value);
-  if (filterServiceTypeId.value) {
-    params.set("serviceTypeId", filterServiceTypeId.value);
-  }
-  if (filterYear.value) params.set("year", filterYear.value);
-  if (filterMonth.value) params.set("month", filterMonth.value);
+  if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
+  if (filterServiceTypeId.value !== "ALL") params.set("serviceTypeId", filterServiceTypeId.value);
+  if (filterYear.value !== "ALL") params.set("year", filterYear.value);
+  if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
 
   const queryString = params.toString();
-
-  const url = queryString
-    ? `/api/events/export?${queryString}`
-    : "/api/events/export";
+  const url = queryString ? `/api/events/export?${queryString}` : "/api/events/export";
 
   window.open(url, "_blank");
 }
@@ -169,7 +246,7 @@ async function handleCreate() {
         clientPhone: clientPhone.value,
         serviceTypeId: serviceTypeId.value,
         equipmentSetup: equipmentSetup.value,
-        salesId: salesId.value || null,
+        salesId: salesId.value === "NONE" ? null : salesId.value,
         eventDate: eventDate.value,
         startTime: startTime.value,
         endTime: endTime.value,
@@ -187,9 +264,9 @@ async function handleCreate() {
     eventName.value = "";
     clientName.value = "";
     clientPhone.value = "";
-    serviceTypeId.value = "";
+    serviceTypeId.value = null;
     equipmentSetup.value = "";
-    salesId.value = "";
+    salesId.value = "NONE";
     eventDate.value = "";
     startTime.value = "";
     endTime.value = "";
@@ -203,6 +280,7 @@ async function handleCreate() {
     notes.value = "";
 
     await refresh();
+    isCreateEventModalOpen.value = false;
   } catch (error) {
     errorMessage.value =
       error?.data?.statusMessage ||
@@ -227,8 +305,8 @@ async function handleDelete(id) {
   } catch (error) {
     alert(
       error?.data?.statusMessage ||
-        error?.statusMessage ||
-        "Failed to delete event",
+      error?.statusMessage ||
+      "Failed to delete event",
     );
   }
 }
@@ -249,381 +327,256 @@ async function handleHardDeleteEvent(id) {
   } catch (error) {
     alert(
       error?.data?.statusMessage ||
-        error?.statusMessage ||
-        "Failed to hard delete event",
+      error?.statusMessage ||
+      "Failed to hard delete event",
     );
   }
 }
 </script>
 
 <template>
-  <section>
-    <h1>Events</h1>
-    <p>Manage event records.</p>
-
-    <hr />
-
-    <form @submit.prevent="handleCreate">
-      <h2>Add Event</h2>
-
+  <div class="p-6 space-y-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <label>Event Name</label>
-        <br />
-        <input
-          v-model="eventName"
-          type="text"
-          placeholder="Example: Friskies CFD"
-        />
+        <h1 class="text-2xl font-semibold">
+          Events
+        </h1>
+        <p class="text-sm text-muted">
+          Manage event records, schedule, assignment, and operational status.
+        </p>
       </div>
 
-      <br />
+      <div class="flex flex-wrap gap-2">
+        <UButton icon="i-lucide-download" color="neutral" variant="outline" @click="handleExportEvents">
+          Export CSV
+        </UButton>
 
-      <div>
-        <label>Client Name</label>
-        <br />
-        <input
-          v-model="clientName"
-          type="text"
-          placeholder="Example: Friskies"
-        />
+        <UButton icon="i-lucide-plus" color="primary" @click="isCreateEventModalOpen = true">
+          Add Event
+        </UButton>
       </div>
-
-      <br />
-
-      <div>
-        <label>Client Phone</label>
-        <br />
-        <input v-model="clientPhone" type="text" placeholder="Optional" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Service Type</label>
-        <br />
-        <select v-model="serviceTypeId">
-          <option value="">Select service type</option>
-          <option
-            v-for="item in serviceTypesData?.data"
-            :key="item.id"
-            :value="item.id"
-          >
-            {{ item.name }}
-          </option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Equipment Setup</label>
-        <br />
-        <textarea
-          v-model="equipmentSetup"
-          placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
-        ></textarea>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Sales</label>
-        <br />
-        <select v-model="salesId">
-          <option value="">No sales / optional</option>
-          <option
-            v-for="item in salesData?.data"
-            :key="item.id"
-            :value="item.id"
-          >
-            {{ item.name }}
-          </option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Event Date</label>
-        <br />
-        <input v-model="eventDate" type="date" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Start Time</label>
-        <br />
-        <input v-model="startTime" type="time" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>End Time</label>
-        <br />
-        <input v-model="endTime" type="time" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Loading Date</label>
-        <br />
-        <input v-model="loadingDate" type="date" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Loading Time</label>
-        <br />
-        <input v-model="loadingTime" type="time" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Location</label>
-        <br />
-        <input v-model="location" type="text" placeholder="Event location" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="status">
-          <option value="DRAFTED">DRAFTED</option>
-          <option value="SCHEDULED">SCHEDULED</option>
-          <option value="READY">READY</option>
-          <option value="ONGOING">ONGOING</option>
-          <option value="PENDING_EVALUATION">PENDING_EVALUATION</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Vehicle Name</label>
-        <br />
-        <input v-model="vehicleName" type="text" placeholder="Optional" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Driver Name</label>
-        <br />
-        <input v-model="driverName" type="text" placeholder="Optional" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Vendor Sewa</label>
-        <br />
-        <input
-          v-model="vendorSewa"
-          type="text"
-          placeholder="Optional vendor rental info"
-        />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Notes</label>
-        <br />
-        <textarea v-model="notes" placeholder="Optional notes"></textarea>
-      </div>
-
-      <br />
-
-      <p v-if="errorMessage" style="color: red">
-        {{ errorMessage }}
-      </p>
-
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? "Saving..." : "Save" }}
-      </button>
-    </form>
-
-    <hr />
-
-    <h2>Filter Events</h2>
-
-    <form @submit.prevent="handleApplyFilter">
-      <div>
-        <label>Search</label>
-        <br />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search event, client, phone, location, equipment"
-        />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="filterStatus">
-          <option value="">All Status</option>
-          <option value="DRAFTED">DRAFTED</option>
-          <option value="SCHEDULED">SCHEDULED</option>
-          <option value="READY">READY</option>
-          <option value="ONGOING">ONGOING</option>
-          <option value="PENDING_EVALUATION">PENDING_EVALUATION</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="CANCELLED">CANCELLED</option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Service Type</label>
-        <br />
-        <select v-model="filterServiceTypeId">
-          <option value="">All Service Types</option>
-          <option
-            v-for="item in serviceTypesData?.data"
-            :key="item.id"
-            :value="item.id"
-          >
-            {{ item.name }}
-          </option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Month</label>
-        <br />
-        <select v-model="filterMonth">
-          <option value="">All Months</option>
-          <option
-            v-for="month in months"
-            :key="month.value"
-            :value="month.value"
-          >
-            {{ month.label }}
-          </option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Year</label>
-        <br />
-        <select v-model="filterYear">
-          <option value="">All Years</option>
-          <option v-for="year in years" :key="year" :value="year">
-            {{ year }}
-          </option>
-        </select>
-      </div>
-
-      <br />
-
-      <button type="submit">Apply Filter</button>
-      <button type="button" @click="handleResetFilter">Reset</button>
-      <button type="button" @click="handleExportEvents">
-        Export Event List CSV
-      </button>
-    </form>
-
-    <hr />
-
-    <h2>Event List</h2>
-
-    <p v-if="pending">Loading...</p>
-    <p v-else-if="error">Failed to load events.</p>
-
-    <table v-else border="1" cellpadding="8" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Event</th>
-          <th>Client</th>
-          <th>Service</th>
-          <th>Equipment Setup</th>
-          <th>Sales</th>
-          <th>Date</th>
-          <th>Time</th>
-          <th>Loading</th>
-          <th>Vendor Sewa</th>
-          <th>Status</th>
-          <th>Location</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="item in eventsData?.data" :key="item.id">
-          <td>{{ item.eventName }}</td>
-          <td>{{ item.clientName }}</td>
-          <td>{{ item.serviceType?.name || "-" }}</td>
-          <td>{{ item.equipmentSetup }}</td>
-          <td>{{ item.sales?.name || "-" }}</td>
-          <td>{{ new Date(item.eventDate).toLocaleDateString() }}</td>
-          <td>{{ item.startTime }} - {{ item.endTime }}</td>
-          <td>
-            <span v-if="item.loadingDate">
-              {{ new Date(item.loadingDate).toLocaleDateString() }}
-              {{ item.loadingTime || "" }}
-            </span>
-            <span v-else>-</span>
-          </td>
-          <td>{{ item.vendorSewa || "-" }}</td>
-          <td>{{ item.status }}</td>
-          <td>{{ item.location || "-" }}</td>
-          <td>
-            <NuxtLink :to="`/events/${item.id}`">Detail</NuxtLink>
-            |
-            <button @click="handleDelete(item.id)">Delete</button>
-            <template v-if="user?.role === 'DEVELOPER'">
-              |
-              <button type="button" @click="handleHardDeleteEvent(item.id)">
-                Hard Delete
-              </button>
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-if="eventsData?.data?.length === 0">No events yet.</p>
-
-    <div v-if="eventsData?.pagination">
-      <p>
-        Page {{ eventsData.pagination.page }} of
-        {{ eventsData.pagination.totalPages }}
-        —
-        Total {{ eventsData.pagination.totalItems }} events
-      </p>
-
-      <button
-        type="button"
-        :disabled="eventsData.pagination.page <= 1"
-        @click="goToPreviousPage"
-      >
-        Previous
-      </button>
-
-      <button
-        type="button"
-        :disabled="eventsData.pagination.page >= eventsData.pagination.totalPages"
-        @click="goToNextPage"
-      >
-        Next
-      </button>
     </div>
-  </section>
+
+    <UModal v-model:open="isCreateEventModalOpen" title="Add Event" description="Create a new event record."
+      :ui="{ content: 'max-w-3xl' }">
+      <template #body>
+        <form id="create-event-form" class="space-y-4" @submit.prevent="handleCreate">
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Event Name" required>
+              <UInput v-model="eventName" placeholder="Example: Friskies CFD" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Client Name" required>
+              <UInput v-model="clientName" placeholder="Example: Friskies" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Client Phone">
+              <UInput v-model="clientPhone" placeholder="Optional" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Service Type" required>
+              <USelect v-model="serviceTypeId" :items="createServiceTypeOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Sales">
+              <USelect v-model="salesId" :items="salesOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Status">
+              <USelect v-model="status" :items="eventStatusOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Event Date" required>
+              <UInput v-model="eventDate" type="date" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Start Time" required>
+              <UInput v-model="startTime" type="time" class="w-full" />
+            </UFormField>
+
+            <UFormField label="End Time" required>
+              <UInput v-model="endTime" type="time" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Loading Date">
+              <UInput v-model="loadingDate" type="date" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Loading Time">
+              <UInput v-model="loadingTime" type="time" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Location" class="w-full">
+              <UInput v-model="location" placeholder="Event location" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Vehicle Name">
+              <UInput v-model="vehicleName" placeholder="Optional" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Driver Name">
+              <UInput v-model="driverName" placeholder="Optional" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Vendor Sewa" class="md:col-span-2">
+              <UInput v-model="vendorSewa" placeholder="Optional vendor rental info" class="w-full" />
+            </UFormField>
+          </div>
+
+          <UFormField label="Equipment Setup" required>
+            <UTextarea v-model="equipmentSetup" placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
+              class="w-full" />
+          </UFormField>
+
+          <UFormField label="Notes">
+            <UTextarea v-model="notes" placeholder="Optional notes" class="w-full" />
+          </UFormField>
+
+          <p v-if="errorMessage" class="text-sm text-red-500">
+            {{ errorMessage }}
+          </p>
+        </form>
+      </template>
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton color="neutral" variant="ghost" type="button" @click="isCreateEventModalOpen = false">
+            Cancel
+          </UButton>
+          <UButton form="create-event-form" type="submit" color="primary" :loading="isSubmitting">
+            Save Event
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+    <UCard>
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div class="w-full lg:max-w-sm">
+          <UInput v-model="search" icon="i-lucide-search" placeholder="Search" class="w-full" size="md"
+            @keyup.enter="handleApplyFilter" />
+        </div>
+        <div class="flex flex-wrap items-center gap-2 w-full md:justify-end">
+          <USelect v-model="filterStatus" :items="statusOptions" size="md" class="w-full md:w-40"
+            @update:model-value="handleApplyFilter" />
+
+          <UButton type="button" size="md" color="neutral" variant="outline" icon="i-lucide-sliders-horizontal"
+            @click="isFilterModalOpen = true">
+            Filter
+            <UBadge v-if="activeFilterCount > 0" color="primary" variant="solid" size="md" class="ml-1">
+              {{ activeFilterCount }}
+            </UBadge>
+          </UButton>
+        </div>
+      </div>
+    </UCard>
+    <UModal v-model:open="isFilterModalOpen" title="Filter Events"
+      description="Apply advanced filters to the event list." :ui="{ content: 'max-w-2xl' }">
+      <template #body>
+        <form id="event-filter-form" class="space-y-4" @submit.prevent="handleApplyFilter">
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Status">
+              <USelect v-model="filterStatus" :items="statusOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Service Type">
+              <USelect v-model="filterServiceTypeId" :items="serviceTypeOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Month">
+              <USelect v-model="filterMonth" :items="monthOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Year">
+              <USelect v-model="filterYear" :items="yearOptions" class="w-full" />
+            </UFormField>
+          </div>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton type="button" color="neutral" variant="ghost" @click="handleResetFilter">
+            Reset
+          </UButton>
+
+          <UButton form="event-filter-form" type="submit" color="primary">
+            Apply Filter
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UCard>
+      <p v-if="pending" class="text-sm text-muted">Loading events...</p>
+      <p v-else-if="error" class="text-sm text-red-500">Failed to load events.</p>
+      <p v-else-if="eventsData?.data?.length === 0" class="text-sm text-muted">No events found.</p>
+
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-default text-left">
+              <th class="py-2 pr-4">Event</th>
+              <th class="py-2 pr-4">Client</th>
+              <th class="py-2 pr-4">Service</th>
+              <th class="py-2 pr-4">Sales</th>
+              <th class="py-2 pr-4">Date</th>
+              <th class="py-2 pr-4">Time</th>
+              <th class="py-2 pr-4">Staff</th>
+              <th class="py-2 pr-4">Status</th>
+              <th class="py-2 pr-4">Location</th>
+              <th class="py-2 pr-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in eventsData?.data" :key="item.id" class="border-b border-default align-top">
+              <td class="py-3 pr-4 font-medium">{{ item.eventName }}</td>
+              <td class="py-3 pr-4">
+                <div>{{ item.clientName }}</div>
+                <div class="text-xs text-muted">{{ item.clientPhone || "-" }}</div>
+              </td>
+              <td class="py-3 pr-4">{{ item.serviceType?.name || "-" }}</td>
+              <td class="py-3 pr-4">{{ item.sales?.name || "-" }}</td>
+              <td class="py-3 pr-4">{{ formatDate(item.eventDate) }}</td>
+              <td class="py-3 pr-4">{{ item.startTime }} - {{ item.endTime }}</td>
+              <td class="py-3 pr-4 min-w-48">{{ getEventStaff(item) }}</td>
+              <td class="py-3 pr-4">
+                <UBadge :color="getStatusColor(item.status)" variant="soft">
+                  {{ item.status }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4">{{ item.location || "-" }}</td>
+              <td class="py-3 pr-4">
+                <div class="flex flex-wrap gap-2">
+                  <UButton size="xs" color="primary" variant="soft" :to="`/events/${item.id}`">Detail</UButton>
+                  <UButton size="xs" color="warning" variant="soft" @click="handleDelete(item.id)">Cancel</UButton>
+                  <UButton v-if="user?.role === 'DEVELOPER'" size="xs" color="error" variant="soft"
+                    @click="handleHardDeleteEvent(item.id)">
+                    Hard Delete
+                  </UButton>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <template #footer>
+        <div v-if="eventsData?.pagination" class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p class="text-sm text-muted">
+            Page {{ eventsData.pagination.page }} of {{ eventsData.pagination.totalPages }}
+            — Total {{ eventsData.pagination.totalItems }} events
+          </p>
+          <div class="flex gap-2">
+            <UButton type="button" color="neutral" variant="outline" :disabled="eventsData.pagination.page <= 1"
+              @click="goToPreviousPage">
+              Previous
+            </UButton>
+            <UButton type="button" color="neutral" variant="outline"
+              :disabled="eventsData.pagination.page >= eventsData.pagination.totalPages" @click="goToNextPage">
+              Next
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UCard>
+  </div>
 </template>

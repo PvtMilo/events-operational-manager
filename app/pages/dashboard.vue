@@ -64,9 +64,9 @@ function formatDate(dateValue) {
         </p>
       </div>
 
-      <UButton icon="i-lucide-refresh-cw" color="neutral" variant="outline" @click="refresh">
+      <!-- <UButton icon="i-lucide-refresh-cw" color="neutral" variant="outline" @click="refresh">
         Refresh
-      </UButton>
+      </UButton> -->
     </div>
 
     <UCard v-if="pending">
@@ -216,8 +216,8 @@ function formatDate(dateValue) {
                       ? event.assignments
                         .map((assignment) => assignment.staff?.name)
                         .filter(Boolean)
-                  .join(", ")
-                  : "-"
+                        .join(", ")
+                      : "-"
                   }}
                 </td>
                 <td class="py-2 pr-4">

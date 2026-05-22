@@ -124,8 +124,16 @@ export default defineEventHandler(async (event) => {
         serviceType: true,
         sales: true,
         assignments: {
+          where: {
+            assignmentStatus: {
+              in: ["ASSIGNED", "CONFIRMED"],
+            },
+          },
           include: {
             staff: true,
+          },
+          orderBy: {
+            createdAt: "asc",
           },
         },
       },

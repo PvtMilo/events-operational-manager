@@ -38,6 +38,8 @@ const filterYear = ref("ALL");
 const filterMonth = ref("ALL");
 const filterDateRange = ref(null);
 
+const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
+
 const hasDateRangeFilter = computed(
   () => !!filterDateRange.value?.start || !!filterDateRange.value?.end,
 );
@@ -193,8 +195,14 @@ function getDateRangeParams() {
 }
 
 function getEventStaff(event) {
-  if (!event.assignments?.length) return "-";
-  return event.assignments
+  const activeAssignments =
+    event.assignments?.filter((assignment) => {
+      return activeAssignmentStatuses.includes(assignment.assignmentStatus);
+    }) || [];
+
+  if (!activeAssignments.length) return "-";
+
+  return activeAssignments
     .map((a) => `${a.staff?.name || "-"} (${a.roleInEvent})`)
     .join(", ");
 }

@@ -2,6 +2,7 @@
 const { user, clear } = useUserSession()
 
 const open = ref(false)
+const collapsed = ref(false)
 
 async function handleLogout() {
     await $fetch('/api/auth/logout', {
@@ -106,10 +107,10 @@ const links = computed(() => {
 
 <template>
     <UDashboardGroup unit="rem">
-        <UDashboardSidebar id="default" v-model:open="open" collapsible resizable class="bg-elevated/25"
-            :ui="{ footer: 'lg:border-t lg:border-default' }">
-            <template #header="{ collapsed }">
-                <div class="px-2 py-3">
+        <UDashboardSidebar id="default" v-model:open="open" v-model:collapsed="collapsed" mode="slideover" collapsible
+            resizable :collapsed-size="4" class="bg-elevated/25" :ui="{ footer: 'lg:border-t lg:border-default' }">
+            <template #header="{ collapsed, collapse }">
+                <div class="flex items-center justify-between gap-2 px-2 py-3">
                     <p v-if="!collapsed" class="font-semibold">
                         EventOps Manager
                     </p>
@@ -117,6 +118,10 @@ const links = computed(() => {
                     <p v-else class="font-semibold">
                         EO
                     </p>
+
+                    <UButton class="hidden lg:inline-flex" size="xs" color="neutral" variant="ghost"
+                        :icon="collapsed ? 'i-lucide-panel-left-open' : 'i-lucide-panel-left-close'"
+                        :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" @click="collapse(!collapsed)" />
                 </div>
             </template>
 
@@ -150,6 +155,14 @@ const links = computed(() => {
         </UDashboardSidebar>
 
         <main class="min-h-screen flex-1 overflow-auto">
+            <header
+                class="sticky top-0 z-10 flex items-center gap-2 border-b border-default bg-default/95 p-3 backdrop-blur lg:hidden">
+                <UDashboardSidebarToggle />
+                <p class="font-semibold">
+                    EventOps Manager
+                </p>
+            </header>
+
             <slot />
         </main>
     </UDashboardGroup>

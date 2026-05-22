@@ -996,7 +996,7 @@ async function handleSaveStaffEvaluation(staffId) {
                 />
               </UFormField>
 
-              <UFormField label="Vendor Sewa" class="md:col-span-2">
+              <UFormField label="Vendor Sewa">
                 <UInput
                   v-model="editVendorSewa"
                   placeholder="Optional vendor rental info"

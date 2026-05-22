@@ -798,6 +798,7 @@ async function handleHardDeleteEvent(id) {
               <th class="py-2 pr-4">Event</th>
               <th class="py-2 pr-4">Client</th>
               <th class="py-2 pr-4">Service</th>
+              <th class="py-2 pr-4">Setup Equipment</th>
               <th class="py-2 pr-4">Sales</th>
               <th class="py-2 pr-4">Date</th>
               <th class="py-2 pr-4">Time</th>
@@ -823,9 +824,10 @@ async function handleHardDeleteEvent(id) {
                 </div>
               </td>
               <td class="py-3 pr-4">{{ item.serviceType?.name || "-" }}</td>
+              <td class="py-3 pr-4 max-w-20">{{ item.equipmentSetup || "-" }}</td>
               <td class="py-3 pr-4">{{ item.sales?.name || "-" }}</td>
               <td class="py-3 pr-4">{{ formatDate(item.eventDate) }}</td>
-              <td class="py-3 pr-4">
+              <td class="py-3 pr-8 min-w-30">
                 {{ item.startTime }} - {{ item.endTime }}
               </td>
               <td class="py-3 pr-4">
@@ -837,7 +839,7 @@ async function handleHardDeleteEvent(id) {
               <td class="py-3 pr-4">
                 {{ item.vehicleName || "-" }}
               </td>
-              <td class="py-3 pr-4 min-w-48">{{ getEventStaff(item) }}</td>
+              <td class="py-3 pr-4 min-w-30">{{ getEventStaff(item) }}</td>
               <td class="py-3 pr-4">{{ item.location || "-" }}</td>
               <td class="py-3 pr-4">
                 <UBadge :color="getStatusColor(item.status)" variant="soft">

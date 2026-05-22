@@ -9,6 +9,33 @@ function getMonthRange(year, month) {
   return { start, end };
 }
 
+function parseDateOnly(value) {
+  const match = value?.toString().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function addDays(date, days) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
@@ -17,6 +44,8 @@ export default defineEventHandler(async (event) => {
   const serviceTypeId = query.serviceTypeId?.toString() || "";
   const year = query.year ? Number(query.year) : null;
   const month = query.month ? Number(query.month) : null;
+  const dateFrom = parseDateOnly(query.dateFrom);
+  const dateTo = parseDateOnly(query.dateTo || query.dateFrom);
 
   const where = {};
 
@@ -63,13 +92,23 @@ export default defineEventHandler(async (event) => {
     where.serviceTypeId = serviceTypeId;
   }
 
-  const monthRange = getMonthRange(year, month);
+  if (dateFrom || dateTo) {
+    where.eventDate = {};
+    if (dateFrom) where.eventDate.gte = dateFrom;
+    if (dateTo) where.eventDate.lt = addDays(dateTo, 1);
+  } else {
+    const monthRange = getMonthRange(year, month);
 
-  if (monthRange) {
-    where.eventDate = {
-      gte: monthRange.start,
-      lt: monthRange.end,
-    };
+    if (monthRange) {
+      where.eventDate = {
+        gte: monthRange.start,
+        lt: monthRange.end,
+      };
+    }
+  }
+
+  if (where.eventDate && Object.keys(where.eventDate).length === 0) {
+    delete where.eventDate;
   }
 
   const page = Number(query.page || 1);

@@ -36,6 +36,11 @@ const filterStatus = ref("ALL");
 const filterServiceTypeId = ref("ALL");
 const filterYear = ref("ALL");
 const filterMonth = ref("ALL");
+const filterDateRange = ref(null);
+
+const hasDateRangeFilter = computed(
+  () => !!filterDateRange.value?.start || !!filterDateRange.value?.end,
+);
 
 const eventUrl = computed(() => {
   const params = new URLSearchParams();
@@ -44,8 +49,16 @@ const eventUrl = computed(() => {
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   if (filterServiceTypeId.value !== "ALL")
     params.set("serviceTypeId", filterServiceTypeId.value);
-  if (filterYear.value !== "ALL") params.set("year", filterYear.value);
-  if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
+
+  const dateParams = getDateRangeParams();
+
+  if (dateParams.dateFrom || dateParams.dateTo) {
+    if (dateParams.dateFrom) params.set("dateFrom", dateParams.dateFrom);
+    if (dateParams.dateTo) params.set("dateTo", dateParams.dateTo);
+  } else {
+    if (filterYear.value !== "ALL") params.set("year", filterYear.value);
+    if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
+  }
 
   params.set("page", page.value);
 
@@ -126,9 +139,23 @@ const activeFilterCount = computed(() => {
   let count = 0;
   if (filterStatus.value !== "ALL") count += 1;
   if (filterServiceTypeId.value !== "ALL") count += 1;
-  if (filterYear.value !== "ALL") count += 1;
-  if (filterMonth.value !== "ALL") count += 1;
+  if (hasDateRangeFilter.value) {
+    count += 1;
+  } else {
+    if (filterYear.value !== "ALL") count += 1;
+    if (filterMonth.value !== "ALL") count += 1;
+  }
   return count;
+});
+
+const filterDateLabel = computed(() => {
+  const start = formatDateFilterValue(filterDateRange.value?.start);
+  const end = formatDateFilterValue(filterDateRange.value?.end);
+
+  if (start && end && start !== end) return `${start} - ${end}`;
+  if (start) return start;
+  if (end) return end;
+  return "Date";
 });
 
 function getStatusColor(status) {
@@ -143,6 +170,26 @@ function getStatusColor(status) {
 function formatDate(dateValue) {
   if (!dateValue) return "-";
   return new Date(dateValue).toLocaleDateString();
+}
+
+function formatDateFilterValue(dateValue) {
+  if (!dateValue) return "";
+
+  const [year, month, day] = dateValue.toString().split("-");
+
+  if (!year || !month || !day) return dateValue.toString();
+
+  return `${day}/${month}/${year}`;
+}
+
+function getDateRangeParams() {
+  const dateFrom = filterDateRange.value?.start?.toString() || "";
+  const dateTo =
+    filterDateRange.value?.end?.toString() ||
+    filterDateRange.value?.start?.toString() ||
+    "";
+
+  return { dateFrom, dateTo };
 }
 
 function getEventStaff(event) {
@@ -181,8 +228,24 @@ function getEventActionItems(event) {
 
 async function handleApplyFilter() {
   page.value = 1;
+  if (hasDateRangeFilter.value) {
+    filterYear.value = "ALL";
+    filterMonth.value = "ALL";
+  }
   await refresh();
   isFilterModalOpen.value = false;
+}
+
+async function handleApplyDateFilter(close) {
+  await handleApplyFilter();
+  close?.();
+}
+
+async function handleClearDateFilter(close) {
+  filterDateRange.value = null;
+  page.value = 1;
+  await refresh();
+  close?.();
 }
 
 async function handleResetFilter() {
@@ -191,6 +254,7 @@ async function handleResetFilter() {
   filterServiceTypeId.value = "ALL";
   filterYear.value = "ALL";
   filterMonth.value = "ALL";
+  filterDateRange.value = null;
   page.value = 1;
 
   await refresh();
@@ -204,8 +268,16 @@ function handleExportEvents() {
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   if (filterServiceTypeId.value !== "ALL")
     params.set("serviceTypeId", filterServiceTypeId.value);
-  if (filterYear.value !== "ALL") params.set("year", filterYear.value);
-  if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
+
+  const dateParams = getDateRangeParams();
+
+  if (dateParams.dateFrom || dateParams.dateTo) {
+    if (dateParams.dateFrom) params.set("dateFrom", dateParams.dateFrom);
+    if (dateParams.dateTo) params.set("dateTo", dateParams.dateTo);
+  } else {
+    if (filterYear.value !== "ALL") params.set("year", filterYear.value);
+    if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
+  }
 
   const queryString = params.toString();
   const url = queryString
@@ -559,6 +631,50 @@ async function handleHardDeleteEvent(id) {
           />
         </div>
         <div class="flex flex-wrap items-center gap-2 w-full md:justify-end">
+          <UPopover :content="{ align: 'end' }">
+            <UButton
+              type="button"
+              size="md"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-calendar"
+              class="w-full justify-center md:w-auto"
+            >
+              {{ filterDateLabel }}
+            </UButton>
+
+            <template #content="{ close }">
+              <div class="space-y-3 p-3">
+                <UCalendar
+                  v-model="filterDateRange"
+                  range
+                  month-controls
+                  year-controls
+                />
+
+                <div class="flex justify-end gap-2">
+                  <UButton
+                    type="button"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    @click="handleClearDateFilter(close)"
+                  >
+                    Clear
+                  </UButton>
+                  <UButton
+                    type="button"
+                    color="primary"
+                    size="sm"
+                    @click="handleApplyDateFilter(close)"
+                  >
+                    Apply
+                  </UButton>
+                </div>
+              </div>
+            </template>
+          </UPopover>
+
           <USelect
             v-model="filterStatus"
             :items="statusOptions"
@@ -602,6 +718,17 @@ async function handleHardDeleteEvent(id) {
           @submit.prevent="handleApplyFilter"
         >
           <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Date" class="md:col-span-2">
+              <div class="rounded-md border border-default p-3">
+                <UCalendar
+                  v-model="filterDateRange"
+                  range
+                  month-controls
+                  year-controls
+                />
+              </div>
+            </UFormField>
+
             <UFormField label="Status">
               <USelect
                 v-model="filterStatus"
@@ -676,10 +803,10 @@ async function handleHardDeleteEvent(id) {
               <th class="py-2 pr-4">Time</th>
               <th class="py-2 pr-4">Loading Date</th>
               <th class="py-2 pr-4">Loading Time</th>
+              <th class="py-2 pr-4">Vehicle</th>
               <th class="py-2 pr-4">Staff</th>
               <th class="py-2 pr-4">Location</th>
               <th class="py-2 pr-4">Status</th>
-
             </tr>
           </thead>
           <tbody>
@@ -706,6 +833,9 @@ async function handleHardDeleteEvent(id) {
               </td>
               <td class="py-3 pr-4">
                 {{ item.loadingTime || "-" }}
+              </td>
+              <td class="py-3 pr-4">
+                {{ item.vehicleName || "-" }}
               </td>
               <td class="py-3 pr-4 min-w-48">{{ getEventStaff(item) }}</td>
               <td class="py-3 pr-4">{{ item.location || "-" }}</td>

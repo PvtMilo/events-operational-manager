@@ -8,20 +8,20 @@ const route = useRoute();
 const eventId = route.params.id;
 const { user } = useUserSession();
 
-const staffId = ref("");
-const roleInEvent = ref("CREW");
-const assignmentNotes = ref("");
-const isSubmitting = ref(false);
-const errorMessage = ref("");
+const {
+  data: eventData,
+  pending,
+  error,
+  refresh,
+} = await useFetch(`/api/events/${eventId}`);
 
-const clientSatisfactionOk = ref(false);
-const clientFeedback = ref("");
-const eventEvaluationNotes = ref("");
+const { data: serviceTypesData } = await useFetch("/api/service-types");
+const { data: salesData } = await useFetch("/api/sales");
+const { data: availabilityData, refresh: refreshAvailability } = await useFetch(
+  `/api/events/${eventId}/staff-availability`,
+);
 
-const staffEvaluationForms = ref({});
-const evaluationErrorMessage = ref("");
-const isSavingEventEvaluation = ref(false);
-const savingStaffEvaluationId = ref("");
+const currentEvent = computed(() => eventData.value?.data || null);
 
 const selectedStatus = ref("");
 const isUpdatingStatus = ref(false);
@@ -30,9 +30,9 @@ const statusErrorMessage = ref("");
 const editEventName = ref("");
 const editClientName = ref("");
 const editClientPhone = ref("");
-const editServiceTypeId = ref("");
+const editServiceTypeId = ref(null);
 const editEquipmentSetup = ref("");
-const editSalesId = ref("");
+const editSalesId = ref("NONE");
 const editEventDate = ref("");
 const editStartTime = ref("");
 const editEndTime = ref("");
@@ -43,7 +43,6 @@ const editVehicleName = ref("");
 const editDriverName = ref("");
 const editVendorSewa = ref("");
 const editNotes = ref("");
-
 const isUpdatingEvent = ref(false);
 const editEventErrorMessage = ref("");
 
@@ -53,6 +52,10 @@ const postEventErrorMessage = ref("");
 const isSavingPostEventData = ref(false);
 
 const postRibbonUsed = computed(() => {
+  if (postRibbonStart.value === "" || postRibbonEnd.value === "") {
+    return "";
+  }
+
   const start = Number(postRibbonStart.value);
   const end = Number(postRibbonEnd.value);
 
@@ -63,37 +66,84 @@ const postRibbonUsed = computed(() => {
   return start - end;
 });
 
+const availableStaffSearch = ref("");
 const assignmentForms = ref({});
 const savingAssignmentId = ref("");
 const assignmentErrorMessage = ref("");
+const addingStaffId = ref("");
 
-const {
-  data: eventData,
-  pending,
-  error,
-  refresh,
-} = await useFetch(`/api/events/${eventId}`);
+const clientSatisfactionOk = ref(false);
+const clientFeedback = ref("");
+const eventEvaluationNotes = ref("");
+const evaluationErrorMessage = ref("");
+const isSavingEventEvaluation = ref(false);
 
-const { data: serviceTypesData } = await useFetch("/api/service-types");
-const { data: salesData } = await useFetch("/api/sales");
+const staffEvaluationForms = ref({});
+const savingStaffEvaluationId = ref("");
 
-const { data: availabilityData, refresh: refreshAvailability } = await useFetch(
-  `/api/events/${eventId}/staff-availability`,
-);
+const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 
-const activeAssignments = computed(() => {
-  return (
-    eventData.value?.data?.assignments?.filter((assignment) => {
-      return ["ASSIGNED", "CONFIRMED"].includes(assignment.assignmentStatus);
-    }) || []
-  );
+const eventStatusOptions = [
+  { label: "DRAFTED", value: "DRAFTED" },
+  { label: "SCHEDULED", value: "SCHEDULED" },
+  { label: "READY", value: "READY" },
+  { label: "ONGOING", value: "ONGOING" },
+  { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
+  { label: "COMPLETED", value: "COMPLETED" },
+  { label: "CANCELLED", value: "CANCELLED" },
+];
+
+const roleOptions = [
+  { label: "PIC", value: "PIC" },
+  { label: "CREW", value: "CREW" },
+];
+
+const assignmentStatusOptions = [
+  { label: "ASSIGNED", value: "ASSIGNED" },
+  { label: "CONFIRMED", value: "CONFIRMED" },
+  { label: "REPLACED", value: "REPLACED" },
+  { label: "CANCELLED", value: "CANCELLED" },
+];
+
+const serviceTypeOptions = computed(() => {
+  return (serviceTypesData.value?.data || []).map((item) => ({
+    label: item.name,
+    value: item.id,
+  }));
 });
 
+const salesOptions = computed(() => {
+  return [
+    { label: "No sales / optional", value: "NONE" },
+    ...(salesData.value?.data || []).map((item) => ({
+      label: item.name,
+      value: item.id,
+    })),
+  ];
+});
+
+const selectedAssignments = computed(() => {
+  return currentEvent.value?.assignments || [];
+});
+
+const activeSelectedAssignments = computed(() => {
+  return selectedAssignments.value.filter((assignment) => {
+    return activeAssignmentStatuses.includes(assignment.assignmentStatus);
+  });
+});
+
+const inactiveSelectedAssignments = computed(() => {
+  return selectedAssignments.value.filter((assignment) => {
+    return !activeAssignmentStatuses.includes(assignment.assignmentStatus);
+  });
+});
+
+const activeAssignments = activeSelectedAssignments;
+
 const assignableStaff = computed(() => {
-  const assignedStaffIds =
-    eventData.value?.data?.assignments?.map(
-      (assignment) => assignment.staffId,
-    ) || [];
+  const assignedStaffIds = selectedAssignments.value.map((assignment) => {
+    return assignment.staffId;
+  });
 
   return (
     availabilityData.value?.data?.filter((staff) => {
@@ -102,44 +152,320 @@ const assignableStaff = computed(() => {
   );
 });
 
-async function handleAssignStaff() {
-  errorMessage.value = "";
+const filteredAvailableStaff = computed(() => {
+  const keyword = availableStaffSearch.value.trim().toLowerCase();
 
-  if (!staffId.value) {
-    errorMessage.value = "Staff is required";
+  if (!keyword) return assignableStaff.value;
+
+  return assignableStaff.value.filter((staff) => {
+    return (
+      staff.name?.toLowerCase().includes(keyword) ||
+      staff.defaultRole?.toLowerCase().includes(keyword) ||
+      staff.availabilityStatus?.toLowerCase().includes(keyword)
+    );
+  });
+});
+
+const requiresRibbonTracking = computed(() => {
+  return currentEvent.value?.serviceType?.requiresRibbonTracking === true;
+});
+
+watch(
+  currentEvent,
+  (event) => {
+    if (!event) return;
+
+    selectedStatus.value = event.status || "";
+
+    editEventName.value = event.eventName || "";
+    editClientName.value = event.clientName || "";
+    editClientPhone.value = event.clientPhone || "";
+    editServiceTypeId.value = event.serviceTypeId || null;
+    editEquipmentSetup.value = event.equipmentSetup || "";
+    editSalesId.value = event.salesId || "NONE";
+    editEventDate.value = formatDateInput(event.eventDate);
+    editStartTime.value = event.startTime || "";
+    editEndTime.value = event.endTime || "";
+    editLoadingDate.value = formatDateInput(event.loadingDate);
+    editLoadingTime.value = event.loadingTime || "";
+    editLocation.value = event.location || "";
+    editVehicleName.value = event.vehicleName || "";
+    editDriverName.value = event.driverName || "";
+    editVendorSewa.value = event.vendorSewa || "";
+    editNotes.value = event.notes || "";
+
+    postRibbonStart.value = event.ribbonStart ?? "";
+    postRibbonEnd.value = event.ribbonEnd ?? "";
+
+    const evaluation = event.eventEvaluation;
+
+    if (evaluation) {
+      clientSatisfactionOk.value = evaluation.clientSatisfactionOk;
+      clientFeedback.value = evaluation.clientFeedback || "";
+      eventEvaluationNotes.value = evaluation.notes || "";
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  selectedAssignments,
+  (assignments) => {
+    const nextForms = {};
+
+    for (const assignment of assignments || []) {
+      nextForms[assignment.id] = {
+        roleInEvent: assignment.roleInEvent || "CREW",
+        assignmentStatus: assignment.assignmentStatus || "ASSIGNED",
+        notes: assignment.notes || "",
+      };
+    }
+
+    assignmentForms.value = nextForms;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => [activeAssignments.value, currentEvent.value?.staffEvaluations],
+  () => {
+    const existingEvaluations = currentEvent.value?.staffEvaluations || [];
+    const nextForms = {};
+
+    for (const assignment of activeAssignments.value) {
+      const existing = existingEvaluations.find((item) => {
+        return item.staffId === assignment.staffId;
+      });
+
+      nextForms[assignment.staffId] = {
+        sopOk: existing?.sopOk || false,
+        warehouseOk: existing?.warehouseOk || false,
+        groomingOk: existing?.groomingOk || false,
+        dataCollectionOk: existing?.dataCollectionOk || false,
+        notes: existing?.notes || "",
+      };
+    }
+
+    staffEvaluationForms.value = nextForms;
+  },
+  { immediate: true },
+);
+
+function formatDateInput(dateValue) {
+  if (!dateValue) return "";
+
+  return new Date(dateValue).toISOString().slice(0, 10);
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleDateString();
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleString();
+}
+
+function getStatusColor(status) {
+  if (status === "COMPLETED") return "success";
+  if (status === "CANCELLED") return "error";
+  if (status === "PENDING_EVALUATION") return "warning";
+  if (status === "ONGOING") return "primary";
+  if (status === "READY") return "info";
+
+  return "neutral";
+}
+
+function getAvailabilityColor(status) {
+  if (status === "AVAILABLE") return "success";
+  if (status === "SAME_DAY_AVAILABLE") return "warning";
+  if (status === "TIME_CONFLICT") return "error";
+
+  return "neutral";
+}
+
+function getAssignmentStatusColor(status) {
+  if (status === "CONFIRMED") return "success";
+  if (status === "ASSIGNED") return "primary";
+  if (status === "REPLACED") return "warning";
+  if (status === "CANCELLED") return "error";
+
+  return "neutral";
+}
+
+function formatBoolean(value) {
+  if (value === true) return "OK";
+  if (value === false) return "NOT OK";
+
+  return "NOT EVALUATED";
+}
+
+function getDefaultRoleForEvent(staff) {
+  return staff.defaultRole === "PIC" ? "PIC" : "CREW";
+}
+
+function getStaffEvaluation(staffId) {
+  return currentEvent.value?.staffEvaluations?.find((item) => {
+    return item.staffId === staffId;
+  });
+}
+
+async function handleUpdateEvent() {
+  editEventErrorMessage.value = "";
+
+  if (!editEventName.value.trim()) {
+    editEventErrorMessage.value = "Event name is required";
     return;
   }
 
-  isSubmitting.value = true;
+  if (!editClientName.value.trim()) {
+    editEventErrorMessage.value = "Client name is required";
+    return;
+  }
+
+  if (!editServiceTypeId.value) {
+    editEventErrorMessage.value = "Service type is required";
+    return;
+  }
+
+  if (!editEquipmentSetup.value.trim()) {
+    editEventErrorMessage.value = "Equipment setup is required";
+    return;
+  }
+
+  if (!editEventDate.value || !editStartTime.value || !editEndTime.value) {
+    editEventErrorMessage.value =
+      "Event date, start time, and end time are required";
+    return;
+  }
+
+  isUpdatingEvent.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}`, {
+      method: "PATCH",
+      body: {
+        eventName: editEventName.value,
+        clientName: editClientName.value,
+        clientPhone: editClientPhone.value,
+        serviceTypeId: editServiceTypeId.value,
+        equipmentSetup: editEquipmentSetup.value,
+        salesId: editSalesId.value === "NONE" ? null : editSalesId.value,
+        eventDate: editEventDate.value,
+        startTime: editStartTime.value,
+        endTime: editEndTime.value,
+        loadingDate: editLoadingDate.value || null,
+        loadingTime: editLoadingTime.value || null,
+        location: editLocation.value,
+        vehicleName: editVehicleName.value,
+        driverName: editDriverName.value,
+        vendorSewa: editVendorSewa.value,
+        notes: editNotes.value,
+      },
+    });
+
+    await refresh();
+    await refreshAvailability();
+  } catch (error) {
+    editEventErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update event";
+  } finally {
+    isUpdatingEvent.value = false;
+  }
+}
+
+async function handleUpdateStatus() {
+  statusErrorMessage.value = "";
+  isUpdatingStatus.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}/status`, {
+      method: "PATCH",
+      body: {
+        status: selectedStatus.value,
+      },
+    });
+
+    await refresh();
+    await refreshAvailability();
+  } catch (error) {
+    statusErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update event status";
+  } finally {
+    isUpdatingStatus.value = false;
+  }
+}
+
+async function handleAddAvailableStaff(staff) {
+  assignmentErrorMessage.value = "";
+
+  if (staff.availabilityStatus === "TIME_CONFLICT") {
+    assignmentErrorMessage.value =
+      "Staff has time conflict and cannot be assigned";
+    return;
+  }
+
+  addingStaffId.value = staff.id;
 
   try {
     await $fetch(`/api/events/${eventId}/assignments`, {
       method: "POST",
       body: {
-        staffId: staffId.value,
-        roleInEvent: roleInEvent.value,
-        notes: assignmentNotes.value,
+        staffId: staff.id,
+        roleInEvent: getDefaultRoleForEvent(staff),
+        notes: "",
       },
     });
-
-    staffId.value = "";
-    roleInEvent.value = "CREW";
-    assignmentNotes.value = "";
 
     await refresh();
     await refreshAvailability();
   } catch (error) {
-    errorMessage.value =
+    assignmentErrorMessage.value =
       error?.data?.statusMessage ||
       error?.statusMessage ||
       "Failed to assign staff";
   } finally {
-    isSubmitting.value = false;
+    addingStaffId.value = "";
+  }
+}
+
+async function handleUpdateAssignment(assignmentId) {
+  assignmentErrorMessage.value = "";
+  savingAssignmentId.value = assignmentId;
+
+  const form = assignmentForms.value[assignmentId];
+
+  try {
+    await $fetch(`/api/event-assignments/${assignmentId}`, {
+      method: "PATCH",
+      body: {
+        roleInEvent: form.roleInEvent,
+        assignmentStatus: form.assignmentStatus,
+        notes: form.notes,
+      },
+    });
+
+    await refresh();
+    await refreshAvailability();
+  } catch (error) {
+    assignmentErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update assignment";
+  } finally {
+    savingAssignmentId.value = "";
   }
 }
 
 async function handleDeleteAssignment(assignmentId) {
-  const confirmed = confirm("Remove this staff from event?");
+  const confirmed = confirm("Cancel this staff assignment?");
 
   if (!confirmed) return;
 
@@ -154,7 +480,7 @@ async function handleDeleteAssignment(assignmentId) {
     alert(
       error?.data?.statusMessage ||
         error?.statusMessage ||
-        "Failed to remove assignment",
+        "Failed to cancel assignment",
     );
   }
 }
@@ -179,6 +505,47 @@ async function handleHardDeleteAssignment(assignmentId) {
         error?.statusMessage ||
         "Failed to hard delete assignment",
     );
+  }
+}
+
+async function handleSavePostEventData() {
+  postEventErrorMessage.value = "";
+
+  if (postRibbonStart.value === "") {
+    postEventErrorMessage.value = "Ribbon awal is required";
+    return;
+  }
+
+  if (postRibbonEnd.value === "") {
+    postEventErrorMessage.value = "Ribbon akhir is required";
+    return;
+  }
+
+  if (Number(postRibbonUsed.value) < 0) {
+    postEventErrorMessage.value =
+      "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.";
+    return;
+  }
+
+  isSavingPostEventData.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}/post-event-data`, {
+      method: "PATCH",
+      body: {
+        ribbonStart: postRibbonStart.value,
+        ribbonEnd: postRibbonEnd.value,
+      },
+    });
+
+    await refresh();
+  } catch (error) {
+    postEventErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to save post event data";
+  } finally {
+    isSavingPostEventData.value = false;
   }
 }
 
@@ -236,859 +603,786 @@ async function handleSaveStaffEvaluation(staffId) {
     savingStaffEvaluationId.value = "";
   }
 }
-
-async function handleUpdateStatus() {
-  statusErrorMessage.value = "";
-  isUpdatingStatus.value = true;
-
-  try {
-    await $fetch(`/api/events/${eventId}/status`, {
-      method: "PATCH",
-      body: {
-        status: selectedStatus.value,
-      },
-    });
-
-    await refresh();
-  } catch (error) {
-    statusErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to update event status";
-  } finally {
-    isUpdatingStatus.value = false;
-  }
-}
-
-async function handleUpdateEvent() {
-  editEventErrorMessage.value = "";
-
-  if (!editEventName.value.trim()) {
-    editEventErrorMessage.value = "Event name is required";
-    return;
-  }
-
-  if (!editClientName.value.trim()) {
-    editEventErrorMessage.value = "Client name is required";
-    return;
-  }
-
-  if (!editServiceTypeId.value) {
-    editEventErrorMessage.value = "Service type is required";
-    return;
-  }
-
-  if (!editEquipmentSetup.value.trim()) {
-    editEventErrorMessage.value = "Equipment setup is required";
-    return;
-  }
-
-  if (!editEventDate.value || !editStartTime.value || !editEndTime.value) {
-    editEventErrorMessage.value =
-      "Event date, start time, and end time are required";
-    return;
-  }
-
-  isUpdatingEvent.value = true;
-
-  try {
-    await $fetch(`/api/events/${eventId}`, {
-      method: "PATCH",
-      body: {
-        eventName: editEventName.value,
-        clientName: editClientName.value,
-        clientPhone: editClientPhone.value,
-        serviceTypeId: editServiceTypeId.value,
-        equipmentSetup: editEquipmentSetup.value,
-        salesId: editSalesId.value || null,
-        eventDate: editEventDate.value,
-        startTime: editStartTime.value,
-        endTime: editEndTime.value,
-        loadingDate: editLoadingDate.value || null,
-        loadingTime: editLoadingTime.value || null,
-        location: editLocation.value,
-        vehicleName: editVehicleName.value,
-        driverName: editDriverName.value,
-        vendorSewa: editVendorSewa.value,
-        notes: editNotes.value,
-      },
-    });
-
-    await refresh();
-    await refreshAvailability();
-  } catch (error) {
-    editEventErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to update event";
-  } finally {
-    isUpdatingEvent.value = false;
-  }
-}
-
-async function handleSavePostEventData() {
-  postEventErrorMessage.value = "";
-
-  if (postRibbonStart.value === "") {
-    postEventErrorMessage.value = "Ribbon awal is required";
-    return;
-  }
-
-  if (postRibbonEnd.value === "") {
-    postEventErrorMessage.value = "Ribbon akhir is required";
-    return;
-  }
-
-  if (Number(postRibbonUsed.value) < 0) {
-    postEventErrorMessage.value =
-      "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.";
-    return;
-  }
-
-  isSavingPostEventData.value = true;
-
-  try {
-    await $fetch(`/api/events/${eventId}/post-event-data`, {
-      method: "PATCH",
-      body: {
-        ribbonStart: postRibbonStart.value,
-        ribbonEnd: postRibbonEnd.value,
-      },
-    });
-
-    await refresh();
-  } catch (error) {
-    postEventErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to save post event data";
-  } finally {
-    isSavingPostEventData.value = false;
-  }
-}
-
-async function handleUpdateAssignment(assignmentId) {
-  assignmentErrorMessage.value = "";
-  savingAssignmentId.value = assignmentId;
-
-  const form = assignmentForms.value[assignmentId];
-
-  try {
-    await $fetch(`/api/event-assignments/${assignmentId}`, {
-      method: "PATCH",
-      body: {
-        roleInEvent: form.roleInEvent,
-        assignmentStatus: form.assignmentStatus,
-        notes: form.notes,
-      },
-    });
-
-    await refresh();
-    await refreshAvailability();
-  } catch (error) {
-    assignmentErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to update assignment";
-  } finally {
-    savingAssignmentId.value = "";
-  }
-}
-
-watchEffect(() => {
-  const evaluation = eventData.value?.data?.eventEvaluation;
-
-  if (evaluation) {
-    clientSatisfactionOk.value = evaluation.clientSatisfactionOk;
-    clientFeedback.value = evaluation.clientFeedback || "";
-    eventEvaluationNotes.value = evaluation.notes || "";
-  }
-
-  const assignedTeam = eventData.value?.data?.assignments || [];
-  const existingEvaluations = eventData.value?.data?.staffEvaluations || [];
-
-  for (const assignment of assignedTeam) {
-    const existing = existingEvaluations.find((item) => {
-      return item.staffId === assignment.staffId;
-    });
-
-    if (!staffEvaluationForms.value[assignment.staffId]) {
-      staffEvaluationForms.value[assignment.staffId] = {
-        sopOk: existing?.sopOk || false,
-        warehouseOk: existing?.warehouseOk || false,
-        groomingOk: existing?.groomingOk || false,
-        dataCollectionOk: existing?.dataCollectionOk || false,
-        notes: existing?.notes || "",
-      };
-    }
-  }
-});
-
-watchEffect(() => {
-  if (eventData.value?.data?.status) {
-    selectedStatus.value = eventData.value.data.status;
-  }
-});
-
-function formatDateInput(dateValue) {
-  if (!dateValue) return "";
-
-  return new Date(dateValue).toISOString().slice(0, 10);
-}
-
-watchEffect(() => {
-  const event = eventData.value?.data;
-
-  if (!event) return;
-
-  editEventName.value = event.eventName || "";
-  editClientName.value = event.clientName || "";
-  editClientPhone.value = event.clientPhone || "";
-  editServiceTypeId.value = event.serviceTypeId || "";
-  editEquipmentSetup.value = event.equipmentSetup || "";
-  editSalesId.value = event.salesId || "";
-  editEventDate.value = formatDateInput(event.eventDate);
-  editStartTime.value = event.startTime || "";
-  editEndTime.value = event.endTime || "";
-  editLoadingDate.value = formatDateInput(event.loadingDate);
-  editLoadingTime.value = event.loadingTime || "";
-  editLocation.value = event.location || "";
-  editVehicleName.value = event.vehicleName || "";
-  editDriverName.value = event.driverName || "";
-  editVendorSewa.value = event.vendorSewa || "";
-  editNotes.value = event.notes || "";
-
-  postRibbonStart.value = event.ribbonStart ?? "";
-  postRibbonEnd.value = event.ribbonEnd ?? "";
-});
-
-watchEffect(() => {
-  const assignments = eventData.value?.data?.assignments || [];
-
-  for (const assignment of assignments) {
-    if (!assignmentForms.value[assignment.id]) {
-      assignmentForms.value[assignment.id] = {
-        roleInEvent: assignment.roleInEvent,
-        assignmentStatus: assignment.assignmentStatus,
-        notes: assignment.notes || "",
-      };
-    }
-  }
-});
 </script>
 
 <template>
-  <section>
-    <p>
-      <NuxtLink to="/events">← Back to Events</NuxtLink>
-    </p>
-
-    <p v-if="pending">Loading...</p>
-    <p v-else-if="error">Failed to load event detail.</p>
-
-    <div v-else>
-      <h1>{{ eventData?.data?.eventName }}</h1>
-      <p>Client: {{ eventData?.data?.clientName }}</p>
-      <p>Service: {{ eventData?.data?.serviceType?.name || "-" }}</p>
-      <p>Equipment Setup: {{ eventData?.data?.equipmentSetup }}</p>
-      <p>Sales: {{ eventData?.data?.sales?.name || "-" }}</p>
-      <p>
-        Date:
-        {{ new Date(eventData?.data?.eventDate).toLocaleDateString() }}
-      </p>
-      <p>
-        Time: {{ eventData?.data?.startTime }} - {{ eventData?.data?.endTime }}
-      </p>
-      <p>Status: {{ eventData?.data?.status }}</p>
-      <p>Vendor Sewa: {{ eventData?.data?.vendorSewa || "-" }}</p>
-
-      <hr />
-
-      <h2>Edit Event</h2>
-
-      <form @submit.prevent="handleUpdateEvent">
-        <div>
-          <label>Event Name</label>
-          <br />
-          <input v-model="editEventName" type="text" />
+  <div class="p-6 space-y-6">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+    >
+      <div>
+        <div class="mb-2">
+          <UButton
+            to="/events"
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-arrow-left"
+            size="sm"
+          >
+            Back to Events
+          </UButton>
         </div>
 
-        <br />
+        <h1 class="text-2xl font-semibold">
+          {{ currentEvent?.eventName || "Event Detail" }}
+        </h1>
 
-        <div>
-          <label>Client Name</label>
-          <br />
-          <input v-model="editClientName" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Client Phone</label>
-          <br />
-          <input v-model="editClientPhone" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Service Type</label>
-          <br />
-          <select v-model="editServiceTypeId">
-            <option value="">Select service type</option>
-            <option
-              v-for="item in serviceTypesData?.data"
-              :key="item.id"
-              :value="item.id"
-            >
-              {{ item.name }}
-            </option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Equipment Setup</label>
-          <br />
-          <textarea v-model="editEquipmentSetup"></textarea>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Sales</label>
-          <br />
-          <select v-model="editSalesId">
-            <option value="">No sales / optional</option>
-            <option
-              v-for="item in salesData?.data"
-              :key="item.id"
-              :value="item.id"
-            >
-              {{ item.name }}
-            </option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Event Date</label>
-          <br />
-          <input v-model="editEventDate" type="date" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Start Time</label>
-          <br />
-          <input v-model="editStartTime" type="time" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>End Time</label>
-          <br />
-          <input v-model="editEndTime" type="time" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Loading Date</label>
-          <br />
-          <input v-model="editLoadingDate" type="date" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Loading Time</label>
-          <br />
-          <input v-model="editLoadingTime" type="time" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Location</label>
-          <br />
-          <input v-model="editLocation" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Vehicle Name</label>
-          <br />
-          <input v-model="editVehicleName" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Driver Name</label>
-          <br />
-          <input v-model="editDriverName" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Vendor Sewa</label>
-          <br />
-          <input v-model="editVendorSewa" type="text" placeholder="Optional vendor rental info" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Notes</label>
-          <br />
-          <textarea v-model="editNotes"></textarea>
-        </div>
-
-        <br />
-
-        <p v-if="editEventErrorMessage" style="color: red">
-          {{ editEventErrorMessage }}
+        <p class="text-sm text-muted">
+          Manage event data, team assignment, post-event data, and evaluation.
         </p>
+      </div>
+    </div>
 
-        <button type="submit" :disabled="isUpdatingEvent">
-          {{ isUpdatingEvent ? "Updating..." : "Update Event" }}
-        </button>
-      </form>
+    <UCard v-if="pending"> Loading event detail... </UCard>
 
-      <hr />
+    <UCard v-else-if="error">
+      <p class="text-sm text-red-500">Failed to load event detail.</p>
+    </UCard>
 
-      <h2>Update Event Status</h2>
-      <form @submit.prevent="handleUpdateStatus">
-        <div>
-          <label>Current Status</label>
-          <br />
-          <strong>{{ eventData?.data?.status }}</strong>
+    <div v-else-if="currentEvent" class="space-y-6">
+      <UCard>
+        <template #header>
+          <div
+            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+          >
+            <div>
+              <h2 class="text-lg font-semibold">Event Info</h2>
+              <p class="text-sm text-muted">
+                Main event information and operational details.
+              </p>
+            </div>
+            <!-- change this to edit button and change the styling to be consistance -->
+            <button>Edit</button>
+          </div>
+        </template>
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <p class="text-xs text-muted">Client</p>
+            <p class="font-medium">{{ currentEvent.clientName }}</p>
+            <p class="text-xs text-muted">
+              {{ currentEvent.clientPhone || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Service Type</p>
+            <p class="font-medium">
+              {{ currentEvent.serviceType?.name || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Sales</p>
+            <p class="font-medium">{{ currentEvent.sales?.name || "-" }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Event Date</p>
+            <p class="font-medium">{{ formatDate(currentEvent.eventDate) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted">Event Time</p>
+            <p class="font-medium">
+              {{ currentEvent.startTime }} - {{ currentEvent.endTime }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Loading Date</p>
+            <p class="font-medium">
+              {{ formatDate(currentEvent.loadingDate) }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Loading Time</p>
+            <p class="font-medium">
+              {{ currentEvent.loadingTime || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Location</p>
+            <p class="font-medium">{{ currentEvent.location || "-" }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Vehicle / Driver</p>
+            <p class="font-medium">{{ currentEvent.vehicleName || "-" }}</p>
+            <p class="text-xs text-muted">
+              {{ currentEvent.driverName || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Vendor Sewa</p>
+            <p class="font-medium">{{ currentEvent.vendorSewa || "-" }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted">Equipment Setup</p>
+            <p class="font-medium">
+              {{ currentEvent.equipmentSetup || "-" }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-muted">Notes</p>
+            <p class="text-sm">
+              {{ currentEvent.notes || "-" }}
+            </p>
+          </div>
+          <div>
+            <p class="text-xs text-muted">Current Status</p>
+            <UBadge :color="getStatusColor(currentEvent.status)" variant="soft">
+              {{ currentEvent.status }}
+            </UBadge>
+          </div>
         </div>
+      </UCard>
+      <UCard>
+        <template #header>
+          <div>
+            <h2 class="text-lg font-semibold">Status Flow</h2>
+            <p class="text-sm text-muted">
+              Update event status with backend validation.
+            </p>
+          </div>
+        </template>
 
-        <br />
+        <form
+          class="flex flex-col gap-4 md:flex-row md:items-end"
+          @submit.prevent="handleUpdateStatus"
+        >
+          <UFormField label="Current Status" class="md:w-64">
+            <UBadge :color="getStatusColor(currentEvent.status)" variant="soft">
+              {{ currentEvent.status }}
+            </UBadge>
+          </UFormField>
 
-        <div>
-          <label>Change Status</label>
-          <br />
-          <select v-model="selectedStatus">
-            <option value="DRAFTED">DRAFTED</option>
-            <option value="SCHEDULED">SCHEDULED</option>
-            <option value="READY">READY</option>
-            <option value="ONGOING">ONGOING</option>
-            <option value="PENDING_EVALUATION">PENDING_EVALUATION</option>
-            <option value="COMPLETED">COMPLETED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
-        </div>
+          <UFormField label="Change Status" class="md:w-72">
+            <USelect v-model="selectedStatus" :items="eventStatusOptions" />
+          </UFormField>
 
-        <br />
+          <UButton
+            type="submit"
+            :loading="isUpdatingStatus"
+            icon="i-lucide-refresh-cw"
+          >
+            Update Status
+          </UButton>
+        </form>
 
-        <p v-if="statusErrorMessage" style="color: red">
+        <p v-if="statusErrorMessage" class="mt-3 text-sm text-red-500">
           {{ statusErrorMessage }}
         </p>
+      </UCard>
 
-        <button type="submit" :disabled="isUpdatingStatus">
-          {{ isUpdatingStatus ? "Updating..." : "Update Status" }}
-        </button>
-      </form>
-      <p>Location: {{ eventData?.data?.location || "-" }}</p>
+      <UCard>
+        <template #header>
+          <div>
+            <h2 class="text-lg font-semibold">Edit Event</h2>
+            <p class="text-sm text-muted">
+              Update event planning and operational data.
+            </p>
+          </div>
+        </template>
 
-      <hr />
+        <form class="space-y-4" @submit.prevent="handleUpdateEvent">
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <UFormField label="Event Name" required>
+              <UInput v-model="editEventName" />
+            </UFormField>
 
-      <h2>Assign Staff</h2>
-      <form @submit.prevent="handleAssignStaff">
-        <div>
-          <label>Staff</label>
-          <br />
-          <select v-model="staffId">
-            <option value="">Select staff</option>
-            <option
-              v-for="staff in assignableStaff"
-              :key="staff.id"
-              :value="staff.id"
-              :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
-            >
-              {{ staff.name }} - {{ staff.defaultRole }} -
-              {{ staff.availabilityStatus }} -
-              {{ staff.monthlyEventCount }} event bulan ini
-            </option>
-          </select>
-          <p>
-            AVAILABLE = belum ada event bentrok. SAME_DAY_AVAILABLE = ada event
-            lain di hari yang sama tapi tidak bentrok waktu. TIME_CONFLICT =
-            tidak bisa dipilih.
+            <UFormField label="Client Name" required>
+              <UInput v-model="editClientName" />
+            </UFormField>
+
+            <UFormField label="Client Phone">
+              <UInput v-model="editClientPhone" />
+            </UFormField>
+
+            <UFormField label="Service Type" required>
+              <USelect
+                v-model="editServiceTypeId"
+                :items="serviceTypeOptions"
+                placeholder="Select service type"
+              />
+            </UFormField>
+
+            <UFormField label="Sales">
+              <USelect
+                v-model="editSalesId"
+                :items="salesOptions"
+                placeholder="No sales / optional"
+              />
+            </UFormField>
+
+            <UFormField label="Event Date" required>
+              <UInput v-model="editEventDate" type="date" />
+            </UFormField>
+
+            <UFormField label="Start Time" required>
+              <UInput v-model="editStartTime" type="time" />
+            </UFormField>
+
+            <UFormField label="End Time" required>
+              <UInput v-model="editEndTime" type="time" />
+            </UFormField>
+
+            <UFormField label="Loading Date">
+              <UInput v-model="editLoadingDate" type="date" />
+            </UFormField>
+
+            <UFormField label="Loading Time">
+              <UInput v-model="editLoadingTime" type="time" />
+            </UFormField>
+
+            <UFormField label="Location">
+              <UInput v-model="editLocation" />
+            </UFormField>
+
+            <UFormField label="Vehicle Name">
+              <UInput v-model="editVehicleName" />
+            </UFormField>
+
+            <UFormField label="Driver Name">
+              <UInput v-model="editDriverName" />
+            </UFormField>
+
+            <UFormField label="Vendor Sewa">
+              <UInput
+                v-model="editVendorSewa"
+                placeholder="Optional vendor rental info"
+              />
+            </UFormField>
+          </div>
+
+          <UFormField label="Equipment Setup" required>
+            <UTextarea v-model="editEquipmentSetup" :rows="3" />
+          </UFormField>
+
+          <UFormField label="Notes">
+            <UTextarea v-model="editNotes" :rows="3" />
+          </UFormField>
+
+          <p v-if="editEventErrorMessage" class="text-sm text-red-500">
+            {{ editEventErrorMessage }}
           </p>
-          <h3>Staff Recommendation</h3>
 
-          <table border="1" cellpadding="8" cellspacing="0">
+          <div class="flex justify-end">
+            <UButton type="submit" :loading="isUpdatingEvent">
+              Update Event
+            </UButton>
+          </div>
+        </form>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <div
+            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+          >
+            <div>
+              <h2 class="text-lg font-semibold">Team Assignment</h2>
+              <p class="text-sm text-muted">
+                Select available staff and manage event role/status.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <UBadge color="primary" variant="soft">
+                {{ activeSelectedAssignments.length }} active staff
+              </UBadge>
+
+              <UBadge color="neutral" variant="soft">
+                {{ filteredAvailableStaff.length }} available
+              </UBadge>
+
+              <UBadge
+                v-if="inactiveSelectedAssignments.length"
+                color="warning"
+                variant="soft"
+              >
+                {{ inactiveSelectedAssignments.length }} inactive history
+              </UBadge>
+            </div>
+          </div>
+        </template>
+
+        <p v-if="assignmentErrorMessage" class="mb-4 text-sm text-red-500">
+          {{ assignmentErrorMessage }}
+        </p>
+
+        <div class="grid gap-4 xl:grid-cols-2">
+          <div class="rounded-lg border border-default bg-muted/20">
+            <div class="border-b border-default p-4">
+              <h3 class="font-medium">Selected Team</h3>
+              <p class="text-sm text-muted">
+                Staff assigned to this event. Cancelled/replaced records stay as
+                history.
+              </p>
+            </div>
+
+            <div class="space-y-3 p-4">
+              <p
+                v-if="selectedAssignments.length === 0"
+                class="text-sm text-muted"
+              >
+                No staff assigned yet.
+              </p>
+
+              <div
+                v-for="assignment in selectedAssignments"
+                :key="assignment.id"
+                class="rounded-lg border border-default bg-default p-4"
+                :class="{
+                  'opacity-60': !activeAssignmentStatuses.includes(
+                    assignment.assignmentStatus,
+                  ),
+                }"
+              >
+                <div
+                  class="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
+                >
+                  <div>
+                    <p class="font-medium">
+                      {{ assignment.staff?.name || "-" }}
+                    </p>
+
+                    <p class="text-sm text-muted">
+                      Default role: {{ assignment.staff?.defaultRole || "-" }}
+                    </p>
+                  </div>
+
+                  <UBadge
+                    :color="
+                      getAssignmentStatusColor(assignment.assignmentStatus)
+                    "
+                    variant="soft"
+                  >
+                    {{ assignment.assignmentStatus }}
+                  </UBadge>
+                </div>
+
+                <div
+                  v-if="assignmentForms[assignment.id]"
+                  class="grid gap-3 md:grid-cols-2"
+                >
+                  <UFormField label="Role">
+                    <USelect
+                      v-model="assignmentForms[assignment.id].roleInEvent"
+                      :items="roleOptions"
+                    />
+                  </UFormField>
+
+                  <UFormField label="Status">
+                    <USelect
+                      v-model="assignmentForms[assignment.id].assignmentStatus"
+                      :items="assignmentStatusOptions"
+                    />
+                  </UFormField>
+
+                  <UFormField label="Notes" class="md:col-span-2">
+                    <UTextarea
+                      v-model="assignmentForms[assignment.id].notes"
+                      placeholder="Assignment notes"
+                      :rows="2"
+                    />
+                  </UFormField>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <UButton
+                    size="sm"
+                    color="primary"
+                    variant="soft"
+                    :loading="savingAssignmentId === assignment.id"
+                    @click="handleUpdateAssignment(assignment.id)"
+                  >
+                    Update
+                  </UButton>
+
+                  <UButton
+                    size="sm"
+                    color="warning"
+                    variant="soft"
+                    @click="handleDeleteAssignment(assignment.id)"
+                  >
+                    Cancel Assignment
+                  </UButton>
+
+                  <UButton
+                    v-if="user?.role === 'DEVELOPER'"
+                    size="sm"
+                    color="error"
+                    variant="soft"
+                    @click="handleHardDeleteAssignment(assignment.id)"
+                  >
+                    Hard Delete
+                  </UButton>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-default bg-muted/20">
+            <div class="border-b border-default p-4">
+              <h3 class="font-medium">Available Staff</h3>
+              <p class="text-sm text-muted">
+                Search and add staff based on availability and workload.
+              </p>
+
+              <div class="mt-3">
+                <UInput
+                  v-model="availableStaffSearch"
+                  icon="i-lucide-search"
+                  placeholder="Search staff"
+                />
+              </div>
+            </div>
+
+            <div class="space-y-3 p-4">
+              <p
+                v-if="filteredAvailableStaff.length === 0"
+                class="text-sm text-muted"
+              >
+                No available staff found.
+              </p>
+
+              <div
+                v-for="staff in filteredAvailableStaff"
+                :key="staff.id"
+                class="rounded-lg border border-default bg-default p-4"
+                :class="{
+                  'opacity-60': staff.availabilityStatus === 'TIME_CONFLICT',
+                }"
+              >
+                <div
+                  class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
+                >
+                  <div class="space-y-1">
+                    <p class="font-medium">
+                      {{ staff.name }}
+                    </p>
+
+                    <p class="text-sm text-muted">
+                      Default role: {{ staff.defaultRole }}
+                    </p>
+
+                    <div class="flex flex-wrap gap-2 pt-1">
+                      <UBadge
+                        :color="getAvailabilityColor(staff.availabilityStatus)"
+                        variant="soft"
+                      >
+                        {{ staff.availabilityStatus }}
+                      </UBadge>
+
+                      <UBadge color="neutral" variant="soft">
+                        {{ staff.monthlyEventCount || 0 }} events this month
+                      </UBadge>
+
+                      <UBadge color="neutral" variant="soft">
+                        {{ staff.monthlyPicCount || 0 }} PIC
+                      </UBadge>
+                    </div>
+
+                    <p
+                      v-if="staff.conflictEvent"
+                      class="pt-1 text-xs text-red-500"
+                    >
+                      Conflict: {{ staff.conflictEvent.eventName }} ({{
+                        staff.conflictEvent.startTime
+                      }}
+                      - {{ staff.conflictEvent.endTime }})
+                    </p>
+
+                    <p
+                      v-else-if="staff.sameDayEvent"
+                      class="pt-1 text-xs text-amber-500"
+                    >
+                      Same day: {{ staff.sameDayEvent.eventName }} ({{
+                        staff.sameDayEvent.startTime
+                      }}
+                      - {{ staff.sameDayEvent.endTime }})
+                    </p>
+                  </div>
+
+                  <UButton
+                    size="sm"
+                    color="primary"
+                    variant="soft"
+                    icon="i-lucide-arrow-left"
+                    :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
+                    :loading="addingStaffId === staff.id"
+                    @click="handleAddAvailableStaff(staff)"
+                  >
+                    Add
+                  </UButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <div
+            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+          >
+            <div>
+              <h2 class="text-lg font-semibold">Post Event Data</h2>
+              <p class="text-sm text-muted">
+                Input actual ribbon usage after the event.
+              </p>
+            </div>
+
+            <UBadge
+              :color="requiresRibbonTracking ? 'warning' : 'neutral'"
+              variant="soft"
+            >
+              Ribbon tracking:
+              {{ requiresRibbonTracking ? "Required" : "Optional" }}
+            </UBadge>
+          </div>
+        </template>
+
+        <form class="space-y-4" @submit.prevent="handleSavePostEventData">
+          <div class="grid gap-4 md:grid-cols-3">
+            <UFormField label="Ribbon Awal">
+              <UInput v-model="postRibbonStart" type="number" />
+            </UFormField>
+
+            <UFormField label="Ribbon Akhir">
+              <UInput v-model="postRibbonEnd" type="number" />
+            </UFormField>
+
+            <UFormField label="Total Penggunaan">
+              <UInput :model-value="postRibbonUsed" type="number" disabled />
+            </UFormField>
+          </div>
+
+          <p v-if="postEventErrorMessage" class="text-sm text-red-500">
+            {{ postEventErrorMessage }}
+          </p>
+
+          <div class="flex justify-end">
+            <UButton type="submit" :loading="isSavingPostEventData">
+              Save Post Event Data
+            </UButton>
+          </div>
+        </form>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <div>
+            <h2 class="text-lg font-semibold">Event Evaluation</h2>
+            <p class="text-sm text-muted">
+              Client satisfaction and event-level feedback.
+            </p>
+          </div>
+        </template>
+
+        <form class="space-y-4" @submit.prevent="handleSaveEventEvaluation">
+          <UCheckbox
+            v-model="clientSatisfactionOk"
+            label="Client Satisfaction OK"
+          />
+
+          <UFormField label="Client Feedback">
+            <UTextarea
+              v-model="clientFeedback"
+              placeholder="Client feedback"
+              :rows="3"
+            />
+          </UFormField>
+
+          <UFormField label="Internal Notes">
+            <UTextarea
+              v-model="eventEvaluationNotes"
+              placeholder="Internal notes"
+              :rows="3"
+            />
+          </UFormField>
+
+          <p v-if="evaluationErrorMessage" class="text-sm text-red-500">
+            {{ evaluationErrorMessage }}
+          </p>
+
+          <div
+            class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+          >
+            <p class="text-sm text-muted">
+              Current Client Satisfaction:
+              <span class="font-medium">
+                {{
+                  formatBoolean(
+                    currentEvent.eventEvaluation?.clientSatisfactionOk,
+                  )
+                }}
+              </span>
+            </p>
+
+            <UButton type="submit" :loading="isSavingEventEvaluation">
+              Save Event Evaluation
+            </UButton>
+          </div>
+        </form>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <div>
+            <h2 class="text-lg font-semibold">Staff Evaluation</h2>
+            <p class="text-sm text-muted">
+              Evaluate only active assigned staff.
+            </p>
+          </div>
+        </template>
+
+        <p v-if="!activeAssignments.length" class="text-sm text-muted">
+          No active staff assignment for evaluation.
+        </p>
+
+        <p v-if="evaluationErrorMessage" class="mb-4 text-sm text-red-500">
+          {{ evaluationErrorMessage }}
+        </p>
+
+        <div class="grid gap-4 xl:grid-cols-2">
+          <div
+            v-for="assignment in activeAssignments"
+            :key="assignment.id"
+            class="rounded-lg border border-default p-4"
+          >
+            <div
+              class="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
+            >
+              <div>
+                <p class="font-medium">
+                  {{ assignment.staff?.name }} - {{ assignment.roleInEvent }}
+                </p>
+
+                <p class="text-sm text-muted">
+                  {{ assignment.staff?.defaultRole }}
+                </p>
+              </div>
+
+              <UBadge
+                :color="
+                  getStaffEvaluation(assignment.staffId)?.isSuccess
+                    ? 'success'
+                    : 'neutral'
+                "
+                variant="soft"
+              >
+                {{
+                  getStaffEvaluation(assignment.staffId)?.isSuccess
+                    ? "SUCCESS"
+                    : "NOT SUCCESS / NOT EVALUATED"
+                }}
+              </UBadge>
+            </div>
+
+            <div
+              v-if="staffEvaluationForms[assignment.staffId]"
+              class="space-y-4"
+            >
+              <div class="grid gap-3 md:grid-cols-2">
+                <UCheckbox
+                  v-model="staffEvaluationForms[assignment.staffId].sopOk"
+                  label="SOP OK"
+                />
+
+                <UCheckbox
+                  v-model="staffEvaluationForms[assignment.staffId].warehouseOk"
+                  label="Warehouse OK"
+                />
+
+                <UCheckbox
+                  v-model="staffEvaluationForms[assignment.staffId].groomingOk"
+                  label="Grooming OK"
+                />
+
+                <UCheckbox
+                  v-model="
+                    staffEvaluationForms[assignment.staffId].dataCollectionOk
+                  "
+                  label="Data Collection OK"
+                />
+              </div>
+
+              <UFormField label="Notes">
+                <UTextarea
+                  v-model="staffEvaluationForms[assignment.staffId].notes"
+                  placeholder="Staff evaluation notes"
+                  :rows="2"
+                />
+              </UFormField>
+
+              <div class="flex justify-end">
+                <UButton
+                  size="sm"
+                  :loading="savingStaffEvaluationId === assignment.staffId"
+                  @click="handleSaveStaffEvaluation(assignment.staffId)"
+                >
+                  Save Staff Evaluation
+                </UButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <div>
+            <h2 class="text-lg font-semibold">Activity Log</h2>
+            <p class="text-sm text-muted">Audit trail for this event.</p>
+          </div>
+        </template>
+
+        <p v-if="!currentEvent.activityLogs?.length" class="text-sm text-muted">
+          No activity log yet.
+        </p>
+
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Default Role</th>
-                <th>Availability</th>
-                <th>Monthly Event Count</th>
-                <th>Monthly PIC Count</th>
-                <th>Recommendation</th>
+              <tr class="border-b border-default text-left">
+                <th class="py-2 pr-4">Time</th>
+                <th class="py-2 pr-4">User</th>
+                <th class="py-2 pr-4">Action</th>
+                <th class="py-2 pr-4">Description</th>
               </tr>
             </thead>
 
             <tbody>
-              <tr v-for="staff in assignableStaff" :key="staff.id">
-                <td>{{ staff.name }}</td>
-                <td>{{ staff.defaultRole }}</td>
-                <td>{{ staff.availabilityStatus }}</td>
-                <td>{{ staff.monthlyEventCount }}</td>
-                <td>{{ staff.monthlyPicCount }}</td>
-                <td>
-                  <span v-if="staff.availabilityStatus === 'TIME_CONFLICT'">
-                    Not recommended
-                  </span>
-                  <span v-else-if="staff.monthlyEventCount === 0">
-                    Highly recommended
-                  </span>
-                  <span v-else> Recommended </span>
+              <tr
+                v-for="log in currentEvent.activityLogs"
+                :key="log.id"
+                class="border-b border-default"
+              >
+                <td class="py-2 pr-4">
+                  {{ formatDateTime(log.createdAt) }}
+                </td>
+                <td class="py-2 pr-4">
+                  {{ log.user?.name || "-" }}
+                </td>
+                <td class="py-2 pr-4">
+                  <UBadge color="neutral" variant="soft">
+                    {{ log.action }}
+                  </UBadge>
+                </td>
+                <td class="py-2 pr-4">
+                  {{ log.description || "-" }}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <br />
-
-        <div>
-          <label>Role in Event</label>
-          <br />
-          <select v-model="roleInEvent">
-            <option value="PIC">PIC</option>
-            <option value="CREW">CREW</option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Notes</label>
-          <br />
-          <textarea
-            v-model="assignmentNotes"
-            placeholder="Optional assignment notes"
-          ></textarea>
-        </div>
-
-        <br />
-
-        <p v-if="errorMessage" style="color: red">
-          {{ errorMessage }}
-        </p>
-
-        <button type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? "Assigning..." : "Assign Staff" }}
-        </button>
-      </form>
-
-      <hr />
-
-      <h2>Assigned Team</h2>
-      <p v-if="eventData?.data?.assignments?.length === 0">
-        No staff assigned yet.
-      </p>
-      <table v-else border="1" cellpadding="8" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Default Role</th>
-            <th>Role in Event</th>
-            <th>Status</th>
-            <th>Notes</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr
-            v-for="assignment in eventData?.data?.assignments"
-            :key="assignment.id"
-          >
-            <td>{{ assignment.staff?.name }}</td>
-            <td>{{ assignment.staff?.defaultRole }}</td>
-
-            <td>
-              <select v-model="assignmentForms[assignment.id].roleInEvent">
-                <option value="PIC">PIC</option>
-                <option value="CREW">CREW</option>
-              </select>
-            </td>
-
-            <td>
-              <select v-model="assignmentForms[assignment.id].assignmentStatus">
-                <option value="ASSIGNED">ASSIGNED</option>
-                <option value="CONFIRMED">CONFIRMED</option>
-                <option value="REPLACED">REPLACED</option>
-                <option value="CANCELLED">CANCELLED</option>
-              </select>
-            </td>
-
-            <td>
-              <textarea
-                v-model="assignmentForms[assignment.id].notes"
-                placeholder="Assignment notes"
-              ></textarea>
-            </td>
-
-            <td>
-              <button
-                type="button"
-                :disabled="savingAssignmentId === assignment.id"
-                @click="handleUpdateAssignment(assignment.id)"
-              >
-                {{
-                  savingAssignmentId === assignment.id ? "Saving..." : "Update"
-                }}
-              </button>
-
-              |
-
-              <button
-                type="button"
-                @click="handleDeleteAssignment(assignment.id)"
-              >
-                Delete
-              </button>
-
-              <template v-if="user?.role === 'DEVELOPER'">
-                |
-
-                <button
-                  type="button"
-                  @click="handleHardDeleteAssignment(assignment.id)"
-                >
-                  Hard Delete
-                </button>
-              </template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p v-if="assignmentErrorMessage" style="color: red">
-        {{ assignmentErrorMessage }}
-      </p>
+      </UCard>
     </div>
-    <hr />
-
-    <h2>Post Event Data</h2>
-
-    <form @submit.prevent="handleSavePostEventData">
-      <div>
-        <label>Ribbon Awal</label>
-        <br />
-        <input v-model="postRibbonStart" type="number" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Ribbon Akhir</label>
-        <br />
-        <input v-model="postRibbonEnd" type="number" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Total Penggunaan</label>
-        <br />
-        <input :value="postRibbonUsed" type="number" disabled />
-      </div>
-
-      <br />
-
-      <p v-if="postEventErrorMessage" style="color: red">
-        {{ postEventErrorMessage }}
-      </p>
-
-      <button type="submit" :disabled="isSavingPostEventData">
-        {{ isSavingPostEventData ? "Saving..." : "Save Post Event Data" }}
-      </button>
-    </form>
-
-    <hr />
-
-    <h2>Event Evaluation</h2>
-    <form @submit.prevent="handleSaveEventEvaluation">
-      <div>
-        <label>
-          <input v-model="clientSatisfactionOk" type="checkbox" />
-          Client Satisfaction OK
-        </label>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Client Feedback</label>
-        <br />
-        <textarea
-          v-model="clientFeedback"
-          placeholder="Client feedback"
-        ></textarea>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Evaluation Notes</label>
-        <br />
-        <textarea
-          v-model="eventEvaluationNotes"
-          placeholder="Internal notes"
-        ></textarea>
-      </div>
-
-      <br />
-
-      <button type="submit" :disabled="isSavingEventEvaluation">
-        {{ isSavingEventEvaluation ? "Saving..." : "Save Event Evaluation" }}
-      </button>
-    </form>
-
-    <p v-if="eventData?.data?.eventEvaluation">
-      Current Client Satisfaction:
-      {{
-        eventData?.data?.eventEvaluation?.clientSatisfactionOk ? "OK" : "NOT OK"
-      }}
-    </p>
-
-    <hr />
-
-    <h2>Staff Evaluation</h2>
-
-    <p v-if="!activeAssignments.length">
-      No active staff assignment for evaluation.
-    </p>
-
-    <p v-if="evaluationErrorMessage" style="color: red">
-      {{ evaluationErrorMessage }}
-    </p>
-
-    <div
-      v-for="assignment in activeAssignments"
-      :key="assignment.id"
-      style="border: 1px solid #ccc; padding: 12px; margin-bottom: 12px"
-    >
-      <h3>{{ assignment.staff?.name }} - {{ assignment.roleInEvent }}</h3>
-
-      <div>
-        <label>
-          <input
-            v-model="staffEvaluationForms[assignment.staffId].sopOk"
-            type="checkbox"
-          />
-          SOP OK
-        </label>
-      </div>
-
-      <div>
-        <label>
-          <input
-            v-model="staffEvaluationForms[assignment.staffId].warehouseOk"
-            type="checkbox"
-          />
-          Warehouse OK
-        </label>
-      </div>
-
-      <div>
-        <label>
-          <input
-            v-model="staffEvaluationForms[assignment.staffId].groomingOk"
-            type="checkbox"
-          />
-          Grooming OK
-        </label>
-      </div>
-
-      <div>
-        <label>
-          <input
-            v-model="staffEvaluationForms[assignment.staffId].dataCollectionOk"
-            type="checkbox"
-          />
-          Data Collection OK
-        </label>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Notes</label>
-        <br />
-        <textarea
-          v-model="staffEvaluationForms[assignment.staffId].notes"
-          placeholder="Staff evaluation notes"
-        ></textarea>
-      </div>
-
-      <br />
-
-      <button
-        type="button"
-        :disabled="savingStaffEvaluationId === assignment.staffId"
-        @click="handleSaveStaffEvaluation(assignment.staffId)"
-      >
-        {{
-          savingStaffEvaluationId === assignment.staffId
-            ? "Saving..."
-            : "Save Staff Evaluation"
-        }}
-      </button>
-
-      <p>
-        Result:
-        <strong>
-          {{
-            eventData?.data?.staffEvaluations?.find(
-              (item) => item.staffId === assignment.staffId,
-            )?.isSuccess
-              ? "SUCCESS"
-              : "NOT SUCCESS / NOT EVALUATED"
-          }}
-        </strong>
-      </p>
-    </div>
-
-    <hr />
-
-    <h2>Activity Log</h2>
-
-    <p v-if="!eventData?.data?.activityLogs?.length">
-      No activity log yet.
-    </p>
-
-    <table v-else border="1" cellpadding="8" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>User</th>
-          <th>Action</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="log in eventData?.data?.activityLogs" :key="log.id">
-          <td>{{ new Date(log.createdAt).toLocaleString() }}</td>
-          <td>{{ log.user?.name || "-" }}</td>
-          <td>{{ log.action }}</td>
-          <td>{{ log.description || "-" }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+  </div>
 </template>

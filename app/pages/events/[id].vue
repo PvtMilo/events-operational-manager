@@ -45,6 +45,7 @@ const editVendorSewa = ref("");
 const editNotes = ref("");
 const isUpdatingEvent = ref(false);
 const editEventErrorMessage = ref("");
+const isEditEventModalOpen = ref(false);
 
 const postRibbonStart = ref("");
 const postRibbonEnd = ref("");
@@ -170,29 +171,32 @@ const requiresRibbonTracking = computed(() => {
   return currentEvent.value?.serviceType?.requiresRibbonTracking === true;
 });
 
+function syncEditEventForm(event) {
+  editEventName.value = event.eventName || "";
+  editClientName.value = event.clientName || "";
+  editClientPhone.value = event.clientPhone || "";
+  editServiceTypeId.value = event.serviceTypeId || null;
+  editEquipmentSetup.value = event.equipmentSetup || "";
+  editSalesId.value = event.salesId || "NONE";
+  editEventDate.value = formatDateInput(event.eventDate);
+  editStartTime.value = event.startTime || "";
+  editEndTime.value = event.endTime || "";
+  editLoadingDate.value = formatDateInput(event.loadingDate);
+  editLoadingTime.value = event.loadingTime || "";
+  editLocation.value = event.location || "";
+  editVehicleName.value = event.vehicleName || "";
+  editDriverName.value = event.driverName || "";
+  editVendorSewa.value = event.vendorSewa || "";
+  editNotes.value = event.notes || "";
+}
+
 watch(
   currentEvent,
   (event) => {
     if (!event) return;
 
     selectedStatus.value = event.status || "";
-
-    editEventName.value = event.eventName || "";
-    editClientName.value = event.clientName || "";
-    editClientPhone.value = event.clientPhone || "";
-    editServiceTypeId.value = event.serviceTypeId || null;
-    editEquipmentSetup.value = event.equipmentSetup || "";
-    editSalesId.value = event.salesId || "NONE";
-    editEventDate.value = formatDateInput(event.eventDate);
-    editStartTime.value = event.startTime || "";
-    editEndTime.value = event.endTime || "";
-    editLoadingDate.value = formatDateInput(event.loadingDate);
-    editLoadingTime.value = event.loadingTime || "";
-    editLocation.value = event.location || "";
-    editVehicleName.value = event.vehicleName || "";
-    editDriverName.value = event.driverName || "";
-    editVendorSewa.value = event.vendorSewa || "";
-    editNotes.value = event.notes || "";
+    syncEditEventForm(event);
 
     postRibbonStart.value = event.ribbonStart ?? "";
     postRibbonEnd.value = event.ribbonEnd ?? "";
@@ -313,6 +317,15 @@ function getStaffEvaluation(staffId) {
   });
 }
 
+function handleOpenEditEventModal() {
+  if (currentEvent.value) {
+    syncEditEventForm(currentEvent.value);
+  }
+
+  editEventErrorMessage.value = "";
+  isEditEventModalOpen.value = true;
+}
+
 async function handleUpdateEvent() {
   editEventErrorMessage.value = "";
 
@@ -369,6 +382,7 @@ async function handleUpdateEvent() {
 
     await refresh();
     await refreshAvailability();
+    isEditEventModalOpen.value = false;
   } catch (error) {
     editEventErrorMessage.value =
       error?.data?.statusMessage ||
@@ -651,8 +665,15 @@ async function handleSaveStaffEvaluation(staffId) {
                 Main event information and operational details.
               </p>
             </div>
-            <!-- change this to edit button and change the styling to be consistance -->
-            <button>Edit</button>
+            <UButton
+              type="button"
+              icon="i-lucide-pencil"
+              color="neutral"
+              variant="outline"
+              @click="handleOpenEditEventModal"
+            >
+              Edit
+            </UButton>
           </div>
         </template>
 
@@ -778,105 +799,156 @@ async function handleSaveStaffEvaluation(staffId) {
         </p>
       </UCard>
 
-      <UCard>
-        <template #header>
-          <div>
-            <h2 class="text-lg font-semibold">Edit Event</h2>
-            <p class="text-sm text-muted">
-              Update event planning and operational data.
+      <UModal
+        v-model:open="isEditEventModalOpen"
+        title="Edit Event"
+        description="Update event planning and operational data."
+        :ui="{ content: 'max-w-3xl' }"
+      >
+        <template #body>
+          <form
+            id="edit-event-form"
+            class="space-y-4"
+            @submit.prevent="handleUpdateEvent"
+          >
+            <div class="grid gap-4 md:grid-cols-2">
+              <UFormField label="Event Name" required>
+                <UInput
+                  v-model="editEventName"
+                  placeholder="Example: Friskies CFD"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Client Name" required>
+                <UInput
+                  v-model="editClientName"
+                  placeholder="Example: Friskies"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Client Phone">
+                <UInput
+                  v-model="editClientPhone"
+                  placeholder="Optional"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Service Type" required>
+                <USelect
+                  v-model="editServiceTypeId"
+                  :items="serviceTypeOptions"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Sales">
+                <USelect
+                  v-model="editSalesId"
+                  :items="salesOptions"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Event Date" required>
+                <UInput v-model="editEventDate" type="date" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Start Time" required>
+                <UInput v-model="editStartTime" type="time" class="w-full" />
+              </UFormField>
+
+              <UFormField label="End Time" required>
+                <UInput v-model="editEndTime" type="time" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Loading Date">
+                <UInput v-model="editLoadingDate" type="date" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Loading Time">
+                <UInput v-model="editLoadingTime" type="time" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Location" class="w-full">
+                <UInput
+                  v-model="editLocation"
+                  placeholder="Event location"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Vehicle Name">
+                <UInput
+                  v-model="editVehicleName"
+                  placeholder="Optional"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Driver Name">
+                <UInput
+                  v-model="editDriverName"
+                  placeholder="Optional"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Vendor Sewa" class="md:col-span-2">
+                <UInput
+                  v-model="editVendorSewa"
+                  placeholder="Optional vendor rental info"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
+
+            <UFormField label="Equipment Setup" required>
+              <UTextarea
+                v-model="editEquipmentSetup"
+                placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="Notes">
+              <UTextarea
+                v-model="editNotes"
+                placeholder="Optional notes"
+                class="w-full"
+              />
+            </UFormField>
+
+            <p v-if="editEventErrorMessage" class="text-sm text-red-500">
+              {{ editEventErrorMessage }}
             </p>
-          </div>
+          </form>
         </template>
 
-        <form class="space-y-4" @submit.prevent="handleUpdateEvent">
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <UFormField label="Event Name" required>
-              <UInput v-model="editEventName" />
-            </UFormField>
+        <template #footer>
+          <div class="flex gap-2 w-full justify-end">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="ghost"
+              @click="isEditEventModalOpen = false"
+            >
+              Cancel
+            </UButton>
 
-            <UFormField label="Client Name" required>
-              <UInput v-model="editClientName" />
-            </UFormField>
-
-            <UFormField label="Client Phone">
-              <UInput v-model="editClientPhone" />
-            </UFormField>
-
-            <UFormField label="Service Type" required>
-              <USelect
-                v-model="editServiceTypeId"
-                :items="serviceTypeOptions"
-                placeholder="Select service type"
-              />
-            </UFormField>
-
-            <UFormField label="Sales">
-              <USelect
-                v-model="editSalesId"
-                :items="salesOptions"
-                placeholder="No sales / optional"
-              />
-            </UFormField>
-
-            <UFormField label="Event Date" required>
-              <UInput v-model="editEventDate" type="date" />
-            </UFormField>
-
-            <UFormField label="Start Time" required>
-              <UInput v-model="editStartTime" type="time" />
-            </UFormField>
-
-            <UFormField label="End Time" required>
-              <UInput v-model="editEndTime" type="time" />
-            </UFormField>
-
-            <UFormField label="Loading Date">
-              <UInput v-model="editLoadingDate" type="date" />
-            </UFormField>
-
-            <UFormField label="Loading Time">
-              <UInput v-model="editLoadingTime" type="time" />
-            </UFormField>
-
-            <UFormField label="Location">
-              <UInput v-model="editLocation" />
-            </UFormField>
-
-            <UFormField label="Vehicle Name">
-              <UInput v-model="editVehicleName" />
-            </UFormField>
-
-            <UFormField label="Driver Name">
-              <UInput v-model="editDriverName" />
-            </UFormField>
-
-            <UFormField label="Vendor Sewa">
-              <UInput
-                v-model="editVendorSewa"
-                placeholder="Optional vendor rental info"
-              />
-            </UFormField>
-          </div>
-
-          <UFormField label="Equipment Setup" required>
-            <UTextarea v-model="editEquipmentSetup" :rows="3" />
-          </UFormField>
-
-          <UFormField label="Notes">
-            <UTextarea v-model="editNotes" :rows="3" />
-          </UFormField>
-
-          <p v-if="editEventErrorMessage" class="text-sm text-red-500">
-            {{ editEventErrorMessage }}
-          </p>
-
-          <div class="flex justify-end">
-            <UButton type="submit" :loading="isUpdatingEvent">
+            <UButton
+              form="edit-event-form"
+              type="submit"
+              color="primary"
+              :loading="isUpdatingEvent"
+            >
               Update Event
             </UButton>
           </div>
-        </form>
-      </UCard>
+        </template>
+      </UModal>
 
       <UCard>
         <template #header>
@@ -924,7 +996,7 @@ async function handleSaveStaffEvaluation(staffId) {
               </p>
             </div>
 
-            <div class="space-y-3 p-4">
+            <div class="max-h-[32rem] space-y-3 overflow-y-auto p-4">
               <p
                 v-if="selectedAssignments.length === 0"
                 class="text-sm text-muted"
@@ -1042,7 +1114,7 @@ async function handleSaveStaffEvaluation(staffId) {
               </div>
             </div>
 
-            <div class="space-y-3 p-4">
+            <div class="max-h-[32rem] space-y-3 overflow-y-auto p-4">
               <p
                 v-if="filteredAvailableStaff.length === 0"
                 class="text-sm text-muted"

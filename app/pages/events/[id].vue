@@ -72,6 +72,9 @@ const assignmentForms = ref({});
 const savingAssignmentId = ref("");
 const assignmentErrorMessage = ref("");
 const addingStaffId = ref("");
+const draftTeam = ref([]);
+const originalTeamSignature = ref("");
+const isSavingTeam = ref(false);
 
 const clientSatisfactionOk = ref(false);
 const clientFeedback = ref("");
@@ -104,6 +107,11 @@ const assignmentStatusOptions = [
   { label: "CONFIRMED", value: "CONFIRMED" },
   { label: "REPLACED", value: "REPLACED" },
   { label: "CANCELLED", value: "CANCELLED" },
+];
+
+const teamAssignmentStatusOptions = [
+  { label: "ASSIGNED", value: "ASSIGNED" },
+  { label: "CONFIRMED", value: "CONFIRMED" },
 ];
 
 const serviceTypeOptions = computed(() => {
@@ -141,15 +149,37 @@ const inactiveSelectedAssignments = computed(() => {
 
 const activeAssignments = activeSelectedAssignments;
 
+const selectedDraftStaffIds = computed(() => {
+  return draftTeam.value.map((member) => member.staffId);
+});
+
 const assignableStaff = computed(() => {
-  const assignedStaffIds = selectedAssignments.value.map((assignment) => {
-    return assignment.staffId;
-  });
+  const selectedIds = selectedDraftStaffIds.value;
 
   return (
-    availabilityData.value?.data?.filter((staff) => {
-      return !assignedStaffIds.includes(staff.id);
-    }) || []
+    availabilityData.value?.data
+      ?.filter((staff) => {
+        return !selectedIds.includes(staff.id);
+      })
+      .sort((a, b) => {
+        const rank = {
+          AVAILABLE: 1,
+          SAME_DAY_AVAILABLE: 2,
+          TIME_CONFLICT: 3,
+        };
+
+        const rankA = rank[a.availabilityStatus] || 9;
+        const rankB = rank[b.availabilityStatus] || 9;
+
+        if (rankA !== rankB) return rankA - rankB;
+
+        const monthlyA = a.monthlyEventCount || 0;
+        const monthlyB = b.monthlyEventCount || 0;
+
+        if (monthlyA !== monthlyB) return monthlyA - monthlyB;
+
+        return a.name.localeCompare(b.name);
+      }) || []
   );
 });
 
@@ -165,6 +195,10 @@ const filteredAvailableStaff = computed(() => {
       staff.availabilityStatus?.toLowerCase().includes(keyword)
     );
   });
+});
+
+const hasTeamChanges = computed(() => {
+  return getTeamSignature(draftTeam.value) !== originalTeamSignature.value;
 });
 
 const requiresRibbonTracking = computed(() => {
@@ -197,6 +231,7 @@ watch(
 
     selectedStatus.value = event.status || "";
     syncEditEventForm(event);
+    syncTeamDraftFromEvent(event);
 
     postRibbonStart.value = event.ribbonStart ?? "";
     postRibbonEnd.value = event.ribbonEnd ?? "";
@@ -311,6 +346,50 @@ function getDefaultRoleForEvent(staff) {
   return staff.defaultRole === "PIC" ? "PIC" : "CREW";
 }
 
+function getTeamSignature(team) {
+  return JSON.stringify(
+    team
+      .map((member) => ({
+        staffId: member.staffId,
+        roleInEvent: member.roleInEvent,
+        assignmentStatus: member.assignmentStatus,
+        notes: member.notes || "",
+      }))
+      .sort((a, b) => a.staffId.localeCompare(b.staffId)),
+  );
+}
+
+function syncTeamDraftFromEvent(event) {
+  const activeAssignments =
+    event?.assignments?.filter((assignment) => {
+      return activeAssignmentStatuses.includes(assignment.assignmentStatus);
+    }) || [];
+
+  draftTeam.value = activeAssignments.map((assignment) => ({
+    assignmentId: assignment.id,
+    staffId: assignment.staffId,
+    staff: assignment.staff,
+    roleInEvent: assignment.roleInEvent || "CREW",
+    assignmentStatus: assignment.assignmentStatus || "ASSIGNED",
+    notes: assignment.notes || "",
+  }));
+
+  originalTeamSignature.value = getTeamSignature(draftTeam.value);
+  assignmentErrorMessage.value = "";
+}
+
+function handleRemoveDraftStaff(staffId) {
+  draftTeam.value = draftTeam.value.filter((member) => {
+    return member.staffId !== staffId;
+  });
+}
+
+function handleResetTeamDraft() {
+  if (!currentEvent.value) return;
+
+  syncTeamDraftFromEvent(currentEvent.value);
+}
+
 function getStaffEvaluation(staffId) {
   return currentEvent.value?.staffEvaluations?.find((item) => {
     return item.staffId === staffId;
@@ -417,7 +496,7 @@ async function handleUpdateStatus() {
   }
 }
 
-async function handleAddAvailableStaff(staff) {
+function handleAddAvailableStaff(staff) {
   assignmentErrorMessage.value = "";
 
   if (staff.availabilityStatus === "TIME_CONFLICT") {
@@ -426,15 +505,36 @@ async function handleAddAvailableStaff(staff) {
     return;
   }
 
-  addingStaffId.value = staff.id;
+  const alreadySelected = draftTeam.value.some((member) => {
+    return member.staffId === staff.id;
+  });
+
+  if (alreadySelected) return;
+
+  draftTeam.value.push({
+    assignmentId: null,
+    staffId: staff.id,
+    staff,
+    roleInEvent: getDefaultRoleForEvent(staff),
+    assignmentStatus: "ASSIGNED",
+    notes: "",
+  });
+}
+
+async function handleSaveTeam() {
+  assignmentErrorMessage.value = "";
+  isSavingTeam.value = true;
 
   try {
-    await $fetch(`/api/events/${eventId}/assignments`, {
-      method: "POST",
+    await $fetch(`/api/events/${eventId}/team`, {
+      method: "PATCH",
       body: {
-        staffId: staff.id,
-        roleInEvent: getDefaultRoleForEvent(staff),
-        notes: "",
+        team: draftTeam.value.map((member) => ({
+          staffId: member.staffId,
+          roleInEvent: member.roleInEvent,
+          assignmentStatus: member.assignmentStatus,
+          notes: member.notes || "",
+        })),
       },
     });
 
@@ -444,9 +544,9 @@ async function handleAddAvailableStaff(staff) {
     assignmentErrorMessage.value =
       error?.data?.statusMessage ||
       error?.statusMessage ||
-      "Failed to assign staff";
+      "Failed to save team";
   } finally {
-    addingStaffId.value = "";
+    isSavingTeam.value = false;
   }
 }
 
@@ -953,31 +1053,49 @@ async function handleSaveStaffEvaluation(staffId) {
       <UCard>
         <template #header>
           <div
-            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+            class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
           >
             <div>
               <h2 class="text-lg font-semibold">Team Assignment</h2>
               <p class="text-sm text-muted">
-                Select available staff and manage event role/status.
+                Build the team draft first, then save when the selection is final.
               </p>
             </div>
 
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <UBadge color="primary" variant="soft">
-                {{ activeSelectedAssignments.length }} active staff
+                {{ draftTeam.length }} selected
               </UBadge>
 
               <UBadge color="neutral" variant="soft">
                 {{ filteredAvailableStaff.length }} available
               </UBadge>
 
-              <UBadge
-                v-if="inactiveSelectedAssignments.length"
-                color="warning"
-                variant="soft"
-              >
-                {{ inactiveSelectedAssignments.length }} inactive history
+              <UBadge v-if="hasTeamChanges" color="warning" variant="soft">
+                Unsaved changes
               </UBadge>
+
+              <UButton
+                size="sm"
+                color="neutral"
+                variant="outline"
+                icon="i-lucide-rotate-ccw"
+                :disabled="!hasTeamChanges || isSavingTeam"
+                @click="handleResetTeamDraft"
+              >
+                Reset Changes
+              </UButton>
+
+              <UButton
+                size="sm"
+                color="primary"
+                icon="i-lucide-save"
+                :loading="isSavingTeam"
+                :disabled="!hasTeamChanges"
+                @click="handleSaveTeam"
+              >
+                Save Team
+              </UButton>
             </div>
           </div>
         </template>
@@ -986,80 +1104,69 @@ async function handleSaveStaffEvaluation(staffId) {
           {{ assignmentErrorMessage }}
         </p>
 
-        <div class="grid gap-4 xl:grid-cols-2">
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div class="rounded-lg border border-default bg-muted/20">
             <div class="border-b border-default p-4">
               <h3 class="font-medium">Selected Team</h3>
               <p class="text-sm text-muted">
-                Staff assigned to this event. Cancelled/replaced records stay as
-                history.
+                Draft team for this event. Use Move to Available if you selected the wrong staff.
               </p>
             </div>
 
             <div class="max-h-[32rem] space-y-3 overflow-y-auto p-4">
-              <p
-                v-if="selectedAssignments.length === 0"
-                class="text-sm text-muted"
-              >
-                No staff assigned yet.
+              <p v-if="draftTeam.length === 0" class="text-sm text-muted">
+                No staff selected yet. Add staff from the available list.
               </p>
 
               <div
-                v-for="assignment in selectedAssignments"
-                :key="assignment.id"
+                v-for="member in draftTeam"
+                :key="member.assignmentId || member.staffId"
                 class="rounded-lg border border-default bg-default p-4"
-                :class="{
-                  'opacity-60': !activeAssignmentStatuses.includes(
-                    assignment.assignmentStatus,
-                  ),
-                }"
               >
                 <div
                   class="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
                 >
                   <div>
                     <p class="font-medium">
-                      {{ assignment.staff?.name || "-" }}
+                      {{ member.staff?.name || '-' }}
                     </p>
 
                     <p class="text-sm text-muted">
-                      Default role: {{ assignment.staff?.defaultRole || "-" }}
+                      Default role: {{ member.staff?.defaultRole || '-' }}
                     </p>
                   </div>
 
                   <UBadge
-                    :color="
-                      getAssignmentStatusColor(assignment.assignmentStatus)
-                    "
+                    :color="getAssignmentStatusColor(member.assignmentStatus)"
                     variant="soft"
                   >
-                    {{ assignment.assignmentStatus }}
+                    {{ member.assignmentStatus }}
                   </UBadge>
                 </div>
 
-                <div
-                  v-if="assignmentForms[assignment.id]"
-                  class="grid gap-3 md:grid-cols-2"
-                >
+                <div class="grid gap-3 md:grid-cols-2">
                   <UFormField label="Role">
                     <USelect
-                      v-model="assignmentForms[assignment.id].roleInEvent"
+                      v-model="member.roleInEvent"
                       :items="roleOptions"
+                      class="w-full"
                     />
                   </UFormField>
 
                   <UFormField label="Status">
                     <USelect
-                      v-model="assignmentForms[assignment.id].assignmentStatus"
-                      :items="assignmentStatusOptions"
+                      v-model="member.assignmentStatus"
+                      :items="teamAssignmentStatusOptions"
+                      class="w-full"
                     />
                   </UFormField>
 
                   <UFormField label="Notes" class="md:col-span-2">
                     <UTextarea
-                      v-model="assignmentForms[assignment.id].notes"
+                      v-model="member.notes"
                       placeholder="Assignment notes"
                       :rows="2"
+                      class="w-full"
                     />
                   </UFormField>
                 </div>
@@ -1067,29 +1174,20 @@ async function handleSaveStaffEvaluation(staffId) {
                 <div class="mt-4 flex flex-wrap gap-2">
                   <UButton
                     size="sm"
-                    color="primary"
-                    variant="soft"
-                    :loading="savingAssignmentId === assignment.id"
-                    @click="handleUpdateAssignment(assignment.id)"
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-arrow-right"
+                    @click="handleRemoveDraftStaff(member.staffId)"
                   >
-                    Update
+                    Move to Available
                   </UButton>
 
                   <UButton
-                    size="sm"
-                    color="warning"
-                    variant="soft"
-                    @click="handleDeleteAssignment(assignment.id)"
-                  >
-                    Cancel Assignment
-                  </UButton>
-
-                  <UButton
-                    v-if="user?.role === 'DEVELOPER'"
+                    v-if="user?.role === 'DEVELOPER' && member.assignmentId"
                     size="sm"
                     color="error"
                     variant="soft"
-                    @click="handleHardDeleteAssignment(assignment.id)"
+                    @click="handleHardDeleteAssignment(member.assignmentId)"
                   >
                     Hard Delete
                   </UButton>
@@ -1098,11 +1196,17 @@ async function handleSaveStaffEvaluation(staffId) {
             </div>
           </div>
 
+          <div class="hidden items-center justify-center xl:flex">
+            <div class="flex flex-col gap-2 text-muted">
+              <UIcon name="i-lucide-arrow-left-right" class="size-6" />
+            </div>
+          </div>
+
           <div class="rounded-lg border border-default bg-muted/20">
             <div class="border-b border-default p-4">
               <h3 class="font-medium">Available Staff</h3>
               <p class="text-sm text-muted">
-                Search and add staff based on availability and workload.
+                Search and add staff based on availability and monthly workload.
               </p>
 
               <div class="mt-3">
@@ -1110,6 +1214,7 @@ async function handleSaveStaffEvaluation(staffId) {
                   v-model="availableStaffSearch"
                   icon="i-lucide-search"
                   placeholder="Search staff"
+                  class="w-full"
                 />
               </div>
             </div>
@@ -1163,20 +1268,16 @@ async function handleSaveStaffEvaluation(staffId) {
                       v-if="staff.conflictEvent"
                       class="pt-1 text-xs text-red-500"
                     >
-                      Conflict: {{ staff.conflictEvent.eventName }} ({{
-                        staff.conflictEvent.startTime
-                      }}
-                      - {{ staff.conflictEvent.endTime }})
+                      Conflict: {{ staff.conflictEvent.eventName }}
+                      ({{ staff.conflictEvent.startTime }} - {{ staff.conflictEvent.endTime }})
                     </p>
 
                     <p
                       v-else-if="staff.sameDayEvent"
                       class="pt-1 text-xs text-amber-500"
                     >
-                      Same day: {{ staff.sameDayEvent.eventName }} ({{
-                        staff.sameDayEvent.startTime
-                      }}
-                      - {{ staff.sameDayEvent.endTime }})
+                      Same day: {{ staff.sameDayEvent.eventName }}
+                      ({{ staff.sameDayEvent.startTime }} - {{ staff.sameDayEvent.endTime }})
                     </p>
                   </div>
 
@@ -1186,7 +1287,6 @@ async function handleSaveStaffEvaluation(staffId) {
                     variant="soft"
                     icon="i-lucide-arrow-left"
                     :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
-                    :loading="addingStaffId === staff.id"
                     @click="handleAddAvailableStaff(staff)"
                   >
                     Add

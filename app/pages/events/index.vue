@@ -152,6 +152,33 @@ function getEventStaff(event) {
     .join(", ");
 }
 
+function getEventActionItems(event) {
+  const items = [
+    {
+      label: "Detail",
+      icon: "i-lucide-eye",
+      to: `/events/${event.id}`,
+    },
+    {
+      label: "Cancel",
+      icon: "i-lucide-ban",
+      color: "warning",
+      onSelect: () => handleDelete(event.id),
+    },
+  ];
+
+  if (user.value?.role === "DEVELOPER") {
+    items.push({
+      label: "Hard Delete",
+      icon: "i-lucide-trash-2",
+      color: "error",
+      onSelect: () => handleHardDeleteEvent(event.id),
+    });
+  }
+
+  return items;
+}
+
 async function handleApplyFilter() {
   page.value = 1;
   await refresh();
@@ -652,7 +679,7 @@ async function handleHardDeleteEvent(id) {
               <th class="py-2 pr-4">Staff</th>
               <th class="py-2 pr-4">Location</th>
               <th class="py-2 pr-4">Status</th>
-              <th class="py-2 pr-4">Action</th>
+
             </tr>
           </thead>
           <tbody>
@@ -689,31 +716,18 @@ async function handleHardDeleteEvent(id) {
               </td>
 
               <td class="py-3 pr-4">
-                <div class="flex flex-wrap gap-2">
+                <UDropdownMenu
+                  :items="getEventActionItems(item)"
+                  :content="{ align: 'end' }"
+                >
                   <UButton
+                    icon="i-lucide-ellipsis-vertical"
                     size="xs"
-                    color="primary"
-                    variant="soft"
-                    :to="`/events/${item.id}`"
-                    >Detail</UButton
-                  >
-                  <UButton
-                    size="xs"
-                    color="warning"
-                    variant="soft"
-                    @click="handleDelete(item.id)"
-                    >Cancel</UButton
-                  >
-                  <UButton
-                    v-if="user?.role === 'DEVELOPER'"
-                    size="xs"
-                    color="error"
-                    variant="soft"
-                    @click="handleHardDeleteEvent(item.id)"
-                  >
-                    Hard Delete
-                  </UButton>
-                </div>
+                    color="neutral"
+                    variant="ghost"
+                    aria-label="Event actions"
+                  />
+                </UDropdownMenu>
               </td>
             </tr>
           </tbody>

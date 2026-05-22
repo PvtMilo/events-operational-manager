@@ -42,7 +42,8 @@ const eventUrl = computed(() => {
 
   if (search.value) params.set("search", search.value);
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
-  if (filterServiceTypeId.value !== "ALL") params.set("serviceTypeId", filterServiceTypeId.value);
+  if (filterServiceTypeId.value !== "ALL")
+    params.set("serviceTypeId", filterServiceTypeId.value);
   if (filterYear.value !== "ALL") params.set("year", filterYear.value);
   if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
 
@@ -84,7 +85,7 @@ const createServiceTypeOptions = computed(() =>
   (serviceTypesData.value?.data || []).map((item) => ({
     label: item.name,
     value: item.id,
-  }))
+  })),
 );
 
 const salesOptions = computed(() => [
@@ -174,12 +175,15 @@ function handleExportEvents() {
 
   if (search.value) params.set("search", search.value);
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
-  if (filterServiceTypeId.value !== "ALL") params.set("serviceTypeId", filterServiceTypeId.value);
+  if (filterServiceTypeId.value !== "ALL")
+    params.set("serviceTypeId", filterServiceTypeId.value);
   if (filterYear.value !== "ALL") params.set("year", filterYear.value);
   if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
 
   const queryString = params.toString();
-  const url = queryString ? `/api/events/export?${queryString}` : "/api/events/export";
+  const url = queryString
+    ? `/api/events/export?${queryString}`
+    : "/api/events/export";
 
   window.open(url, "_blank");
 }
@@ -198,12 +202,7 @@ async function goToNextPage() {
   await refresh();
 }
 
-const {
-  data: eventsData,
-  pending,
-  error,
-  refresh,
-} = await useFetch(eventUrl);
+const { data: eventsData, pending, error, refresh } = await useFetch(eventUrl);
 const { data: serviceTypesData } = await useFetch("/api/service-types");
 const { data: salesData } = await useFetch("/api/sales");
 
@@ -305,8 +304,8 @@ async function handleDelete(id) {
   } catch (error) {
     alert(
       error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to delete event",
+        error?.statusMessage ||
+        "Failed to delete event",
     );
   }
 }
@@ -327,8 +326,8 @@ async function handleHardDeleteEvent(id) {
   } catch (error) {
     alert(
       error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to hard delete event",
+        error?.statusMessage ||
+        "Failed to hard delete event",
     );
   }
 }
@@ -336,46 +335,79 @@ async function handleHardDeleteEvent(id) {
 
 <template>
   <div class="p-6 space-y-6">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
       <div>
-        <h1 class="text-2xl font-semibold">
-          Events
-        </h1>
+        <h1 class="text-2xl font-semibold">Events</h1>
         <p class="text-sm text-muted">
           Manage event records, schedule, assignment, and operational status.
         </p>
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <UButton icon="i-lucide-download" color="neutral" variant="outline" @click="handleExportEvents">
+        <UButton
+          icon="i-lucide-download"
+          color="neutral"
+          variant="outline"
+          @click="handleExportEvents"
+        >
           Export CSV
         </UButton>
 
-        <UButton icon="i-lucide-plus" color="primary" @click="isCreateEventModalOpen = true">
+        <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          @click="isCreateEventModalOpen = true"
+        >
           Add Event
         </UButton>
       </div>
     </div>
 
-    <UModal v-model:open="isCreateEventModalOpen" title="Add Event" description="Create a new event record."
-      :ui="{ content: 'max-w-3xl' }">
+    <UModal
+      v-model:open="isCreateEventModalOpen"
+      title="Add Event"
+      description="Create a new event record."
+      :ui="{ content: 'max-w-3xl' }"
+    >
       <template #body>
-        <form id="create-event-form" class="space-y-4" @submit.prevent="handleCreate">
+        <form
+          id="create-event-form"
+          class="space-y-4"
+          @submit.prevent="handleCreate"
+        >
           <div class="grid gap-4 md:grid-cols-2">
             <UFormField label="Event Name" required>
-              <UInput v-model="eventName" placeholder="Example: Friskies CFD" class="w-full" />
+              <UInput
+                v-model="eventName"
+                placeholder="Example: Friskies CFD"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Client Name" required>
-              <UInput v-model="clientName" placeholder="Example: Friskies" class="w-full" />
+              <UInput
+                v-model="clientName"
+                placeholder="Example: Friskies"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Client Phone">
-              <UInput v-model="clientPhone" placeholder="Optional" class="w-full" />
+              <UInput
+                v-model="clientPhone"
+                placeholder="Optional"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Service Type" required>
-              <USelect v-model="serviceTypeId" :items="createServiceTypeOptions" class="w-full" />
+              <USelect
+                v-model="serviceTypeId"
+                :items="createServiceTypeOptions"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Sales">
@@ -383,7 +415,11 @@ async function handleHardDeleteEvent(id) {
             </UFormField>
 
             <UFormField label="Status">
-              <USelect v-model="status" :items="eventStatusOptions" class="w-full" />
+              <USelect
+                v-model="status"
+                :items="eventStatusOptions"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Event Date" required>
@@ -407,29 +443,52 @@ async function handleHardDeleteEvent(id) {
             </UFormField>
 
             <UFormField label="Location" class="w-full">
-              <UInput v-model="location" placeholder="Event location" class="w-full" />
+              <UInput
+                v-model="location"
+                placeholder="Event location"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Vehicle Name">
-              <UInput v-model="vehicleName" placeholder="Optional" class="w-full" />
+              <UInput
+                v-model="vehicleName"
+                placeholder="Optional"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Driver Name">
-              <UInput v-model="driverName" placeholder="Optional" class="w-full" />
+              <UInput
+                v-model="driverName"
+                placeholder="Optional"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Vendor Sewa" class="md:col-span-2">
-              <UInput v-model="vendorSewa" placeholder="Optional vendor rental info" class="w-full" />
+              <UInput
+                v-model="vendorSewa"
+                placeholder="Optional vendor rental info"
+                class="w-full"
+              />
             </UFormField>
           </div>
 
           <UFormField label="Equipment Setup" required>
-            <UTextarea v-model="equipmentSetup" placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
-              class="w-full" />
+            <UTextarea
+              v-model="equipmentSetup"
+              placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
+              class="w-full"
+            />
           </UFormField>
 
           <UFormField label="Notes">
-            <UTextarea v-model="notes" placeholder="Optional notes" class="w-full" />
+            <UTextarea
+              v-model="notes"
+              placeholder="Optional notes"
+              class="w-full"
+            />
           </UFormField>
 
           <p v-if="errorMessage" class="text-sm text-red-500">
@@ -439,54 +498,113 @@ async function handleHardDeleteEvent(id) {
       </template>
       <template #footer>
         <div class="flex gap-2 w-full justify-end">
-          <UButton color="neutral" variant="ghost" type="button" @click="isCreateEventModalOpen = false">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            type="button"
+            @click="isCreateEventModalOpen = false"
+          >
             Cancel
           </UButton>
-          <UButton form="create-event-form" type="submit" color="primary" :loading="isSubmitting">
+          <UButton
+            form="create-event-form"
+            type="submit"
+            color="primary"
+            :loading="isSubmitting"
+          >
             Save Event
           </UButton>
         </div>
       </template>
     </UModal>
     <UCard>
-      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div
+        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
         <div class="w-full lg:max-w-sm">
-          <UInput v-model="search" icon="i-lucide-search" placeholder="Search" class="w-full" size="md"
-            @keyup.enter="handleApplyFilter" />
+          <UInput
+            v-model="search"
+            icon="i-lucide-search"
+            placeholder="Search"
+            class="w-full"
+            size="md"
+            @keyup.enter="handleApplyFilter"
+          />
         </div>
         <div class="flex flex-wrap items-center gap-2 w-full md:justify-end">
-          <USelect v-model="filterStatus" :items="statusOptions" size="md" class="w-full md:w-40"
-            @update:model-value="handleApplyFilter" />
+          <USelect
+            v-model="filterStatus"
+            :items="statusOptions"
+            size="md"
+            class="w-full md:w-40"
+            @update:model-value="handleApplyFilter"
+          />
 
-          <UButton type="button" size="md" color="neutral" variant="outline" icon="i-lucide-sliders-horizontal"
-            @click="isFilterModalOpen = true">
+          <UButton
+            type="button"
+            size="md"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-sliders-horizontal"
+            @click="isFilterModalOpen = true"
+          >
             Filter
-            <UBadge v-if="activeFilterCount > 0" color="primary" variant="solid" size="md" class="ml-1">
+            <UBadge
+              v-if="activeFilterCount > 0"
+              color="primary"
+              variant="solid"
+              size="md"
+              class="ml-1"
+            >
               {{ activeFilterCount }}
             </UBadge>
           </UButton>
         </div>
       </div>
     </UCard>
-    <UModal v-model:open="isFilterModalOpen" title="Filter Events"
-      description="Apply advanced filters to the event list." :ui="{ content: 'max-w-2xl' }">
+    <UModal
+      v-model:open="isFilterModalOpen"
+      title="Filter Events"
+      description="Apply advanced filters to the event list."
+      :ui="{ content: 'max-w-2xl' }"
+    >
       <template #body>
-        <form id="event-filter-form" class="space-y-4" @submit.prevent="handleApplyFilter">
+        <form
+          id="event-filter-form"
+          class="space-y-4"
+          @submit.prevent="handleApplyFilter"
+        >
           <div class="grid gap-4 md:grid-cols-2">
             <UFormField label="Status">
-              <USelect v-model="filterStatus" :items="statusOptions" class="w-full" />
+              <USelect
+                v-model="filterStatus"
+                :items="statusOptions"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Service Type">
-              <USelect v-model="filterServiceTypeId" :items="serviceTypeOptions" class="w-full" />
+              <USelect
+                v-model="filterServiceTypeId"
+                :items="serviceTypeOptions"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Month">
-              <USelect v-model="filterMonth" :items="monthOptions" class="w-full" />
+              <USelect
+                v-model="filterMonth"
+                :items="monthOptions"
+                class="w-full"
+              />
             </UFormField>
 
             <UFormField label="Year">
-              <USelect v-model="filterYear" :items="yearOptions" class="w-full" />
+              <USelect
+                v-model="filterYear"
+                :items="yearOptions"
+                class="w-full"
+              />
             </UFormField>
           </div>
         </form>
@@ -494,7 +612,12 @@ async function handleHardDeleteEvent(id) {
 
       <template #footer>
         <div class="flex gap-2 w-full justify-end">
-          <UButton type="button" color="neutral" variant="ghost" @click="handleResetFilter">
+          <UButton
+            type="button"
+            color="neutral"
+            variant="ghost"
+            @click="handleResetFilter"
+          >
             Reset
           </UButton>
 
@@ -507,8 +630,12 @@ async function handleHardDeleteEvent(id) {
 
     <UCard>
       <p v-if="pending" class="text-sm text-muted">Loading events...</p>
-      <p v-else-if="error" class="text-sm text-red-500">Failed to load events.</p>
-      <p v-else-if="eventsData?.data?.length === 0" class="text-sm text-muted">No events found.</p>
+      <p v-else-if="error" class="text-sm text-red-500">
+        Failed to load events.
+      </p>
+      <p v-else-if="eventsData?.data?.length === 0" class="text-sm text-muted">
+        No events found.
+      </p>
 
       <div v-else class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -520,36 +647,70 @@ async function handleHardDeleteEvent(id) {
               <th class="py-2 pr-4">Sales</th>
               <th class="py-2 pr-4">Date</th>
               <th class="py-2 pr-4">Time</th>
+              <th class="py-2 pr-4">Loading Date</th>
+              <th class="py-2 pr-4">Loading Time</th>
               <th class="py-2 pr-4">Staff</th>
-              <th class="py-2 pr-4">Status</th>
               <th class="py-2 pr-4">Location</th>
+              <th class="py-2 pr-4">Status</th>
               <th class="py-2 pr-4">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in eventsData?.data" :key="item.id" class="border-b border-default align-top">
+            <tr
+              v-for="item in eventsData?.data"
+              :key="item.id"
+              class="border-b border-default align-top"
+            >
               <td class="py-3 pr-4 font-medium">{{ item.eventName }}</td>
               <td class="py-3 pr-4">
                 <div>{{ item.clientName }}</div>
-                <div class="text-xs text-muted">{{ item.clientPhone || "-" }}</div>
+                <div class="text-xs text-muted">
+                  {{ item.clientPhone || "-" }}
+                </div>
               </td>
               <td class="py-3 pr-4">{{ item.serviceType?.name || "-" }}</td>
               <td class="py-3 pr-4">{{ item.sales?.name || "-" }}</td>
               <td class="py-3 pr-4">{{ formatDate(item.eventDate) }}</td>
-              <td class="py-3 pr-4">{{ item.startTime }} - {{ item.endTime }}</td>
+              <td class="py-3 pr-4">
+                {{ item.startTime }} - {{ item.endTime }}
+              </td>
+              <td class="py-3 pr-4">
+                {{ formatDate(item.loadingDate) }}
+              </td>
+              <td class="py-3 pr-4">
+                {{ item.loadingTime || "-" }}
+              </td>
               <td class="py-3 pr-4 min-w-48">{{ getEventStaff(item) }}</td>
+              <td class="py-3 pr-4">{{ item.location || "-" }}</td>
               <td class="py-3 pr-4">
                 <UBadge :color="getStatusColor(item.status)" variant="soft">
                   {{ item.status }}
                 </UBadge>
               </td>
-              <td class="py-3 pr-4">{{ item.location || "-" }}</td>
+
               <td class="py-3 pr-4">
                 <div class="flex flex-wrap gap-2">
-                  <UButton size="xs" color="primary" variant="soft" :to="`/events/${item.id}`">Detail</UButton>
-                  <UButton size="xs" color="warning" variant="soft" @click="handleDelete(item.id)">Cancel</UButton>
-                  <UButton v-if="user?.role === 'DEVELOPER'" size="xs" color="error" variant="soft"
-                    @click="handleHardDeleteEvent(item.id)">
+                  <UButton
+                    size="xs"
+                    color="primary"
+                    variant="soft"
+                    :to="`/events/${item.id}`"
+                    >Detail</UButton
+                  >
+                  <UButton
+                    size="xs"
+                    color="warning"
+                    variant="soft"
+                    @click="handleDelete(item.id)"
+                    >Cancel</UButton
+                  >
+                  <UButton
+                    v-if="user?.role === 'DEVELOPER'"
+                    size="xs"
+                    color="error"
+                    variant="soft"
+                    @click="handleHardDeleteEvent(item.id)"
+                  >
                     Hard Delete
                   </UButton>
                 </div>
@@ -560,18 +721,34 @@ async function handleHardDeleteEvent(id) {
       </div>
 
       <template #footer>
-        <div v-if="eventsData?.pagination" class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div
+          v-if="eventsData?.pagination"
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
           <p class="text-sm text-muted">
-            Page {{ eventsData.pagination.page }} of {{ eventsData.pagination.totalPages }}
-            — Total {{ eventsData.pagination.totalItems }} events
+            Page {{ eventsData.pagination.page }} of
+            {{ eventsData.pagination.totalPages }} — Total
+            {{ eventsData.pagination.totalItems }} events
           </p>
           <div class="flex gap-2">
-            <UButton type="button" color="neutral" variant="outline" :disabled="eventsData.pagination.page <= 1"
-              @click="goToPreviousPage">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="eventsData.pagination.page <= 1"
+              @click="goToPreviousPage"
+            >
               Previous
             </UButton>
-            <UButton type="button" color="neutral" variant="outline"
-              :disabled="eventsData.pagination.page >= eventsData.pagination.totalPages" @click="goToNextPage">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="
+                eventsData.pagination.page >= eventsData.pagination.totalPages
+              "
+              @click="goToNextPage"
+            >
               Next
             </UButton>
           </div>

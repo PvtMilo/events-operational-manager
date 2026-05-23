@@ -1058,7 +1058,8 @@ async function handleSaveStaffEvaluation(staffId) {
             <div>
               <h2 class="text-lg font-semibold">Team Assignment</h2>
               <p class="text-sm text-muted">
-                Build the team draft first, then save when the selection is final.
+                Build the team draft first, then save when the selection is
+                final.
               </p>
             </div>
 
@@ -1109,7 +1110,8 @@ async function handleSaveStaffEvaluation(staffId) {
             <div class="border-b border-default p-4">
               <h3 class="font-medium">Selected Team</h3>
               <p class="text-sm text-muted">
-                Draft team for this event. Use Move to Available if you selected the wrong staff.
+                Draft team for this event. Use Move to Available if you selected
+                the wrong staff.
               </p>
             </div>
 
@@ -1128,11 +1130,11 @@ async function handleSaveStaffEvaluation(staffId) {
                 >
                   <div>
                     <p class="font-medium">
-                      {{ member.staff?.name || '-' }}
+                      {{ member.staff?.name || "-" }}
                     </p>
 
                     <p class="text-sm text-muted">
-                      Default role: {{ member.staff?.defaultRole || '-' }}
+                      Default role: {{ member.staff?.defaultRole || "-" }}
                     </p>
                   </div>
 
@@ -1268,16 +1270,20 @@ async function handleSaveStaffEvaluation(staffId) {
                       v-if="staff.conflictEvent"
                       class="pt-1 text-xs text-red-500"
                     >
-                      Conflict: {{ staff.conflictEvent.eventName }}
-                      ({{ staff.conflictEvent.startTime }} - {{ staff.conflictEvent.endTime }})
+                      Conflict: {{ staff.conflictEvent.eventName }} ({{
+                        staff.conflictEvent.startTime
+                      }}
+                      - {{ staff.conflictEvent.endTime }})
                     </p>
 
                     <p
                       v-else-if="staff.sameDayEvent"
                       class="pt-1 text-xs text-amber-500"
                     >
-                      Same day: {{ staff.sameDayEvent.eventName }}
-                      ({{ staff.sameDayEvent.startTime }} - {{ staff.sameDayEvent.endTime }})
+                      Same day: {{ staff.sameDayEvent.eventName }} ({{
+                        staff.sameDayEvent.startTime
+                      }}
+                      - {{ staff.sameDayEvent.endTime }})
                     </p>
                   </div>
 
@@ -1297,112 +1303,126 @@ async function handleSaveStaffEvaluation(staffId) {
           </div>
         </div>
       </UCard>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <UCard>
+          <template #header>
+            <div
+              class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+            >
+              <div>
+                <h2 class="text-lg font-semibold">Post Event Data</h2>
+                <p class="text-sm text-muted">
+                  Input actual ribbon usage after the event.
+                </p>
+              </div>
 
-      <UCard>
-        <template #header>
-          <div
-            class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-          >
-            <div>
-              <h2 class="text-lg font-semibold">Post Event Data</h2>
-              <p class="text-sm text-muted">
-                Input actual ribbon usage after the event.
-              </p>
+              <UBadge
+                :color="requiresRibbonTracking ? 'warning' : 'neutral'"
+                variant="soft"
+              >
+                Ribbon tracking:
+                {{ requiresRibbonTracking ? "Required" : "Optional" }}
+              </UBadge>
+            </div>
+          </template>
+
+          <form class="space-y-4" @submit.prevent="handleSavePostEventData">
+            <div class="grid gap-4 md:grid-cols-3">
+              <UFormField label="Ribbon Awal">
+                <UInput v-model="postRibbonStart" type="number" />
+              </UFormField>
+
+              <UFormField label="Ribbon Akhir">
+                <UInput v-model="postRibbonEnd" type="number" />
+              </UFormField>
+
+              <UFormField label="Total Penggunaan">
+                <UInput :model-value="postRibbonUsed" type="number" disabled />
+              </UFormField>
             </div>
 
-            <UBadge
-              :color="requiresRibbonTracking ? 'warning' : 'neutral'"
-              variant="soft"
+            <p v-if="postEventErrorMessage" class="text-sm text-red-500">
+              {{ postEventErrorMessage }}
+            </p>
+
+            <div class="flex justify-end">
+              <UButton type="submit" :loading="isSavingPostEventData">
+                Save Post Event Data
+              </UButton>
+            </div>
+          </form>
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <div
+              class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
             >
-              Ribbon tracking:
-              {{ requiresRibbonTracking ? "Required" : "Optional" }}
-            </UBadge>
-          </div>
-        </template>
+              <div>
+                <h2 class="text-lg font-semibold">Event Evaluation</h2>
+                <p class="text-sm text-muted">
+                  Client satisfaction and event-level feedback.
+                </p>
+              </div>
+              <UBadge
+                :color="
+                  currentEvent.eventEvaluation?.clientSatisfactionOk
+                    ? 'success'
+                    : 'warning'
+                "
+                variant="soft"
+              >
+                <span class="font-medium">
+                  {{
+                    formatBoolean(
+                      currentEvent.eventEvaluation?.clientSatisfactionOk,
+                    )
+                  }}
+                </span>
+              </UBadge>
+            </div>
+          </template>
 
-        <form class="space-y-4" @submit.prevent="handleSavePostEventData">
-          <div class="grid gap-4 md:grid-cols-3">
-            <UFormField label="Ribbon Awal">
-              <UInput v-model="postRibbonStart" type="number" />
-            </UFormField>
-
-            <UFormField label="Ribbon Akhir">
-              <UInput v-model="postRibbonEnd" type="number" />
-            </UFormField>
-
-            <UFormField label="Total Penggunaan">
-              <UInput :model-value="postRibbonUsed" type="number" disabled />
-            </UFormField>
-          </div>
-
-          <p v-if="postEventErrorMessage" class="text-sm text-red-500">
-            {{ postEventErrorMessage }}
-          </p>
-
-          <div class="flex justify-end">
-            <UButton type="submit" :loading="isSavingPostEventData">
-              Save Post Event Data
-            </UButton>
-          </div>
-        </form>
-      </UCard>
-
-      <UCard>
-        <template #header>
-          <div>
-            <h2 class="text-lg font-semibold">Event Evaluation</h2>
-            <p class="text-sm text-muted">
-              Client satisfaction and event-level feedback.
-            </p>
-          </div>
-        </template>
-
-        <form class="space-y-4" @submit.prevent="handleSaveEventEvaluation">
-          <UCheckbox
-            v-model="clientSatisfactionOk"
-            label="Client Satisfaction OK"
-          />
-
-          <UFormField label="Client Feedback">
-            <UTextarea
-              v-model="clientFeedback"
-              placeholder="Client feedback"
-              :rows="3"
+          <form class="space-y-4" @submit.prevent="handleSaveEventEvaluation">
+            <UCheckbox
+              v-model="clientSatisfactionOk"
+              label="Client Satisfaction OK"
             />
-          </UFormField>
 
-          <UFormField label="Internal Notes">
-            <UTextarea
-              v-model="eventEvaluationNotes"
-              placeholder="Internal notes"
-              :rows="3"
-            />
-          </UFormField>
+            <UFormField label="Client Feedback">
+              <UTextarea
+                v-model="clientFeedback"
+                class="w-full"
+                placeholder="Client feedback"
+                :rows="3"
+              />
+            </UFormField>
 
-          <p v-if="evaluationErrorMessage" class="text-sm text-red-500">
-            {{ evaluationErrorMessage }}
-          </p>
+            <UFormField label="Internal Notes">
+              <UTextarea
+                v-model="eventEvaluationNotes"
+                class="w-full"
+                placeholder="Internal notes"
+                :rows="3"
+              />
+            </UFormField>
 
-          <div
-            class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-          >
-            <p class="text-sm text-muted">
-              Current Client Satisfaction:
-              <span class="font-medium">
-                {{
-                  formatBoolean(
-                    currentEvent.eventEvaluation?.clientSatisfactionOk,
-                  )
-                }}
-              </span>
+            <p v-if="evaluationErrorMessage" class="text-sm text-red-500">
+              {{ evaluationErrorMessage }}
             </p>
 
-            <UButton type="submit" :loading="isSavingEventEvaluation">
-              Save Event Evaluation
-            </UButton>
-          </div>
-        </form>
-      </UCard>
+            <div class="flex flex-col items-end">
+              <UButton
+                class="w-fit"
+                type="submit"
+                :loading="isSavingEventEvaluation"
+              >
+                Save Event Evaluation
+              </UButton>
+            </div>
+          </form>
+        </UCard>
+      </div>
 
       <UCard>
         <template #header>
@@ -1488,6 +1508,7 @@ async function handleSaveStaffEvaluation(staffId) {
               <UFormField label="Notes">
                 <UTextarea
                   v-model="staffEvaluationForms[assignment.staffId].notes"
+                  class="w-full"
                   placeholder="Staff evaluation notes"
                   :rows="2"
                 />

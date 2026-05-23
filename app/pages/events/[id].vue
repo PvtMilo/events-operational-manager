@@ -308,6 +308,16 @@ function formatDateTime(dateValue) {
   return new Date(dateValue).toLocaleString();
 }
 
+function formatCapitalCase(value) {
+  if (!value) return "-";
+
+  return value
+    .toString()
+    .replace(/[_-]+/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function getStatusColor(status) {
   if (status === "COMPLETED") return "success";
   if (status === "CANCELLED") return "error";
@@ -780,7 +790,9 @@ async function handleSaveStaffEvaluation(staffId) {
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <p class="text-xs text-muted">Client</p>
-            <p class="font-medium">{{ currentEvent.clientName }}</p>
+            <p class="font-medium">
+              {{ formatCapitalCase(currentEvent.clientName) }}
+            </p>
             <p class="text-xs text-muted">
               {{ currentEvent.clientPhone || "-" }}
             </p>
@@ -789,13 +801,15 @@ async function handleSaveStaffEvaluation(staffId) {
           <div>
             <p class="text-xs text-muted">Service Type</p>
             <p class="font-medium">
-              {{ currentEvent.serviceType?.name || "-" }}
+              {{ formatCapitalCase(currentEvent.serviceType?.name) }}
             </p>
           </div>
 
           <div>
             <p class="text-xs text-muted">Sales</p>
-            <p class="font-medium">{{ currentEvent.sales?.name || "-" }}</p>
+            <p class="font-medium">
+              {{ formatCapitalCase(currentEvent.sales?.name) }}
+            </p>
           </div>
 
           <div>
@@ -825,38 +839,44 @@ async function handleSaveStaffEvaluation(staffId) {
 
           <div>
             <p class="text-xs text-muted">Location</p>
-            <p class="font-medium">{{ currentEvent.location || "-" }}</p>
+            <p class="font-medium">
+              {{ formatCapitalCase(currentEvent.location) }}
+            </p>
           </div>
 
           <div>
             <p class="text-xs text-muted">Vehicle / Driver</p>
-            <p class="font-medium">{{ currentEvent.vehicleName || "-" }}</p>
+            <p class="font-medium">
+              {{ formatCapitalCase(currentEvent.vehicleName) }}
+            </p>
             <p class="text-xs text-muted">
-              {{ currentEvent.driverName || "-" }}
+              {{ formatCapitalCase(currentEvent.driverName) }}
             </p>
           </div>
 
           <div>
             <p class="text-xs text-muted">Vendor Sewa</p>
-            <p class="font-medium">{{ currentEvent.vendorSewa || "-" }}</p>
+            <p class="font-medium">
+              {{ formatCapitalCase(currentEvent.vendorSewa) }}
+            </p>
           </div>
           <div>
             <p class="text-xs text-muted">Equipment Setup</p>
             <p class="font-medium">
-              {{ currentEvent.equipmentSetup || "-" }}
+              {{ formatCapitalCase(currentEvent.equipmentSetup) }}
             </p>
           </div>
 
           <div>
             <p class="text-xs text-muted">Notes</p>
             <p class="text-sm">
-              {{ currentEvent.notes || "-" }}
+              {{ formatCapitalCase(currentEvent.notes) }}
             </p>
           </div>
           <div>
             <p class="text-xs text-muted">Current Status</p>
             <UBadge :color="getStatusColor(currentEvent.status)" variant="soft">
-              {{ currentEvent.status }}
+              {{ formatCapitalCase(currentEvent.status) }}
             </UBadge>
           </div>
         </div>

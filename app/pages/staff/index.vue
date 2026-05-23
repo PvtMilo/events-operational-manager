@@ -15,20 +15,25 @@ const notes = ref("");
 
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+const isCreateStaffModalOpen = ref(false);
+const isEditStaffModalOpen = ref(false);
+const isFilterModalOpen = ref(false);
 
 const search = ref("");
-const filterDefaultRole = ref("");
-const filterStatus = ref("");
-const filterCanBeAssigned = ref("");
+const filterDefaultRole = ref("ALL");
+const filterStatus = ref("ALL");
+const filterCanBeAssigned = ref("ALL");
 const page = ref(1);
 
 const staffUrl = computed(() => {
   const params = new URLSearchParams();
 
   if (search.value) params.set("search", search.value);
-  if (filterDefaultRole.value) params.set("defaultRole", filterDefaultRole.value);
-  if (filterStatus.value) params.set("status", filterStatus.value);
-  if (filterCanBeAssigned.value) {
+  if (filterDefaultRole.value !== "ALL") {
+    params.set("defaultRole", filterDefaultRole.value);
+  }
+  if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
+  if (filterCanBeAssigned.value !== "ALL") {
     params.set("canBeAssigned", filterCanBeAssigned.value);
   }
   params.set("page", page.value);
@@ -50,19 +55,57 @@ const editErrorMessage = ref("");
 
 const { data, pending, error, refresh } = await useFetch(staffUrl);
 
+const roleOptions = [
+  { label: "PIC", value: "PIC" },
+  { label: "SENIOR_CREW", value: "SENIOR_CREW" },
+  { label: "JUNIOR_CREW", value: "JUNIOR_CREW" },
+  { label: "INHOUSE", value: "INHOUSE" },
+];
+
+const roleFilterOptions = [
+  { label: "All Roles", value: "ALL" },
+  ...roleOptions,
+];
+
+const statusOptions = [
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "INACTIVE", value: "INACTIVE" },
+];
+
+const statusFilterOptions = [
+  { label: "All Status", value: "ALL" },
+  ...statusOptions,
+];
+
+const canBeAssignedOptions = [
+  { label: "All Assignments", value: "ALL" },
+  { label: "Can be assigned", value: "true" },
+  { label: "Cannot be assigned", value: "false" },
+];
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filterDefaultRole.value !== "ALL") count += 1;
+  if (filterStatus.value !== "ALL") count += 1;
+  if (filterCanBeAssigned.value !== "ALL") count += 1;
+  return count;
+});
+
 async function handleApplyFilter() {
   page.value = 1;
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
   search.value = "";
-  filterDefaultRole.value = "";
-  filterStatus.value = "";
-  filterCanBeAssigned.value = "";
+  filterDefaultRole.value = "ALL";
+  filterStatus.value = "ALL";
+  filterCanBeAssigned.value = "ALL";
   page.value = 1;
 
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function goToPreviousPage() {
@@ -110,6 +153,7 @@ async function handleCreate() {
     notes.value = "";
 
     await refresh();
+    isCreateStaffModalOpen.value = false;
   } catch (error) {
     errorMessage.value =
       error?.data?.statusMessage ||
@@ -129,6 +173,7 @@ function startEdit(item) {
   editStatus.value = item.status || "ACTIVE";
   editNotes.value = item.notes || "";
   editErrorMessage.value = "";
+  isEditStaffModalOpen.value = true;
 }
 
 function cancelEdit() {
@@ -140,6 +185,7 @@ function cancelEdit() {
   editStatus.value = "ACTIVE";
   editNotes.value = "";
   editErrorMessage.value = "";
+  isEditStaffModalOpen.value = false;
 }
 
 async function handleUpdate() {
@@ -192,7 +238,7 @@ async function handleDelete(id) {
     alert(
       error?.data?.statusMessage ||
         error?.statusMessage ||
-        "Failed to delete staff"
+        "Failed to delete staff",
     );
   }
 }
@@ -218,289 +264,451 @@ async function handleHardDeleteStaff(id) {
     );
   }
 }
+
+function getStatusColor(status) {
+  if (status === "ACTIVE") return "success";
+  if (status === "INACTIVE") return "neutral";
+
+  return "neutral";
+}
+
+function getAssignableColor(canAssign) {
+  return canAssign ? "success" : "warning";
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleString();
+}
+
+function getStaffActionItems(item) {
+  const items = [
+    {
+      label: "Edit",
+      icon: "i-lucide-pencil",
+      onSelect: () => startEdit(item),
+    },
+    {
+      label: "Delete",
+      icon: "i-lucide-ban",
+      color: "warning",
+      onSelect: () => handleDelete(item.id),
+    },
+  ];
+
+  if (user.value?.role === "DEVELOPER") {
+    items.push({
+      label: "Hard Delete",
+      icon: "i-lucide-trash-2",
+      color: "error",
+      onSelect: () => handleHardDeleteStaff(item.id),
+    });
+  }
+
+  return items;
+}
 </script>
 
 <template>
-  <section>
-    <h1>Staff</h1>
-    <p>Manage operational staff data.</p>
-
-    <hr />
-
-    <form @submit.prevent="handleCreate">
-      <h2>Add Staff</h2>
-
+  <div class="p-6 space-y-6">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
       <div>
-        <label>Name</label>
-        <br />
-        <input v-model="name" type="text" placeholder="Example: Andi" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Phone</label>
-        <br />
-        <input v-model="phone" type="text" placeholder="Example: 08123456789" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Default Role</label>
-        <br />
-        <select v-model="defaultRole">
-          <option value="PIC">PIC</option>
-          <option value="SENIOR_CREW">SENIOR_CREW</option>
-          <option value="JUNIOR_CREW">JUNIOR_CREW</option>
-          <option value="INHOUSE">INHOUSE</option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>
-          <input v-model="canBeAssignedToEvent" type="checkbox" />
-          Can be assigned to event
-        </label>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="status">
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Notes</label>
-        <br />
-        <textarea v-model="notes" placeholder="Optional notes"></textarea>
-      </div>
-
-      <br />
-
-      <p v-if="errorMessage" style="color: red">
-        {{ errorMessage }}
-      </p>
-
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? "Saving..." : "Save" }}
-      </button>
-    </form>
-
-    <hr />
-
-    <div v-if="editingId">
-      <h2>Edit Staff</h2>
-
-      <form @submit.prevent="handleUpdate">
-        <div>
-          <label>Name</label>
-          <br />
-          <input v-model="editName" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Phone</label>
-          <br />
-          <input v-model="editPhone" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Default Role</label>
-          <br />
-          <select v-model="editDefaultRole">
-            <option value="PIC">PIC</option>
-            <option value="SENIOR_CREW">SENIOR_CREW</option>
-            <option value="JUNIOR_CREW">JUNIOR_CREW</option>
-            <option value="INHOUSE">INHOUSE</option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>
-            <input v-model="editCanBeAssignedToEvent" type="checkbox" />
-            Can be assigned to event
-          </label>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Status</label>
-          <br />
-          <select v-model="editStatus">
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Notes</label>
-          <br />
-          <textarea v-model="editNotes"></textarea>
-        </div>
-
-        <br />
-
-        <p v-if="editErrorMessage" style="color: red">
-          {{ editErrorMessage }}
+        <h1 class="text-2xl font-semibold">Staff</h1>
+        <p class="text-sm text-muted">
+          Manage operational staff, roles, assignment eligibility, and status.
         </p>
+      </div>
 
-        <button type="submit" :disabled="isUpdating">
-          {{ isUpdating ? "Updating..." : "Update" }}
-        </button>
-
-        <button type="button" @click="cancelEdit">
-          Cancel
-        </button>
-      </form>
+      <UButton
+        icon="i-lucide-plus"
+        color="primary"
+        @click="isCreateStaffModalOpen = true"
+      >
+        Add Staff
+      </UButton>
     </div>
 
-    <hr />
+    <UModal
+      v-model:open="isCreateStaffModalOpen"
+      title="Add Staff"
+      description="Create a new operational staff record."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="create-staff-form"
+          class="space-y-4"
+          @submit.prevent="handleCreate"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Name" required>
+              <UInput
+                v-model="name"
+                placeholder="Example: Andi"
+                class="w-full"
+              />
+            </UFormField>
 
-    <h2>Filter Staff</h2>
+            <UFormField label="Phone">
+              <UInput
+                v-model="phone"
+                placeholder="Example: 08123456789"
+                class="w-full"
+              />
+            </UFormField>
 
-    <form @submit.prevent="handleApplyFilter">
-      <div>
-        <label>Search</label>
-        <br />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search name, phone, notes"
-        />
+            <UFormField label="Default Role">
+              <USelect
+                v-model="defaultRole"
+                :items="roleOptions"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="Status">
+              <USelect
+                v-model="status"
+                :items="statusOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <UCheckbox
+            v-model="canBeAssignedToEvent"
+            label="Can be assigned to event"
+          />
+
+          <UFormField label="Notes">
+            <UTextarea
+              v-model="notes"
+              placeholder="Optional notes"
+              class="w-full"
+            />
+          </UFormField>
+
+          <p v-if="errorMessage" class="text-sm text-red-500">
+            {{ errorMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            type="button"
+            @click="isCreateStaffModalOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            form="create-staff-form"
+            type="submit"
+            color="primary"
+            :loading="isSubmitting"
+          >
+            Save Staff
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isEditStaffModalOpen"
+      title="Edit Staff"
+      description="Update staff profile and assignment settings."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="edit-staff-form"
+          class="space-y-4"
+          @submit.prevent="handleUpdate"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Name" required>
+              <UInput v-model="editName" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Phone">
+              <UInput v-model="editPhone" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Default Role">
+              <USelect
+                v-model="editDefaultRole"
+                :items="roleOptions"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="Status">
+              <USelect
+                v-model="editStatus"
+                :items="statusOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <UCheckbox
+            v-model="editCanBeAssignedToEvent"
+            label="Can be assigned to event"
+          />
+
+          <UFormField label="Notes">
+            <UTextarea
+              v-model="editNotes"
+              placeholder="Optional notes"
+              class="w-full"
+            />
+          </UFormField>
+
+          <p v-if="editErrorMessage" class="text-sm text-red-500">
+            {{ editErrorMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            type="button"
+            @click="cancelEdit"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            form="edit-staff-form"
+            type="submit"
+            color="primary"
+            :loading="isUpdating"
+          >
+            Update Staff
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UCard>
+      <div
+        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <div class="w-full lg:max-w-sm">
+          <UInput
+            v-model="search"
+            icon="i-lucide-search"
+            placeholder="Search staff"
+            class="w-full"
+            size="md"
+            @keyup.enter="handleApplyFilter"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:justify-end">
+          <USelect
+            v-model="filterStatus"
+            :items="statusFilterOptions"
+            size="md"
+            class="w-full md:w-40"
+            @update:model-value="handleApplyFilter"
+          />
+
+          <UButton
+            type="button"
+            size="md"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-sliders-horizontal"
+            @click="isFilterModalOpen = true"
+          >
+            Filter
+            <UBadge
+              v-if="activeFilterCount > 0"
+              color="primary"
+              variant="solid"
+              size="md"
+              class="ml-1"
+            >
+              {{ activeFilterCount }}
+            </UBadge>
+          </UButton>
+        </div>
       </div>
+    </UCard>
 
-      <br />
+    <UModal
+      v-model:open="isFilterModalOpen"
+      title="Filter Staff"
+      description="Apply advanced filters to the staff list."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="staff-filter-form"
+          class="space-y-4"
+          @submit.prevent="handleApplyFilter"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Default Role">
+              <USelect
+                v-model="filterDefaultRole"
+                :items="roleFilterOptions"
+                class="w-full"
+              />
+            </UFormField>
 
-      <div>
-        <label>Default Role</label>
-        <br />
-        <select v-model="filterDefaultRole">
-          <option value="">All Roles</option>
-          <option value="PIC">PIC</option>
-          <option value="SENIOR_CREW">SENIOR_CREW</option>
-          <option value="JUNIOR_CREW">JUNIOR_CREW</option>
-          <option value="INHOUSE">INHOUSE</option>
-        </select>
-      </div>
+            <UFormField label="Status">
+              <USelect
+                v-model="filterStatus"
+                :items="statusFilterOptions"
+                class="w-full"
+              />
+            </UFormField>
 
-      <br />
+            <UFormField label="Can Be Assigned">
+              <USelect
+                v-model="filterCanBeAssigned"
+                :items="canBeAssignedOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </form>
+      </template>
 
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="filterStatus">
-          <option value="">All Status</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-      </div>
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            type="button"
+            color="neutral"
+            variant="ghost"
+            @click="handleResetFilter"
+          >
+            Reset
+          </UButton>
 
-      <br />
+          <UButton form="staff-filter-form" type="submit" color="primary">
+            Apply Filter
+          </UButton>
+        </div>
+      </template>
+    </UModal>
 
-      <div>
-        <label>Can Be Assigned</label>
-        <br />
-        <select v-model="filterCanBeAssigned">
-          <option value="">All</option>
-          <option value="true">Can be assigned</option>
-          <option value="false">Cannot be assigned</option>
-        </select>
-      </div>
-
-      <br />
-
-      <button type="submit">Apply Filter</button>
-      <button type="button" @click="handleResetFilter">Reset</button>
-    </form>
-
-    <hr />
-
-    <h2>Staff List</h2>
-
-    <p v-if="pending">Loading...</p>
-    <p v-else-if="error">Failed to load staff.</p>
-
-    <table v-else border="1" cellpadding="8" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Phone</th>
-          <th>Default Role</th>
-          <th>Can Assign</th>
-          <th>Status</th>
-          <th>Notes</th>
-          <th>Created At</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="item in data?.data" :key="item.id">
-          <td>{{ item.name }}</td>
-          <td>{{ item.phone || "-" }}</td>
-          <td>{{ item.defaultRole }}</td>
-          <td>{{ item.canBeAssignedToEvent ? "Yes" : "No" }}</td>
-          <td>{{ item.status }}</td>
-          <td>{{ item.notes || "-" }}</td>
-          <td>{{ new Date(item.createdAt).toLocaleString() }}</td>
-          <td>
-            <button type="button" @click="startEdit(item)">Edit</button>
-            |
-            <button type="button" @click="handleDelete(item.id)">Delete</button>
-            <template v-if="user?.role === 'DEVELOPER'">
-              |
-              <button type="button" @click="handleHardDeleteStaff(item.id)">
-                Hard Delete
-              </button>
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-if="data?.data?.length === 0">No staff yet.</p>
-
-    <div v-if="data?.pagination">
-      <p>
-        Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
-        —
-        Total {{ data.pagination.totalItems }} staff
+    <UCard>
+      <p v-if="pending" class="text-sm text-muted">Loading staff...</p>
+      <p v-else-if="error" class="text-sm text-red-500">
+        Failed to load staff.
+      </p>
+      <p v-else-if="data?.data?.length === 0" class="text-sm text-muted">
+        No staff found.
       </p>
 
-      <button
-        type="button"
-        :disabled="data.pagination.page <= 1"
-        @click="goToPreviousPage"
-      >
-        Previous
-      </button>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-default text-left">
+              <th class="py-2 pr-4">Staff</th>
+              <th class="py-2 pr-4">Phone</th>
+              <th class="py-2 pr-4">Default Role</th>
+              <th class="py-2 pr-4">Can Assign</th>
+              <th class="py-2 pr-4">Status</th>
+              <th class="py-2 pr-4">Notes</th>
+              <th class="py-2 pr-4">Created At</th>
+              <th class="py-2 pr-4"></th>
+            </tr>
+          </thead>
 
-      <button
-        type="button"
-        :disabled="data.pagination.page >= data.pagination.totalPages"
-        @click="goToNextPage"
-      >
-        Next
-      </button>
-    </div>
-  </section>
+          <tbody>
+            <tr
+              v-for="item in data?.data"
+              :key="item.id"
+              class="border-b border-default align-top"
+            >
+              <td class="py-3 pr-4 font-medium">{{ item.name }}</td>
+              <td class="py-3 pr-4">{{ item.phone || "-" }}</td>
+              <td class="py-3 pr-4">
+                <UBadge color="neutral" variant="soft">
+                  {{ item.defaultRole }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4">
+                <UBadge
+                  :color="getAssignableColor(item.canBeAssignedToEvent)"
+                  variant="soft"
+                >
+                  {{ item.canBeAssignedToEvent ? "Yes" : "No" }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4">
+                <UBadge :color="getStatusColor(item.status)" variant="soft">
+                  {{ item.status }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4 max-w-xs">
+                {{ item.notes || "-" }}
+              </td>
+              <td class="py-3 pr-4 min-w-40">
+                {{ formatDateTime(item.createdAt) }}
+              </td>
+              <td class="py-3 pr-4">
+                <UDropdownMenu
+                  :items="getStaffActionItems(item)"
+                  :content="{ align: 'end' }"
+                >
+                  <UButton
+                    icon="i-lucide-ellipsis-vertical"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    aria-label="Staff actions"
+                  />
+                </UDropdownMenu>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <template #footer>
+        <div
+          v-if="data?.pagination"
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <p class="text-sm text-muted">
+            Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
+            - Total {{ data.pagination.totalItems }} staff
+          </p>
+
+          <div class="flex gap-2">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="data.pagination.page <= 1"
+              @click="goToPreviousPage"
+            >
+              Previous
+            </UButton>
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="data.pagination.page >= data.pagination.totalPages"
+              @click="goToNextPage"
+            >
+              Next
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UCard>
+  </div>
 </template>

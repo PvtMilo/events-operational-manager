@@ -13,16 +13,19 @@ const status = ref("ACTIVE");
 
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+const isCreateSalesModalOpen = ref(false);
+const isEditSalesModalOpen = ref(false);
+const isFilterModalOpen = ref(false);
 
 const search = ref("");
-const filterStatus = ref("");
+const filterStatus = ref("ALL");
 const page = ref(1);
 
 const salesUrl = computed(() => {
   const params = new URLSearchParams();
 
   if (search.value) params.set("search", search.value);
-  if (filterStatus.value) params.set("status", filterStatus.value);
+  if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   params.set("page", page.value);
 
   const queryString = params.toString();
@@ -40,17 +43,35 @@ const editErrorMessage = ref("");
 
 const { data, pending, error, refresh } = await useFetch(salesUrl);
 
+const statusOptions = [
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "INACTIVE", value: "INACTIVE" },
+];
+
+const statusFilterOptions = [
+  { label: "All Status", value: "ALL" },
+  ...statusOptions,
+];
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filterStatus.value !== "ALL") count += 1;
+  return count;
+});
+
 async function handleApplyFilter() {
   page.value = 1;
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
   search.value = "";
-  filterStatus.value = "";
+  filterStatus.value = "ALL";
   page.value = 1;
 
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function goToPreviousPage() {
@@ -94,6 +115,7 @@ async function handleCreate() {
     status.value = "ACTIVE";
 
     await refresh();
+    isCreateSalesModalOpen.value = false;
   } catch (error) {
     errorMessage.value =
       error?.data?.statusMessage ||
@@ -111,6 +133,7 @@ function startEdit(item) {
   editNotes.value = item.notes || "";
   editStatus.value = item.status || "ACTIVE";
   editErrorMessage.value = "";
+  isEditSalesModalOpen.value = true;
 }
 
 function cancelEdit() {
@@ -120,6 +143,7 @@ function cancelEdit() {
   editNotes.value = "";
   editStatus.value = "ACTIVE";
   editErrorMessage.value = "";
+  isEditSalesModalOpen.value = false;
 }
 
 async function handleUpdate() {
@@ -170,7 +194,7 @@ async function handleDelete(id) {
     alert(
       error?.data?.statusMessage ||
         error?.statusMessage ||
-        "Failed to delete sales"
+        "Failed to delete sales",
     );
   }
 }
@@ -196,215 +220,390 @@ async function handleHardDeleteSales(id) {
     );
   }
 }
+
+function getStatusColor(status) {
+  if (status === "ACTIVE") return "success";
+  if (status === "INACTIVE") return "neutral";
+
+  return "neutral";
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleString();
+}
+
+function getSalesActionItems(item) {
+  const items = [
+    {
+      label: "Edit",
+      icon: "i-lucide-pencil",
+      onSelect: () => startEdit(item),
+    },
+    {
+      label: "Delete",
+      icon: "i-lucide-ban",
+      color: "warning",
+      onSelect: () => handleDelete(item.id),
+    },
+  ];
+
+  if (user.value?.role === "DEVELOPER") {
+    items.push({
+      label: "Hard Delete",
+      icon: "i-lucide-trash-2",
+      color: "error",
+      onSelect: () => handleHardDeleteSales(item.id),
+    });
+  }
+
+  return items;
+}
 </script>
 
 <template>
-  <section>
-    <h1>Sales</h1>
-    <p>Manage sales data.</p>
-
-    <hr />
-
-    <form @submit.prevent="handleCreate">
-      <h2>Add Sales</h2>
-
+  <div class="p-6 space-y-6">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
       <div>
-        <label>Name</label>
-        <br />
-        <input v-model="name" type="text" placeholder="Example: Samuel" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Phone</label>
-        <br />
-        <input v-model="phone" type="text" placeholder="Example: 08123456789" />
-      </div>
-
-      <br />
-
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="status">
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Notes</label>
-        <br />
-        <textarea v-model="notes" placeholder="Optional notes"></textarea>
-      </div>
-
-      <br />
-
-      <p v-if="errorMessage" style="color: red">
-        {{ errorMessage }}
-      </p>
-
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? "Saving..." : "Save" }}
-      </button>
-    </form>
-
-    <hr />
-
-    <div v-if="editingId">
-      <h2>Edit Sales</h2>
-
-      <form @submit.prevent="handleUpdate">
-        <div>
-          <label>Name</label>
-          <br />
-          <input v-model="editName" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Phone</label>
-          <br />
-          <input v-model="editPhone" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Status</label>
-          <br />
-          <select v-model="editStatus">
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Notes</label>
-          <br />
-          <textarea v-model="editNotes"></textarea>
-        </div>
-
-        <br />
-
-        <p v-if="editErrorMessage" style="color: red">
-          {{ editErrorMessage }}
+        <h1 class="text-2xl font-semibold">Sales</h1>
+        <p class="text-sm text-muted">
+          Manage sales contacts, phone numbers, notes, and status.
         </p>
+      </div>
 
-        <button type="submit" :disabled="isUpdating">
-          {{ isUpdating ? "Updating..." : "Update" }}
-        </button>
-
-        <button type="button" @click="cancelEdit">
-          Cancel
-        </button>
-      </form>
+      <UButton
+        icon="i-lucide-plus"
+        color="primary"
+        @click="isCreateSalesModalOpen = true"
+      >
+        Add Sales
+      </UButton>
     </div>
 
-    <hr />
+    <UModal
+      v-model:open="isCreateSalesModalOpen"
+      title="Add Sales"
+      description="Create a new sales record."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="create-sales-form"
+          class="space-y-4"
+          @submit.prevent="handleCreate"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Name" required>
+              <UInput
+                v-model="name"
+                placeholder="Example: Samuel"
+                class="w-full"
+              />
+            </UFormField>
 
-    <h2>Filter Sales</h2>
+            <UFormField label="Phone">
+              <UInput
+                v-model="phone"
+                placeholder="Example: 08123456789"
+                class="w-full"
+              />
+            </UFormField>
 
-    <form @submit.prevent="handleApplyFilter">
-      <div>
-        <label>Search</label>
-        <br />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Search name, phone, notes"
-        />
+            <UFormField label="Status">
+              <USelect
+                v-model="status"
+                :items="statusOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <UFormField label="Notes">
+            <UTextarea
+              v-model="notes"
+              placeholder="Optional notes"
+              class="w-full"
+            />
+          </UFormField>
+
+          <p v-if="errorMessage" class="text-sm text-red-500">
+            {{ errorMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            type="button"
+            @click="isCreateSalesModalOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            form="create-sales-form"
+            type="submit"
+            color="primary"
+            :loading="isSubmitting"
+          >
+            Save Sales
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isEditSalesModalOpen"
+      title="Edit Sales"
+      description="Update sales contact and status."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="edit-sales-form"
+          class="space-y-4"
+          @submit.prevent="handleUpdate"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Name" required>
+              <UInput v-model="editName" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Phone">
+              <UInput v-model="editPhone" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Status">
+              <USelect
+                v-model="editStatus"
+                :items="statusOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <UFormField label="Notes">
+            <UTextarea
+              v-model="editNotes"
+              placeholder="Optional notes"
+              class="w-full"
+            />
+          </UFormField>
+
+          <p v-if="editErrorMessage" class="text-sm text-red-500">
+            {{ editErrorMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            type="button"
+            @click="cancelEdit"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            form="edit-sales-form"
+            type="submit"
+            color="primary"
+            :loading="isUpdating"
+          >
+            Update Sales
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UCard>
+      <div
+        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <div class="w-full lg:max-w-sm">
+          <UInput
+            v-model="search"
+            icon="i-lucide-search"
+            placeholder="Search sales"
+            class="w-full"
+            size="md"
+            @keyup.enter="handleApplyFilter"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:justify-end">
+          <USelect
+            v-model="filterStatus"
+            :items="statusFilterOptions"
+            size="md"
+            class="w-full md:w-40"
+            @update:model-value="handleApplyFilter"
+          />
+
+          <UButton
+            type="button"
+            size="md"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-sliders-horizontal"
+            @click="isFilterModalOpen = true"
+          >
+            Filter
+            <UBadge
+              v-if="activeFilterCount > 0"
+              color="primary"
+              variant="solid"
+              size="md"
+              class="ml-1"
+            >
+              {{ activeFilterCount }}
+            </UBadge>
+          </UButton>
+        </div>
       </div>
+    </UCard>
 
-      <br />
+    <UModal
+      v-model:open="isFilterModalOpen"
+      title="Filter Sales"
+      description="Apply advanced filters to the sales list."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="sales-filter-form"
+          class="space-y-4"
+          @submit.prevent="handleApplyFilter"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Status">
+              <USelect
+                v-model="filterStatus"
+                :items="statusFilterOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </form>
+      </template>
 
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="filterStatus">
-          <option value="">All Status</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-      </div>
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            type="button"
+            color="neutral"
+            variant="ghost"
+            @click="handleResetFilter"
+          >
+            Reset
+          </UButton>
 
-      <br />
+          <UButton form="sales-filter-form" type="submit" color="primary">
+            Apply Filter
+          </UButton>
+        </div>
+      </template>
+    </UModal>
 
-      <button type="submit">Apply Filter</button>
-      <button type="button" @click="handleResetFilter">Reset</button>
-    </form>
-
-    <hr />
-
-    <h2>Sales List</h2>
-
-    <p v-if="pending">Loading...</p>
-    <p v-else-if="error">Failed to load sales.</p>
-
-    <table v-else border="1" cellpadding="8" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Phone</th>
-          <th>Status</th>
-          <th>Notes</th>
-          <th>Created At</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="item in data?.data" :key="item.id">
-          <td>{{ item.name }}</td>
-          <td>{{ item.phone || "-" }}</td>
-          <td>{{ item.status }}</td>
-          <td>{{ item.notes || "-" }}</td>
-          <td>{{ new Date(item.createdAt).toLocaleString() }}</td>
-          <td>
-            <button type="button" @click="startEdit(item)">Edit</button>
-            |
-            <button type="button" @click="handleDelete(item.id)">Delete</button>
-            <template v-if="user?.role === 'DEVELOPER'">
-              |
-              <button type="button" @click="handleHardDeleteSales(item.id)">
-                Hard Delete
-              </button>
-            </template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-if="data?.data?.length === 0">No sales yet.</p>
-
-    <div v-if="data?.pagination">
-      <p>
-        Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
-        —
-        Total {{ data.pagination.totalItems }} sales
+    <UCard>
+      <p v-if="pending" class="text-sm text-muted">Loading sales...</p>
+      <p v-else-if="error" class="text-sm text-red-500">
+        Failed to load sales.
+      </p>
+      <p v-else-if="data?.data?.length === 0" class="text-sm text-muted">
+        No sales found.
       </p>
 
-      <button
-        type="button"
-        :disabled="data.pagination.page <= 1"
-        @click="goToPreviousPage"
-      >
-        Previous
-      </button>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-default text-left">
+              <th class="py-2 pr-4">Sales</th>
+              <th class="py-2 pr-4">Phone</th>
+              <th class="py-2 pr-4">Status</th>
+              <th class="py-2 pr-4">Notes</th>
+              <th class="py-2 pr-4">Created At</th>
+              <th class="py-2 pr-4"></th>
+            </tr>
+          </thead>
 
-      <button
-        type="button"
-        :disabled="data.pagination.page >= data.pagination.totalPages"
-        @click="goToNextPage"
-      >
-        Next
-      </button>
-    </div>
-  </section>
+          <tbody>
+            <tr
+              v-for="item in data?.data"
+              :key="item.id"
+              class="border-b border-default align-top"
+            >
+              <td class="py-3 pr-4 font-medium">{{ item.name }}</td>
+              <td class="py-3 pr-4">{{ item.phone || "-" }}</td>
+              <td class="py-3 pr-4">
+                <UBadge :color="getStatusColor(item.status)" variant="soft">
+                  {{ item.status }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4 max-w-xs">
+                {{ item.notes || "-" }}
+              </td>
+              <td class="py-3 pr-4 min-w-40">
+                {{ formatDateTime(item.createdAt) }}
+              </td>
+              <td class="py-3 pr-4">
+                <UDropdownMenu
+                  :items="getSalesActionItems(item)"
+                  :content="{ align: 'end' }"
+                >
+                  <UButton
+                    icon="i-lucide-ellipsis-vertical"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    aria-label="Sales actions"
+                  />
+                </UDropdownMenu>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <template #footer>
+        <div
+          v-if="data?.pagination"
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <p class="text-sm text-muted">
+            Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
+            - Total {{ data.pagination.totalItems }} sales
+          </p>
+
+          <div class="flex gap-2">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="data.pagination.page <= 1"
+              @click="goToPreviousPage"
+            >
+              Previous
+            </UButton>
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="data.pagination.page >= data.pagination.totalPages"
+              @click="goToNextPage"
+            >
+              Next
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UCard>
+  </div>
 </template>

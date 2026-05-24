@@ -20,123 +20,399 @@ const report = computed(() => {
   return data.value?.data || null;
 });
 
+const events = computed(() => {
+  return report.value?.events || [];
+});
+
+const summary = computed(() => {
+  return (
+    report.value?.summary || {
+      totalAssigned: 0,
+      totalPic: 0,
+      totalEvaluated: 0,
+      totalSuccess: 0,
+      totalFailed: 0,
+      successRate: 0,
+    }
+  );
+});
+
+const periodLabel = computed(() => {
+  const date = new Date(Number(year), Number(month) - 1, 1);
+
+  return date.toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+});
+
+const evaluationGap = computed(() => {
+  return Math.max(summary.value.totalAssigned - summary.value.totalEvaluated, 0);
+});
+
+const evaluationCoverage = computed(() => {
+  if (!summary.value.totalAssigned) return 0;
+
+  return Math.round(
+    (summary.value.totalEvaluated / summary.value.totalAssigned) * 100,
+  );
+});
+
+const signal = computed(() => {
+  if (!summary.value.totalAssigned) {
+    return {
+      label: "No Assignment",
+      color: "neutral",
+      detail: "No active assignment in this period.",
+    };
+  }
+
+  if (evaluationGap.value > 0) {
+    return {
+      label: "Evaluation Gap",
+      color: "warning",
+      detail: `${evaluationGap.value} event still needs evaluation.`,
+    };
+  }
+
+  if (summary.value.successRate >= 90) {
+    return {
+      label: "Strong Performer",
+      color: "success",
+      detail: "High success rate with completed evaluations.",
+    };
+  }
+
+  if (summary.value.successRate >= 75) {
+    return {
+      label: "Stable",
+      color: "primary",
+      detail: "Good baseline, review failed events if any.",
+    };
+  }
+
+  return {
+    label: "Needs Review",
+    color: "error",
+    detail: "Review failures before assigning critical events.",
+  };
+});
+
+function formatDate(dateValue) {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleDateString();
+}
+
+function formatTimeRange(item) {
+  if (!item.startTime && !item.endTime) return "-";
+
+  return `${item.startTime || "-"} - ${item.endTime || "-"}`;
+}
+
 function formatBoolean(value) {
   if (value === true) return "OK";
   if (value === false) return "NOT OK";
   return "NOT EVALUATED";
 }
+
+function getBooleanColor(value) {
+  if (value === true) return "success";
+  if (value === false) return "error";
+  return "neutral";
+}
+
+function getSuccessLabel(value) {
+  if (value === true) return "SUCCESS";
+  if (value === false) return "NOT SUCCESS";
+  return "NOT EVALUATED";
+}
+
+function getSuccessColor(value) {
+  if (value === true) return "success";
+  if (value === false) return "error";
+  return "neutral";
+}
+
+function getRateColor(rate, evaluated = 1) {
+  if (!evaluated) return "neutral";
+  if (rate >= 90) return "success";
+  if (rate >= 75) return "warning";
+  return "error";
+}
+
+function getRoleColor(role) {
+  if (role === "PIC") return "primary";
+  return "neutral";
+}
+
+function getAssignmentStatusColor(status) {
+  if (status === "CONFIRMED") return "success";
+  if (status === "ASSIGNED") return "primary";
+  return "neutral";
+}
+
+function getEventStatusColor(status) {
+  if (status === "COMPLETED") return "success";
+  if (status === "CANCELLED") return "error";
+  if (status === "PENDING_EVALUATION") return "warning";
+  if (status === "ONGOING") return "primary";
+  if (status === "READY") return "info";
+  return "neutral";
+}
 </script>
 
 <template>
-  <section>
-    <p>
-      <NuxtLink :to="`/reports?year=${year}&month=${month}`">
-        ← Back to Reports
-      </NuxtLink>
+  <div class="p-6 space-y-6">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-arrow-left"
+          class="mb-2"
+          :to="`/reports?year=${year}&month=${month}`"
+        >
+          Back to Reports
+        </UButton>
+
+        <h1 class="text-2xl font-semibold">Staff Report Detail</h1>
+        <p class="text-sm text-muted">
+          Monthly performance detail, evaluation checks, and event history.
+        </p>
+      </div>
+
+      <UButton
+        type="button"
+        color="neutral"
+        variant="outline"
+        icon="i-lucide-refresh-cw"
+        @click="refresh"
+      >
+        Refresh
+      </UButton>
+    </div>
+
+    <p v-if="pending" class="text-sm text-muted">Loading report detail...</p>
+    <p v-else-if="error" class="text-sm text-red-500">
+      Failed to load report detail.
     </p>
 
-    <h1>Staff Report Detail</h1>
+    <template v-else-if="report">
+      <UCard>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xl font-semibold">{{ report.staff.name }}</h2>
+              <UBadge color="neutral" variant="soft">
+                {{ report.staff.defaultRole }}
+              </UBadge>
+            </div>
 
-    <button type="button" @click="refresh">Refresh</button>
+            <p class="mt-1 text-sm text-muted">
+              {{ periodLabel }}
+            </p>
+          </div>
 
-    <p v-if="pending">Loading report detail...</p>
-    <p v-else-if="error">Failed to load report detail.</p>
+          <div class="max-w-xl">
+            <div class="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
+              <UBadge :color="signal.color" variant="soft">
+                {{ signal.label }}
+              </UBadge>
+              <p class="text-sm text-muted">{{ signal.detail }}</p>
+            </div>
+          </div>
+        </div>
+      </UCard>
 
-    <div v-else-if="report">
-      <h2>{{ report.staff.name }}</h2>
-      <p>Default Role: {{ report.staff.defaultRole }}</p>
-      <p>Period: {{ month }}/{{ year }}</p>
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+        <UCard>
+          <p class="text-sm text-muted">Assigned</p>
+          <p class="mt-1 text-2xl font-semibold">
+            {{ summary.totalAssigned }}
+          </p>
+        </UCard>
 
-      <hr />
+        <UCard>
+          <p class="text-sm text-muted">PIC</p>
+          <p class="mt-1 text-2xl font-semibold">
+            {{ summary.totalPic }}
+          </p>
+        </UCard>
 
-      <h2>Summary</h2>
+        <UCard>
+          <p class="text-sm text-muted">Evaluated</p>
+          <p class="mt-1 text-2xl font-semibold">
+            {{ summary.totalEvaluated }}
+          </p>
+        </UCard>
 
-      <table border="1" cellpadding="8" cellspacing="0">
-        <tbody>
-          <tr>
-            <td>Total Assigned</td>
-            <td>{{ report.summary.totalAssigned }}</td>
-          </tr>
-          <tr>
-            <td>Total PIC</td>
-            <td>{{ report.summary.totalPic }}</td>
-          </tr>
-          <tr>
-            <td>Total Evaluated</td>
-            <td>{{ report.summary.totalEvaluated }}</td>
-          </tr>
-          <tr>
-            <td>Total Success</td>
-            <td>{{ report.summary.totalSuccess }}</td>
-          </tr>
-          <tr>
-            <td>Total Failed</td>
-            <td>{{ report.summary.totalFailed }}</td>
-          </tr>
-          <tr>
-            <td>Success Rate</td>
-            <td>{{ report.summary.successRate }}%</td>
-          </tr>
-        </tbody>
-      </table>
+        <UCard>
+          <p class="text-sm text-muted">Success</p>
+          <p class="mt-1 text-2xl font-semibold">
+            {{ summary.totalSuccess }}
+          </p>
+        </UCard>
 
-      <hr />
+        <UCard>
+          <p class="text-sm text-muted">Failed</p>
+          <p class="mt-1 text-2xl font-semibold">
+            {{ summary.totalFailed }}
+          </p>
+        </UCard>
 
-      <h2>Event List</h2>
+        <UCard>
+          <p class="text-sm text-muted">Success Rate</p>
+          <div class="mt-2 flex items-center gap-2">
+            <p class="text-2xl font-semibold">{{ summary.successRate }}%</p>
+            <UBadge
+              :color="getRateColor(summary.successRate, summary.totalEvaluated)"
+              variant="soft"
+            >
+              {{ evaluationCoverage }}% eval
+            </UBadge>
+          </div>
+        </UCard>
+      </div>
 
-      <p v-if="report.events.length === 0">
-        No active assignment for this staff in this period.
-      </p>
+      <UCard>
+        <template #header>
+          <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold">Event Performance</h2>
+              <p class="text-sm text-muted">
+                Assignment history and evaluation checklist for this period.
+              </p>
+            </div>
 
-      <table v-else border="1" cellpadding="8" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Event</th>
-            <th>Client</th>
-            <th>Service</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Role</th>
-            <th>Assignment Status</th>
-            <th>Event Status</th>
-            <th>Client Satisfaction</th>
-            <th>SOP</th>
-            <th>Warehouse</th>
-            <th>Grooming</th>
-            <th>Data Collection</th>
-            <th>Success</th>
-            <th>Detail</th>
-          </tr>
-        </thead>
+            <UBadge color="neutral" variant="soft">
+              {{ events.length }} events
+            </UBadge>
+          </div>
+        </template>
 
-        <tbody>
-          <tr v-for="item in report.events" :key="item.assignmentId">
-            <td>{{ item.eventName }}</td>
-            <td>{{ item.clientName }}</td>
-            <td>{{ item.serviceTypeName || "-" }}</td>
-            <td>{{ new Date(item.eventDate).toLocaleDateString() }}</td>
-            <td>{{ item.startTime }} - {{ item.endTime }}</td>
-            <td>{{ item.roleInEvent }}</td>
-            <td>{{ item.assignmentStatus }}</td>
-            <td>{{ item.eventStatus }}</td>
-            <td>{{ formatBoolean(item.clientSatisfactionOk) }}</td>
-            <td>{{ formatBoolean(item.sopOk) }}</td>
-            <td>{{ formatBoolean(item.warehouseOk) }}</td>
-            <td>{{ formatBoolean(item.groomingOk) }}</td>
-            <td>{{ formatBoolean(item.dataCollectionOk) }}</td>
-            <td>
-              <strong>
-                {{ item.isSuccess === true ? "SUCCESS" : "NOT SUCCESS / NOT EVALUATED" }}
-              </strong>
-            </td>
-            <td>
-              <NuxtLink :to="`/events/${item.eventId}`">
-                Event Detail
-              </NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+        <p v-if="events.length === 0" class="text-sm text-muted">
+          No active assignment for this staff in this period.
+        </p>
+
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-default text-left">
+                <th class="py-2 pr-4">Event</th>
+                <th class="py-2 pr-4">Client</th>
+                <th class="py-2 pr-4">Service</th>
+                <th class="py-2 pr-4">Date</th>
+                <th class="py-2 pr-4">Time</th>
+                <th class="py-2 pr-4">Role</th>
+                <th class="py-2 pr-4">Assignment</th>
+                <th class="py-2 pr-4">Event Status</th>
+                <th class="py-2 pr-4">Client</th>
+                <th class="py-2 pr-4">SOP</th>
+                <th class="py-2 pr-4">Warehouse</th>
+                <th class="py-2 pr-4">Grooming</th>
+                <th class="py-2 pr-4">Data</th>
+                <th class="py-2 pr-4">Result</th>
+                <th class="py-2 pr-4"></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr
+                v-for="item in events"
+                :key="item.assignmentId"
+                class="border-b border-default align-top"
+              >
+                <td class="py-3 pr-4 font-medium min-w-56">
+                  {{ item.eventName }}
+                </td>
+                <td class="py-3 pr-4 min-w-40">
+                  {{ item.clientName }}
+                </td>
+                <td class="py-3 pr-4 min-w-40">
+                  {{ item.serviceTypeName || "-" }}
+                </td>
+                <td class="py-3 pr-4 whitespace-nowrap">
+                  {{ formatDate(item.eventDate) }}
+                </td>
+                <td class="py-3 pr-4 whitespace-nowrap">
+                  {{ formatTimeRange(item) }}
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge :color="getRoleColor(item.roleInEvent)" variant="soft">
+                    {{ item.roleInEvent }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge
+                    :color="getAssignmentStatusColor(item.assignmentStatus)"
+                    variant="soft"
+                  >
+                    {{ item.assignmentStatus }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge
+                    :color="getEventStatusColor(item.eventStatus)"
+                    variant="soft"
+                  >
+                    {{ item.eventStatus }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge
+                    :color="getBooleanColor(item.clientSatisfactionOk)"
+                    variant="soft"
+                  >
+                    {{ formatBoolean(item.clientSatisfactionOk) }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge :color="getBooleanColor(item.sopOk)" variant="soft">
+                    {{ formatBoolean(item.sopOk) }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge :color="getBooleanColor(item.warehouseOk)" variant="soft">
+                    {{ formatBoolean(item.warehouseOk) }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge :color="getBooleanColor(item.groomingOk)" variant="soft">
+                    {{ formatBoolean(item.groomingOk) }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge
+                    :color="getBooleanColor(item.dataCollectionOk)"
+                    variant="soft"
+                  >
+                    {{ formatBoolean(item.dataCollectionOk) }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UBadge :color="getSuccessColor(item.isSuccess)" variant="soft">
+                    {{ getSuccessLabel(item.isSuccess) }}
+                  </UBadge>
+                </td>
+                <td class="py-3 pr-4">
+                  <UButton
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-eye"
+                    :to="`/events/${item.eventId}`"
+                  >
+                    Event
+                  </UButton>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </UCard>
+    </template>
+  </div>
 </template>

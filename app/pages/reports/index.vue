@@ -50,144 +50,40 @@ const periodLabel = computed(() => {
   return `${month?.label || selectedMonth.value} ${selectedYear.value}`;
 });
 
-const metrics = computed(() => {
-  const staffRows = rows.value;
-  const assignedRows = staffRows.filter((item) => item.totalAssigned > 0);
+const leaderboards = computed(() => [
+  {
+    title: "Top 5 PIC",
+    role: "PIC",
+    rows: getLeaderboardRows("PIC"),
+  },
+  {
+    title: "Top 5 Senior Crew",
+    role: "SENIOR_CREW",
+    rows: getLeaderboardRows("SENIOR_CREW"),
+  },
+  {
+    title: "Top 5 Junior Crew",
+    role: "JUNIOR_CREW",
+    rows: getLeaderboardRows("JUNIOR_CREW"),
+  },
+]);
 
-  const totalAssignments = staffRows.reduce((total, item) => {
+const metrics = computed(() => {
+  const assignedRows = rows.value.filter((item) => item.totalAssigned > 0);
+  const totalAssignments = assignedRows.reduce((total, item) => {
     return total + item.totalAssigned;
   }, 0);
 
-  const totalEvaluated = staffRows.reduce((total, item) => {
-    return total + item.totalEvaluated;
-  }, 0);
-
-  const totalSuccess = staffRows.reduce((total, item) => {
-    return total + item.totalSuccess;
-  }, 0);
-
-  const totalFailed = staffRows.reduce((total, item) => {
-    return total + item.totalFailed;
-  }, 0);
-
-  const totalPic = staffRows.reduce((total, item) => {
-    return total + item.totalPic;
-  }, 0);
-
-  const assignedCounts = assignedRows.map((item) => item.totalAssigned);
-  const maxAssigned = assignedCounts.length ? Math.max(...assignedCounts) : 0;
-  const minAssigned = assignedCounts.length ? Math.min(...assignedCounts) : 0;
-  const averageAssigned = assignedRows.length
-    ? totalAssignments / assignedRows.length
-    : 0;
-
   return {
-    activeStaff: staffRows.length,
-    assignedStaff: assignedRows.length,
-    benchStaff: staffRows.length - assignedRows.length,
-    totalAssignments,
-    totalEvaluated,
-    totalSuccess,
-    totalFailed,
-    totalPic,
-    evaluationGap: Math.max(totalAssignments - totalEvaluated, 0),
-    evaluationCoverage: totalAssignments
-      ? Math.round((totalEvaluated / totalAssignments) * 100)
+    averageAssigned: assignedRows.length
+      ? totalAssignments / assignedRows.length
       : 0,
-    successRate: totalEvaluated
-      ? Math.round((totalSuccess / totalEvaluated) * 100)
-      : 0,
-    maxAssigned,
-    minAssigned,
-    averageAssigned,
-    workloadSpread: maxAssigned - minAssigned,
+    benchStaff: rows.value.length - assignedRows.length,
   };
-});
-
-const topReliabilityRows = computed(() => {
-  return [...rows.value]
-    .filter((item) => item.totalEvaluated > 0)
-    .sort((a, b) => {
-      if (a.successRate !== b.successRate) return b.successRate - a.successRate;
-      if (a.totalSuccess !== b.totalSuccess) return b.totalSuccess - a.totalSuccess;
-      return b.totalAssigned - a.totalAssigned;
-    })
-    .slice(0, 3);
-});
-
-const heavyLoadRows = computed(() => {
-  return [...rows.value]
-    .filter((item) => item.totalAssigned > 0)
-    .sort((a, b) => {
-      if (a.totalAssigned !== b.totalAssigned) {
-        return b.totalAssigned - a.totalAssigned;
-      }
-
-      return b.totalPic - a.totalPic;
-    })
-    .slice(0, 3);
-});
-
-const needsReviewRows = computed(() => {
-  return [...rows.value]
-    .filter((item) => {
-      return (
-        item.totalAssigned > 0 &&
-        (item.totalFailed > 0 ||
-          item.totalEvaluated < item.totalAssigned ||
-          item.successRate < 80)
-      );
-    })
-    .sort((a, b) => {
-      const aGap = a.totalAssigned - a.totalEvaluated;
-      const bGap = b.totalAssigned - b.totalEvaluated;
-
-      if (a.totalFailed !== b.totalFailed) return b.totalFailed - a.totalFailed;
-      if (aGap !== bGap) return bGap - aGap;
-
-      return a.successRate - b.successRate;
-    })
-    .slice(0, 5);
 });
 
 const benchRows = computed(() => {
   return rows.value.filter((item) => item.totalAssigned === 0).slice(0, 5);
-});
-
-const scheduleSignals = computed(() => {
-  const topPic = [...rows.value]
-    .filter((item) => item.totalPic > 0)
-    .sort((a, b) => {
-      if (a.totalPic !== b.totalPic) return b.totalPic - a.totalPic;
-      return b.successRate - a.successRate;
-    })[0];
-
-  return [
-    {
-      label: "Evaluation Gap",
-      value: metrics.value.evaluationGap,
-      detail: `${metrics.value.evaluationCoverage}% coverage`,
-      color: getCoverageColor(metrics.value.evaluationCoverage),
-    },
-    {
-      label: "Bench Capacity",
-      value: metrics.value.benchStaff,
-      detail: "active staff without assignment",
-      color: metrics.value.benchStaff > 0 ? "info" : "neutral",
-    },
-    {
-      label: "Load Spread",
-      value: metrics.value.workloadSpread,
-      detail: "max minus min assignments",
-      color: getSpreadColor(metrics.value.workloadSpread),
-    },
-    {
-      label: "PIC Anchor",
-      value: topPic?.name || "-",
-      detail: topPic ? `${topPic.totalPic} PIC, ${topPic.successRate}% success` : "no PIC data",
-      color: topPic ? "primary" : "neutral",
-    },
-  ];
 });
 
 function getInitialYear(value) {
@@ -239,23 +135,64 @@ function getSuccessColor(rate, evaluated = 1) {
   return "error";
 }
 
-function getCoverageColor(rate) {
-  if (rate >= 90) return "success";
-  if (rate >= 70) return "warning";
-  return "error";
+function getRankColor(rank) {
+  if (rank === 1) return "warning";
+  if (rank === 2) return "neutral";
+  if (rank === 3) return "primary";
+  return "neutral";
 }
 
-function getSpreadColor(spread) {
-  if (spread <= 1) return "success";
-  if (spread <= 3) return "warning";
-  return "error";
+function getLeaderboardRows(role) {
+  return rows.value
+    .filter((item) => {
+      return item.defaultRole === role && item.totalAssigned > 0;
+    })
+    .map((item) => ({
+      ...item,
+      score: getLeaderboardScore(item),
+    }))
+    .sort((a, b) => {
+      if (a.score !== b.score) return b.score - a.score;
+      if (a.successRate !== b.successRate) return b.successRate - a.successRate;
+      if (a.totalSuccess !== b.totalSuccess) return b.totalSuccess - a.totalSuccess;
+      return b.totalAssigned - a.totalAssigned;
+    })
+    .slice(0, 5);
+}
+
+function getLeaderboardScore(item) {
+  const evaluationGap = Math.max(item.totalAssigned - item.totalEvaluated, 0);
+  const picBonus = item.defaultRole === "PIC" ? item.totalPic * 4 : item.totalPic * 2;
+
+  return (
+    item.successRate +
+    item.totalSuccess * 6 +
+    item.totalAssigned * 3 +
+    picBonus -
+    item.totalFailed * 10 -
+    evaluationGap * 4
+  );
+}
+
+function formatScore(score) {
+  return Math.max(Math.round(score), 0);
+}
+
+function getLeaderboardSubtitle(role) {
+  if (role === "PIC") return "Ranked by success, PIC load, and completed evaluations.";
+
+  return "Ranked by success, assignment load, and evaluation quality.";
 }
 
 function getLoadColor(item) {
   if (item.totalAssigned === 0) return "neutral";
-  if (metrics.value.averageAssigned && item.totalAssigned >= metrics.value.averageAssigned * 1.5) {
+  if (
+    metrics.value.averageAssigned &&
+    item.totalAssigned >= metrics.value.averageAssigned * 1.5
+  ) {
     return "warning";
   }
+
   return "primary";
 }
 
@@ -356,7 +293,126 @@ function getReviewColor(item) {
         </div>
       </form>
     </UCard>
-<!-- Change To top 5 PIC | top 5 Senior Crew | top 5 Junior Crew  -->
+    <UCard>
+      <template #header>
+        <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 class="text-lg font-semibold">Monthly Staff Leaderboard</h2>
+            <p class="text-sm text-muted">
+              Top performers by role for schedule maker reference.
+            </p>
+          </div>
+
+          <UBadge color="neutral" variant="soft">
+            {{ periodLabel }}
+          </UBadge>
+        </div>
+      </template>
+
+      <p v-if="pending" class="text-sm text-muted">Loading report...</p>
+      <p v-else-if="error" class="text-sm text-red-500">
+        Failed to load report.
+      </p>
+      <p v-else-if="rows.length === 0" class="text-sm text-muted">
+        No report data.
+      </p>
+
+      <div v-else class="grid gap-4 xl:grid-cols-3">
+        <section
+          v-for="board in leaderboards"
+          :key="board.role"
+          class="rounded-md border border-default"
+        >
+          <div class="border-b border-default p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h3 class="font-semibold">{{ board.title }}</h3>
+                <p class="mt-1 text-xs text-muted">
+                  {{ getLeaderboardSubtitle(board.role) }}
+                </p>
+              </div>
+
+              <UBadge color="neutral" variant="soft">
+                {{ board.rows.length }} / 5
+              </UBadge>
+            </div>
+          </div>
+
+          <div class="divide-y divide-default">
+            <p
+              v-if="board.rows.length === 0"
+              class="p-4 text-sm text-muted"
+            >
+              No assigned {{ board.title.replace("Top 5 ", "") }} data.
+            </p>
+
+            <div
+              v-for="(item, index) in board.rows"
+              :key="item.staffId"
+              class="p-4"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-start gap-3">
+                  <UBadge
+                    :color="getRankColor(index + 1)"
+                    variant="soft"
+                    class="mt-0.5"
+                  >
+                    #{{ index + 1 }}
+                  </UBadge>
+
+                  <div class="min-w-0">
+                    <p class="truncate font-medium">{{ item.name }}</p>
+                    <p class="mt-1 text-xs text-muted">
+                      {{ item.totalAssigned }} assigned,
+                      {{ item.totalEvaluated }} evaluated,
+                      {{ item.totalPic }} PIC
+                    </p>
+                  </div>
+                </div>
+
+                <UBadge
+                  :color="getSuccessColor(item.successRate, item.totalEvaluated)"
+                  variant="soft"
+                >
+                  {{ item.successRate }}%
+                </UBadge>
+              </div>
+
+              <div class="mt-4 grid grid-cols-4 gap-2 text-sm">
+                <div>
+                  <p class="text-xs text-muted">Score</p>
+                  <p class="font-semibold">{{ formatScore(item.score) }}</p>
+                </div>
+
+                <div>
+                  <p class="text-xs text-muted">Success</p>
+                  <p class="font-semibold">{{ item.totalSuccess }}</p>
+                </div>
+
+                <div>
+                  <p class="text-xs text-muted">Failed</p>
+                  <p class="font-semibold">{{ item.totalFailed }}</p>
+                </div>
+
+                <div class="flex items-end justify-end">
+                  <UButton
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    icon="i-lucide-eye"
+                    :to="`/reports/staff/${item.staffId}?year=${selectedYear}&month=${selectedMonth}`"
+                  >
+                    Detail
+                  </UButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </UCard>
+
     <UCard>
       <template #header>
         <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -449,22 +505,6 @@ function getReviewColor(item) {
           </tbody>
         </table>
       </div>
-
-      <template #footer>
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p class="text-sm text-muted">
-            {{ metrics.benchStaff }} bench staff
-            <span v-if="benchRows.length">
-              : {{ benchRows.map((item) => item.name).join(", ") }}
-            </span>
-          </p>
-
-          <p class="text-sm text-muted">
-            Average assigned load:
-            {{ metrics.averageAssigned.toFixed(1) }}
-          </p>
-        </div>
-      </template>
     </UCard>
   </div>
 </template>

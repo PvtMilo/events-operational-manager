@@ -321,14 +321,15 @@ function getStaffActionItems(item) {
           Manage operational staff, roles, assignment eligibility, and status.
         </p>
       </div>
-
-      <UButton
-        icon="i-lucide-plus"
-        color="primary"
-        @click="isCreateStaffModalOpen = true"
-      >
-        Add Staff
-      </UButton>
+      <div class="flex flex-wrap gap-2">
+        <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          @click="isCreateStaffModalOpen = true"
+        >
+          Add Staff
+        </UButton>
+      </div>
     </div>
 
     <UModal
@@ -369,11 +370,7 @@ function getStaffActionItems(item) {
             </UFormField>
 
             <UFormField label="Status">
-              <USelect
-                v-model="status"
-                :items="statusOptions"
-                class="w-full"
-              />
+              <USelect v-model="status" :items="statusOptions" class="w-full" />
             </UFormField>
           </div>
 
@@ -683,8 +680,9 @@ function getStaffActionItems(item) {
           class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
         >
           <p class="text-sm text-muted">
-            Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
-            - Total {{ data.pagination.totalItems }} staff
+            Page {{ data.pagination.page }} of
+            {{ data.pagination.totalPages }} - Total
+            {{ data.pagination.totalItems }} staff
           </p>
 
           <div class="flex gap-2">

@@ -271,26 +271,6 @@ function getReviewColor(item) {
             />
           </UFormField>
         </div>
-
-        <div class="flex flex-wrap gap-2 md:justify-end">
-          <UButton
-            type="button"
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-refresh-cw"
-            @click="refresh"
-          >
-            Refresh
-          </UButton>
-
-          <UButton
-            type="submit"
-            color="primary"
-            icon="i-lucide-sliders-horizontal"
-          >
-            Apply Filter
-          </UButton>
-        </div>
       </form>
     </UCard>
     <UCard>

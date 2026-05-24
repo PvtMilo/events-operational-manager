@@ -775,15 +775,17 @@ async function handleSaveStaffEvaluation(staffId) {
                 Main event information and operational details.
               </p>
             </div>
-            <UButton
-              type="button"
-              icon="i-lucide-pencil"
-              color="neutral"
-              variant="outline"
-              @click="handleOpenEditEventModal"
-            >
-              Edit
-            </UButton>
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                type="button"
+                icon="i-lucide-pencil"
+                color="neutral"
+                variant="outline"
+                @click="handleOpenEditEventModal"
+              >
+                Edit
+              </UButton>
+            </div>
           </div>
         </template>
 
@@ -904,14 +906,15 @@ async function handleSaveStaffEvaluation(staffId) {
           <UFormField label="Change Status" class="md:w-72">
             <USelect v-model="selectedStatus" :items="eventStatusOptions" />
           </UFormField>
-
-          <UButton
-            type="submit"
-            :loading="isUpdatingStatus"
-            icon="i-lucide-refresh-cw"
-          >
-            Update Status
-          </UButton>
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              type="submit"
+              :loading="isUpdatingStatus"
+              icon="i-lucide-refresh-cw"
+            >
+              Update Status
+            </UButton>
+          </div>
         </form>
 
         <p v-if="statusErrorMessage" class="mt-3 text-sm text-red-500">
@@ -1157,13 +1160,14 @@ async function handleSaveStaffEvaluation(staffId) {
                       Default role: {{ member.staff?.defaultRole || "-" }}
                     </p>
                   </div>
-
-                  <UBadge
-                    :color="getAssignmentStatusColor(member.assignmentStatus)"
-                    variant="soft"
-                  >
-                    {{ member.assignmentStatus }}
-                  </UBadge>
+                  <div class="flex flex-wrap gap-2">
+                    <UBadge
+                      :color="getAssignmentStatusColor(member.assignmentStatus)"
+                      variant="soft"
+                    >
+                      {{ member.assignmentStatus }}
+                    </UBadge>
+                  </div>
                 </div>
 
                 <div class="grid gap-3 md:grid-cols-2">
@@ -1306,17 +1310,18 @@ async function handleSaveStaffEvaluation(staffId) {
                       - {{ staff.sameDayEvent.endTime }})
                     </p>
                   </div>
-
-                  <UButton
-                    size="sm"
-                    color="primary"
-                    variant="soft"
-                    icon="i-lucide-arrow-left"
-                    :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
-                    @click="handleAddAvailableStaff(staff)"
-                  >
-                    Add
-                  </UButton>
+                  <div class="flex flex-wrap gap-2">
+                    <UButton
+                      size="sm"
+                      color="primary"
+                      variant="soft"
+                      icon="i-lucide-arrow-left"
+                      :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
+                      @click="handleAddAvailableStaff(staff)"
+                    >
+                      Add
+                    </UButton>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1335,14 +1340,15 @@ async function handleSaveStaffEvaluation(staffId) {
                   Input actual ribbon usage after the event.
                 </p>
               </div>
-
-              <UBadge
-                :color="requiresRibbonTracking ? 'warning' : 'neutral'"
-                variant="soft"
-              >
-                Ribbon tracking:
-                {{ requiresRibbonTracking ? "Required" : "Optional" }}
-              </UBadge>
+              <div class="flex flex-wrap gap-2">
+                <UBadge
+                  :color="requiresRibbonTracking ? 'warning' : 'neutral'"
+                  variant="soft"
+                >
+                  Ribbon tracking:
+                  {{ requiresRibbonTracking ? "Required" : "Optional" }}
+                </UBadge>
+              </div>
             </div>
           </template>
 
@@ -1384,22 +1390,24 @@ async function handleSaveStaffEvaluation(staffId) {
                   Client satisfaction and event-level feedback.
                 </p>
               </div>
-              <UBadge
-                :color="
-                  currentEvent.eventEvaluation?.clientSatisfactionOk
-                    ? 'success'
-                    : 'warning'
-                "
-                variant="soft"
-              >
-                <span class="font-medium">
-                  {{
-                    formatBoolean(
-                      currentEvent.eventEvaluation?.clientSatisfactionOk,
-                    )
-                  }}
-                </span>
-              </UBadge>
+              <div class="flex flex-wrap gap-2">
+                <UBadge
+                  :color="
+                    currentEvent.eventEvaluation?.clientSatisfactionOk
+                      ? 'success'
+                      : 'warning'
+                  "
+                  variant="soft"
+                >
+                  <span class="font-medium">
+                    {{
+                      formatBoolean(
+                        currentEvent.eventEvaluation?.clientSatisfactionOk,
+                      )
+                    }}
+                  </span>
+                </UBadge>
+              </div>
             </div>
           </template>
 
@@ -1480,21 +1488,22 @@ async function handleSaveStaffEvaluation(staffId) {
                   {{ assignment.staff?.defaultRole }}
                 </p>
               </div>
-
-              <UBadge
-                :color="
-                  getStaffEvaluation(assignment.staffId)?.isSuccess
-                    ? 'success'
-                    : 'neutral'
-                "
-                variant="soft"
-              >
-                {{
-                  getStaffEvaluation(assignment.staffId)?.isSuccess
-                    ? "SUCCESS"
-                    : "NOT SUCCESS / NOT EVALUATED"
-                }}
-              </UBadge>
+              <div class="flex flex-wrap gap-2">
+                <UBadge
+                  :color="
+                    getStaffEvaluation(assignment.staffId)?.isSuccess
+                      ? 'success'
+                      : 'neutral'
+                  "
+                  variant="soft"
+                >
+                  {{
+                    getStaffEvaluation(assignment.staffId)?.isSuccess
+                      ? "SUCCESS"
+                      : "NOT SUCCESS / NOT EVALUATED"
+                  }}
+                </UBadge>
+              </div>
             </div>
 
             <div

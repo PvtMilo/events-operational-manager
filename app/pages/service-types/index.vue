@@ -23,7 +23,9 @@ const serviceTypesUrl = computed(() => {
 
   const queryString = params.toString();
 
-  return queryString ? `/api/service-types?${queryString}` : "/api/service-types";
+  return queryString
+    ? `/api/service-types?${queryString}`
+    : "/api/service-types";
 });
 
 const editingId = ref("");
@@ -221,14 +223,15 @@ function getServiceTypeActionItems(item) {
           Manage event service types, descriptions, and ribbon tracking rules.
         </p>
       </div>
-
-      <UButton
-        icon="i-lucide-plus"
-        color="primary"
-        @click="isCreateServiceTypeModalOpen = true"
-      >
-        Add Service Type
-      </UButton>
+      <div class="flex flex-wrap gap-2">
+        <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          @click="isCreateServiceTypeModalOpen = true"
+        >
+          Add Service Type
+        </UButton>
+      </div>
     </div>
 
     <UModal
@@ -367,9 +370,7 @@ function getServiceTypeActionItems(item) {
     </UCard>
 
     <UCard>
-      <p v-if="pending" class="text-sm text-muted">
-        Loading service types...
-      </p>
+      <p v-if="pending" class="text-sm text-muted">Loading service types...</p>
       <p v-else-if="error" class="text-sm text-red-500">
         Failed to load service types.
       </p>

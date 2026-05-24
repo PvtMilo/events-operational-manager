@@ -1,5 +1,6 @@
 <script setup>
 const { user, clear } = useUserSession();
+const colorMode = useColorMode();
 
 const open = ref(false);
 const collapsed = ref(false);
@@ -79,6 +80,29 @@ const links = computed(() => {
   }
 
   const settingsChildren = [
+    {
+      label: "Appearance",
+      icon: "i-lucide-palette",
+      type: "trigger",
+      children: [
+        {
+          label: "Light",
+          icon: "i-lucide-sun",
+          onSelect: () => {
+            colorMode.preference = "light";
+            open.value = false;
+          },
+        },
+        {
+          label: "Dark",
+          icon: "i-lucide-moon",
+          onSelect: () => {
+            colorMode.preference = "dark";
+            open.value = false;
+          },
+        },
+      ],
+    },
     {
       label: "Change Password",
       icon: "i-lucide-key-round",
@@ -164,9 +188,6 @@ const links = computed(() => {
               {{ user?.role || "-" }}
             </p>
           </div>
-
-          <UColorModeButton />
-
           <UButton
             block
             size="sm"

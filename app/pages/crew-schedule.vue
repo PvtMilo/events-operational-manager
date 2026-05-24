@@ -283,7 +283,7 @@ async function goToNextPage() {
         </p>
       </div>
 
-      <div class="flex flex-wrap gap-2">
+      <!-- <div class="flex flex-wrap gap-2">
         <UButton
           type="button"
           color="neutral"
@@ -293,7 +293,7 @@ async function goToNextPage() {
         >
           Refresh
         </UButton>
-      </div>
+      </div> -->
     </div>
 
     <UCard>

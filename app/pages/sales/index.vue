@@ -273,14 +273,15 @@ function getSalesActionItems(item) {
           Manage sales contacts, phone numbers, notes, and status.
         </p>
       </div>
-
-      <UButton
-        icon="i-lucide-plus"
-        color="primary"
-        @click="isCreateSalesModalOpen = true"
-      >
-        Add Sales
-      </UButton>
+      <div class="flex flex-wrap gap-2">
+        <UButton
+          icon="i-lucide-plus"
+          color="primary"
+          @click="isCreateSalesModalOpen = true"
+        >
+          Add Sales
+        </UButton>
+      </div>
     </div>
 
     <UModal
@@ -313,11 +314,7 @@ function getSalesActionItems(item) {
             </UFormField>
 
             <UFormField label="Status">
-              <USelect
-                v-model="status"
-                :items="statusOptions"
-                class="w-full"
-              />
+              <USelect v-model="status" :items="statusOptions" class="w-full" />
             </UFormField>
           </div>
 
@@ -578,8 +575,9 @@ function getSalesActionItems(item) {
           class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
         >
           <p class="text-sm text-muted">
-            Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
-            - Total {{ data.pagination.totalItems }} sales
+            Page {{ data.pagination.page }} of
+            {{ data.pagination.totalPages }} - Total
+            {{ data.pagination.totalItems }} sales
           </p>
 
           <div class="flex gap-2">

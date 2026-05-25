@@ -11,6 +11,10 @@ const role = ref("STAFF");
 
 const isSubmitting = ref(false);
 const errorMessage = ref("");
+const isCreateUserModalOpen = ref(false);
+const isEditUserModalOpen = ref(false);
+const isResetPasswordModalOpen = ref(false);
+const isFilterModalOpen = ref(false);
 
 const editingId = ref("");
 const editName = ref("");
@@ -26,8 +30,8 @@ const isResettingPassword = ref(false);
 const resetPasswordErrorMessage = ref("");
 const resetPasswordSuccessMessage = ref("");
 
-const filterRole = ref("");
-const filterStatus = ref("");
+const filterRole = ref("ALL");
+const filterStatus = ref("ALL");
 const page = ref(1);
 const {
   searchInput,
@@ -40,12 +44,42 @@ const {
   },
 });
 
+const roleOptions = [
+  { label: "DEVELOPER", value: "DEVELOPER" },
+  { label: "ADMIN", value: "ADMIN" },
+  { label: "SCHEDULE_MAKER", value: "SCHEDULE_MAKER" },
+  { label: "HEAD_OPERATIONAL", value: "HEAD_OPERATIONAL" },
+  { label: "STAFF", value: "STAFF" },
+];
+
+const roleFilterOptions = [
+  { label: "All Roles", value: "ALL" },
+  ...roleOptions,
+];
+
+const statusOptions = [
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "INACTIVE", value: "INACTIVE" },
+];
+
+const statusFilterOptions = [
+  { label: "All Status", value: "ALL" },
+  ...statusOptions,
+];
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filterRole.value !== "ALL") count += 1;
+  if (filterStatus.value !== "ALL") count += 1;
+  return count;
+});
+
 const usersUrl = computed(() => {
   const params = new URLSearchParams();
 
   if (appliedSearch.value) params.set("search", appliedSearch.value);
-  if (filterRole.value) params.set("role", filterRole.value);
-  if (filterStatus.value) params.set("status", filterStatus.value);
+  if (filterRole.value !== "ALL") params.set("role", filterRole.value);
+  if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   params.set("page", page.value);
 
   const queryString = params.toString();
@@ -59,15 +93,17 @@ async function handleApplyFilter() {
   applySearchNow();
   page.value = 1;
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
   resetSearch();
-  filterRole.value = "";
-  filterStatus.value = "";
+  filterRole.value = "ALL";
+  filterStatus.value = "ALL";
   page.value = 1;
 
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function goToPreviousPage() {
@@ -84,12 +120,18 @@ async function goToNextPage() {
   await refresh();
 }
 
+function openCreateUserModal() {
+  errorMessage.value = "";
+  isCreateUserModalOpen.value = true;
+}
+
 function startEdit(user) {
   editingId.value = user.id;
   editName.value = user.name;
   editRole.value = user.role;
   editStatus.value = user.status;
   editErrorMessage.value = "";
+  isEditUserModalOpen.value = true;
 }
 
 function cancelEdit() {
@@ -98,6 +140,7 @@ function cancelEdit() {
   editRole.value = "STAFF";
   editStatus.value = "ACTIVE";
   editErrorMessage.value = "";
+  isEditUserModalOpen.value = false;
 }
 
 function startResetPassword(user) {
@@ -106,6 +149,7 @@ function startResetPassword(user) {
   newPassword.value = "";
   resetPasswordErrorMessage.value = "";
   resetPasswordSuccessMessage.value = "";
+  isResetPasswordModalOpen.value = true;
 }
 
 function cancelResetPassword() {
@@ -114,6 +158,7 @@ function cancelResetPassword() {
   newPassword.value = "";
   resetPasswordErrorMessage.value = "";
   resetPasswordSuccessMessage.value = "";
+  isResetPasswordModalOpen.value = false;
 }
 
 async function handleResetPassword() {
@@ -185,6 +230,7 @@ async function handleCreate() {
     role.value = "STAFF";
 
     await refresh();
+    isCreateUserModalOpen.value = false;
   } catch (error) {
     errorMessage.value =
       error?.data?.statusMessage ||
@@ -226,263 +272,409 @@ async function handleUpdate() {
     isUpdating.value = false;
   }
 }
+
+function getStatusColor(status) {
+  if (status === "ACTIVE") return "success";
+  if (status === "INACTIVE") return "neutral";
+
+  return "neutral";
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return "-";
+
+  return new Date(dateValue).toLocaleString();
+}
+
+function getUserActionItems(user) {
+  return [
+    {
+      label: "Edit",
+      icon: "i-lucide-pencil",
+      onSelect: () => startEdit(user),
+    },
+    {
+      label: "Reset Password",
+      icon: "i-lucide-key-round",
+      onSelect: () => startResetPassword(user),
+    },
+  ];
+}
 </script>
 
 <template>
-  <section>
-    <h1>Users</h1>
-    <p>Manage application users.</p>
-
-    <hr />
-
-    <form @submit.prevent="handleCreate">
-      <h2>Add User</h2>
-
+  <div class="p-6 space-y-6">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
       <div>
-        <label>Name</label>
-        <br />
-        <input v-model="name" type="text" />
+        <h1 class="text-2xl font-semibold">Users</h1>
+        <p class="text-sm text-muted">
+          Manage application users, roles, account status, and password resets.
+        </p>
       </div>
 
-      <br />
+      <UButton icon="i-lucide-plus" color="primary" @click="openCreateUserModal">
+        Add User
+      </UButton>
+    </div>
 
-      <div>
-        <label>Email</label>
-        <br />
-        <input v-model="email" type="email" />
+    <UModal
+      v-model:open="isCreateUserModalOpen"
+      title="Add User"
+      description="Create a new application account."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="create-user-form"
+          class="space-y-4"
+          @submit.prevent="handleCreate"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Name" required>
+              <UInput v-model="name" placeholder="Example: Andi" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Email" required>
+              <UInput
+                v-model="email"
+                type="email"
+                placeholder="andi@example.com"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="Password" required>
+              <UInput v-model="password" type="password" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Role">
+              <USelect v-model="role" :items="roleOptions" class="w-full" />
+            </UFormField>
+          </div>
+
+          <p v-if="errorMessage" class="text-sm text-red-500">
+            {{ errorMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            type="button"
+            color="neutral"
+            variant="ghost"
+            @click="isCreateUserModalOpen = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            form="create-user-form"
+            type="submit"
+            color="primary"
+            :loading="isSubmitting"
+          >
+            Save User
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isEditUserModalOpen"
+      title="Edit User"
+      description="Update user profile, role, and account status."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="edit-user-form"
+          class="space-y-4"
+          @submit.prevent="handleUpdate"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Name" required>
+              <UInput v-model="editName" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Role">
+              <USelect v-model="editRole" :items="roleOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Status">
+              <USelect
+                v-model="editStatus"
+                :items="statusOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <p v-if="editErrorMessage" class="text-sm text-red-500">
+            {{ editErrorMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton type="button" color="neutral" variant="ghost" @click="cancelEdit">
+            Cancel
+          </UButton>
+          <UButton
+            form="edit-user-form"
+            type="submit"
+            color="primary"
+            :loading="isUpdating"
+          >
+            Update User
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isResetPasswordModalOpen"
+      title="Reset Password"
+      :description="`Set a new password for ${resetPasswordUserName || 'this user'}.`"
+      :ui="{ content: 'max-w-lg' }"
+    >
+      <template #body>
+        <form
+          id="reset-password-form"
+          class="space-y-4"
+          @submit.prevent="handleResetPassword"
+        >
+          <UFormField label="New Password" required>
+            <UInput v-model="newPassword" type="password" class="w-full" />
+          </UFormField>
+
+          <p v-if="resetPasswordErrorMessage" class="text-sm text-red-500">
+            {{ resetPasswordErrorMessage }}
+          </p>
+
+          <p v-if="resetPasswordSuccessMessage" class="text-sm text-green-600">
+            {{ resetPasswordSuccessMessage }}
+          </p>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            type="button"
+            color="neutral"
+            variant="ghost"
+            @click="cancelResetPassword"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            form="reset-password-form"
+            type="submit"
+            color="primary"
+            :loading="isResettingPassword"
+          >
+            Reset Password
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UCard>
+      <div
+        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <div class="w-full lg:max-w-sm">
+          <UInput
+            v-model="searchInput"
+            icon="i-lucide-search"
+            placeholder="Search users"
+            class="w-full"
+            size="md"
+            @keyup.enter="handleApplyFilter"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 w-full md:justify-end">
+          <USelect
+            v-model="filterStatus"
+            :items="statusFilterOptions"
+            size="md"
+            class="w-full md:w-40"
+            @update:model-value="handleApplyFilter"
+          />
+
+          <UButton
+            type="button"
+            size="md"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-sliders-horizontal"
+            @click="isFilterModalOpen = true"
+          >
+            Filter
+            <UBadge
+              v-if="activeFilterCount > 0"
+              color="primary"
+              variant="solid"
+              size="md"
+              class="ml-1"
+            >
+              {{ activeFilterCount }}
+            </UBadge>
+          </UButton>
+        </div>
       </div>
+    </UCard>
 
-      <br />
+    <UModal
+      v-model:open="isFilterModalOpen"
+      title="Filter Users"
+      description="Apply role and status filters to the user list."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="user-filter-form"
+          class="space-y-4"
+          @submit.prevent="handleApplyFilter"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Role">
+              <USelect
+                v-model="filterRole"
+                :items="roleFilterOptions"
+                class="w-full"
+              />
+            </UFormField>
 
-      <div>
-        <label>Password</label>
-        <br />
-        <input v-model="password" type="password" />
-      </div>
+            <UFormField label="Status">
+              <USelect
+                v-model="filterStatus"
+                :items="statusFilterOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </form>
+      </template>
 
-      <br />
+      <template #footer>
+        <div class="flex gap-2 w-full justify-end">
+          <UButton
+            type="button"
+            color="neutral"
+            variant="ghost"
+            @click="handleResetFilter"
+          >
+            Reset
+          </UButton>
 
-      <div>
-        <label>Role</label>
-        <br />
-        <select v-model="role">
-          <option value="DEVELOPER">DEVELOPER</option>
-          <option value="ADMIN">ADMIN</option>
-          <option value="SCHEDULE_MAKER">SCHEDULE_MAKER</option>
-          <option value="HEAD_OPERATIONAL">HEAD_OPERATIONAL</option>
-          <option value="STAFF">STAFF</option>
-        </select>
-      </div>
+          <UButton form="user-filter-form" type="submit" color="primary">
+            Apply Filter
+          </UButton>
+        </div>
+      </template>
+    </UModal>
 
-      <br />
-
-      <p v-if="errorMessage" style="color: red">
-        {{ errorMessage }}
+    <UCard>
+      <p v-if="pending" class="text-sm text-muted">Loading users...</p>
+      <p v-else-if="error" class="text-sm text-red-500">
+        Failed to load users.
+      </p>
+      <p v-else-if="data?.data?.length === 0" class="text-sm text-muted">
+        No users found.
       </p>
 
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? "Saving..." : "Save User" }}
-      </button>
-    </form>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-default text-left">
+              <th class="py-2 pr-4">User</th>
+              <th class="py-2 pr-4">Email</th>
+              <th class="py-2 pr-4">Role</th>
+              <th class="py-2 pr-4">Status</th>
+              <th class="py-2 pr-4">Created At</th>
+              <th class="py-2 pr-4"></th>
+            </tr>
+          </thead>
 
-    <hr />
-
-    <div v-if="editingId">
-      <h2>Edit User</h2>
-
-      <form @submit.prevent="handleUpdate">
-        <div>
-          <label>Name</label>
-          <br />
-          <input v-model="editName" type="text" />
-        </div>
-
-        <br />
-
-        <div>
-          <label>Role</label>
-          <br />
-          <select v-model="editRole">
-            <option value="DEVELOPER">DEVELOPER</option>
-            <option value="ADMIN">ADMIN</option>
-            <option value="SCHEDULE_MAKER">SCHEDULE_MAKER</option>
-            <option value="HEAD_OPERATIONAL">HEAD_OPERATIONAL</option>
-            <option value="STAFF">STAFF</option>
-          </select>
-        </div>
-
-        <br />
-
-        <div>
-          <label>Status</label>
-          <br />
-          <select v-model="editStatus">
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
-        </div>
-
-        <br />
-
-        <p v-if="editErrorMessage" style="color: red">
-          {{ editErrorMessage }}
-        </p>
-
-        <button type="submit" :disabled="isUpdating">
-          {{ isUpdating ? "Updating..." : "Update User" }}
-        </button>
-
-        <button type="button" @click="cancelEdit">
-          Cancel
-        </button>
-      </form>
-
-      <hr />
-    </div>
-
-    <div v-if="resetPasswordUserId">
-      <h2>Reset Password</h2>
-
-      <p>User: {{ resetPasswordUserName }}</p>
-
-      <form @submit.prevent="handleResetPassword">
-        <div>
-          <label>New Password</label>
-          <br />
-          <input v-model="newPassword" type="password" />
-        </div>
-
-        <br />
-
-        <p v-if="resetPasswordErrorMessage" style="color: red">
-          {{ resetPasswordErrorMessage }}
-        </p>
-
-        <p v-if="resetPasswordSuccessMessage" style="color: green">
-          {{ resetPasswordSuccessMessage }}
-        </p>
-
-        <button type="submit" :disabled="isResettingPassword">
-          {{ isResettingPassword ? "Resetting..." : "Reset Password" }}
-        </button>
-
-        <button type="button" @click="cancelResetPassword">
-          Cancel
-        </button>
-      </form>
-    </div>
-
-    <hr />
-
-    <h2>Filter Users</h2>
-
-    <form @submit.prevent="handleApplyFilter">
-      <div>
-        <label>Search</label>
-        <br />
-        <input
-          v-model="searchInput"
-          type="text"
-          placeholder="Search name or email"
-        />
+          <tbody>
+            <tr
+              v-for="user in data?.data"
+              :key="user.id"
+              class="border-b border-default align-top"
+            >
+              <td class="py-3 pr-4 font-medium">{{ user.name }}</td>
+              <td class="py-3 pr-4">{{ user.email }}</td>
+              <td class="py-3 pr-4">
+                <UBadge color="neutral" variant="soft">
+                  {{ user.role }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4">
+                <UBadge :color="getStatusColor(user.status)" variant="soft">
+                  {{ user.status }}
+                </UBadge>
+              </td>
+              <td class="py-3 pr-4 min-w-40">
+                {{ formatDateTime(user.createdAt) }}
+              </td>
+              <td class="py-3 pr-4">
+                <UDropdownMenu
+                  :items="getUserActionItems(user)"
+                  :content="{ align: 'end' }"
+                >
+                  <UButton
+                    icon="i-lucide-ellipsis-vertical"
+                    size="xs"
+                    color="neutral"
+                    variant="ghost"
+                    aria-label="User actions"
+                  />
+                </UDropdownMenu>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <br />
+      <template #footer>
+        <div
+          v-if="data?.pagination"
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <p class="text-sm text-muted">
+            Page {{ data.pagination.page }} of
+            {{ data.pagination.totalPages }} - Total
+            {{ data.pagination.totalItems }} users
+          </p>
 
-      <div>
-        <label>Role</label>
-        <br />
-        <select v-model="filterRole">
-          <option value="">All Roles</option>
-          <option value="DEVELOPER">DEVELOPER</option>
-          <option value="ADMIN">ADMIN</option>
-          <option value="SCHEDULE_MAKER">SCHEDULE_MAKER</option>
-          <option value="HEAD_OPERATIONAL">HEAD_OPERATIONAL</option>
-          <option value="STAFF">STAFF</option>
-        </select>
-      </div>
-
-      <br />
-
-      <div>
-        <label>Status</label>
-        <br />
-        <select v-model="filterStatus">
-          <option value="">All Status</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
-      </div>
-
-      <br />
-
-      <button type="submit">Apply Filter</button>
-      <button type="button" @click="handleResetFilter">Reset</button>
-    </form>
-
-    <h2>User List</h2>
-
-    <p v-if="pending">Loading users...</p>
-    <p v-else-if="error">Failed to load users.</p>
-
-    <table v-else border="1" cellpadding="8" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Created At</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="user in data?.data" :key="user.id">
-          <td>{{ user.name }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.role }}</td>
-          <td>{{ user.status }}</td>
-          <td>{{ new Date(user.createdAt).toLocaleString() }}</td>
-          <td>
-            <button type="button" @click="startEdit(user)">
-              Edit
-            </button>
-
-            |
-
-            <button type="button" @click="startResetPassword(user)">
-              Reset Password
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-if="data?.data?.length === 0">No users yet.</p>
-
-    <div v-if="data?.pagination">
-      <p>
-        Page {{ data.pagination.page }} of {{ data.pagination.totalPages }}
-        —
-        Total {{ data.pagination.totalItems }} users
-      </p>
-
-      <button
-        type="button"
-        :disabled="data.pagination.page <= 1"
-        @click="goToPreviousPage"
-      >
-        Previous
-      </button>
-
-      <button
-        type="button"
-        :disabled="data.pagination.page >= data.pagination.totalPages"
-        @click="goToNextPage"
-      >
-        Next
-      </button>
-    </div>
-  </section>
+          <div class="flex gap-2">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="data.pagination.page <= 1"
+              @click="goToPreviousPage"
+            >
+              Previous
+            </UButton>
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="data.pagination.page >= data.pagination.totalPages"
+              @click="goToNextPage"
+            >
+              Next
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UCard>
+  </div>
 </template>

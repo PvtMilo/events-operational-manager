@@ -31,12 +31,21 @@ const isFilterModalOpen = ref(false);
 
 const page = ref(1);
 
-const search = ref("");
 const filterStatus = ref("ALL");
 const filterServiceTypeId = ref("ALL");
 const filterYear = ref("ALL");
 const filterMonth = ref("ALL");
 const filterDateRange = ref(null);
+const {
+  searchInput,
+  appliedSearch,
+  applySearchNow,
+  resetSearch,
+} = useDebouncedSearch({
+  onApply: () => {
+    page.value = 1;
+  },
+});
 
 const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 
@@ -47,7 +56,7 @@ const hasDateRangeFilter = computed(
 const eventUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   if (filterServiceTypeId.value !== "ALL")
     params.set("serviceTypeId", filterServiceTypeId.value);
@@ -235,6 +244,7 @@ function getEventActionItems(event) {
 }
 
 async function handleApplyFilter() {
+  applySearchNow();
   page.value = 1;
   if (hasDateRangeFilter.value) {
     filterYear.value = "ALL";
@@ -257,7 +267,7 @@ async function handleClearDateFilter(close) {
 }
 
 async function handleResetFilter() {
-  search.value = "";
+  resetSearch();
   filterStatus.value = "ALL";
   filterServiceTypeId.value = "ALL";
   filterYear.value = "ALL";
@@ -270,9 +280,11 @@ async function handleResetFilter() {
 }
 
 function handleExportEvents() {
+  applySearchNow();
+
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   if (filterServiceTypeId.value !== "ALL")
     params.set("serviceTypeId", filterServiceTypeId.value);
@@ -630,7 +642,7 @@ async function handleHardDeleteEvent(id) {
       >
         <div class="w-full lg:max-w-sm">
           <UInput
-            v-model="search"
+            v-model="searchInput"
             icon="i-lucide-search"
             placeholder="Search"
             class="w-full"

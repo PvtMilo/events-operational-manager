@@ -26,15 +26,24 @@ const isResettingPassword = ref(false);
 const resetPasswordErrorMessage = ref("");
 const resetPasswordSuccessMessage = ref("");
 
-const search = ref("");
 const filterRole = ref("");
 const filterStatus = ref("");
 const page = ref(1);
+const {
+  searchInput,
+  appliedSearch,
+  applySearchNow,
+  resetSearch,
+} = useDebouncedSearch({
+  onApply: () => {
+    page.value = 1;
+  },
+});
 
 const usersUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
   if (filterRole.value) params.set("role", filterRole.value);
   if (filterStatus.value) params.set("status", filterStatus.value);
   params.set("page", page.value);
@@ -47,12 +56,13 @@ const usersUrl = computed(() => {
 const { data, pending, error, refresh } = await useFetch(usersUrl);
 
 async function handleApplyFilter() {
+  applySearchNow();
   page.value = 1;
   await refresh();
 }
 
 async function handleResetFilter() {
-  search.value = "";
+  resetSearch();
   filterRole.value = "";
   filterStatus.value = "";
   page.value = 1;
@@ -371,7 +381,7 @@ async function handleUpdate() {
         <label>Search</label>
         <br />
         <input
-          v-model="search"
+          v-model="searchInput"
           type="text"
           placeholder="Search name or email"
         />

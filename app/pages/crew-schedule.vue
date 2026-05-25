@@ -5,7 +5,6 @@ definePageMeta({
 });
 
 const page = ref(1);
-const search = ref("");
 const filterRole = ref("ALL");
 const filterAssignmentStatus = ref("ALL_ACTIVE");
 const filterEventStatus = ref("ALL");
@@ -13,6 +12,16 @@ const filterYear = ref("ALL");
 const filterMonth = ref("ALL");
 const filterDateRange = ref(null);
 const isFilterModalOpen = ref(false);
+const {
+  searchInput,
+  appliedSearch,
+  applySearchNow,
+  resetSearch,
+} = useDebouncedSearch({
+  onApply: () => {
+    page.value = 1;
+  },
+});
 
 const hasDateRangeFilter = computed(
   () => !!filterDateRange.value?.start || !!filterDateRange.value?.end,
@@ -21,7 +30,7 @@ const hasDateRangeFilter = computed(
 const scheduleUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
 
   if (filterRole.value !== "ALL") {
     params.set("role", filterRole.value);
@@ -218,6 +227,7 @@ function getEventStatusColor(status) {
 }
 
 async function handleApplyFilter() {
+  applySearchNow();
   page.value = 1;
   if (hasDateRangeFilter.value) {
     filterYear.value = "ALL";
@@ -240,7 +250,7 @@ async function handleClearDateFilter(close) {
 }
 
 async function handleResetFilter() {
-  search.value = "";
+  resetSearch();
   filterRole.value = "ALL";
   filterAssignmentStatus.value = "ALL_ACTIVE";
   filterEventStatus.value = "ALL";
@@ -302,7 +312,7 @@ async function goToNextPage() {
       >
         <div class="w-full lg:max-w-sm">
           <UInput
-            v-model="search"
+            v-model="searchInput"
             icon="i-lucide-search"
             placeholder="Search crew schedule"
             class="w-full"

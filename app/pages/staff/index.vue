@@ -19,16 +19,25 @@ const isCreateStaffModalOpen = ref(false);
 const isEditStaffModalOpen = ref(false);
 const isFilterModalOpen = ref(false);
 
-const search = ref("");
 const filterDefaultRole = ref("ALL");
 const filterStatus = ref("ALL");
 const filterCanBeAssigned = ref("ALL");
 const page = ref(1);
+const {
+  searchInput,
+  appliedSearch,
+  applySearchNow,
+  resetSearch,
+} = useDebouncedSearch({
+  onApply: () => {
+    page.value = 1;
+  },
+});
 
 const staffUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
   if (filterDefaultRole.value !== "ALL") {
     params.set("defaultRole", filterDefaultRole.value);
   }
@@ -92,13 +101,14 @@ const activeFilterCount = computed(() => {
 });
 
 async function handleApplyFilter() {
+  applySearchNow();
   page.value = 1;
   await refresh();
   isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
-  search.value = "";
+  resetSearch();
   filterDefaultRole.value = "ALL";
   filterStatus.value = "ALL";
   filterCanBeAssigned.value = "ALL";
@@ -500,7 +510,7 @@ function getStaffActionItems(item) {
       >
         <div class="w-full lg:max-w-sm">
           <UInput
-            v-model="search"
+            v-model="searchInput"
             icon="i-lucide-search"
             placeholder="Search staff"
             class="w-full"

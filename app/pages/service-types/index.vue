@@ -14,12 +14,17 @@ const errorMessage = ref("");
 const isCreateServiceTypeModalOpen = ref(false);
 const isEditServiceTypeModalOpen = ref(false);
 
-const search = ref("");
+const {
+  searchInput,
+  appliedSearch,
+  applySearchNow,
+  resetSearch,
+} = useDebouncedSearch();
 
 const serviceTypesUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
 
   const queryString = params.toString();
 
@@ -38,11 +43,12 @@ const editErrorMessage = ref("");
 const { data, pending, error, refresh } = await useFetch(serviceTypesUrl);
 
 async function handleApplyFilter() {
+  applySearchNow();
   await refresh();
 }
 
 async function handleResetFilter() {
-  search.value = "";
+  resetSearch();
   await refresh();
 }
 
@@ -358,7 +364,7 @@ function getServiceTypeActionItems(item) {
       >
         <div class="w-full lg:max-w-sm">
           <UInput
-            v-model="search"
+            v-model="searchInput"
             icon="i-lucide-search"
             placeholder="Search service types"
             class="w-full"

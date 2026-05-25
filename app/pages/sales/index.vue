@@ -17,14 +17,23 @@ const isCreateSalesModalOpen = ref(false);
 const isEditSalesModalOpen = ref(false);
 const isFilterModalOpen = ref(false);
 
-const search = ref("");
 const filterStatus = ref("ALL");
 const page = ref(1);
+const {
+  searchInput,
+  appliedSearch,
+  applySearchNow,
+  resetSearch,
+} = useDebouncedSearch({
+  onApply: () => {
+    page.value = 1;
+  },
+});
 
 const salesUrl = computed(() => {
   const params = new URLSearchParams();
 
-  if (search.value) params.set("search", search.value);
+  if (appliedSearch.value) params.set("search", appliedSearch.value);
   if (filterStatus.value !== "ALL") params.set("status", filterStatus.value);
   params.set("page", page.value);
 
@@ -60,13 +69,14 @@ const activeFilterCount = computed(() => {
 });
 
 async function handleApplyFilter() {
+  applySearchNow();
   page.value = 1;
   await refresh();
   isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
-  search.value = "";
+  resetSearch();
   filterStatus.value = "ALL";
   page.value = 1;
 
@@ -426,7 +436,7 @@ function getSalesActionItems(item) {
       >
         <div class="w-full lg:max-w-sm">
           <UInput
-            v-model="search"
+            v-model="searchInput"
             icon="i-lucide-search"
             placeholder="Search sales"
             class="w-full"

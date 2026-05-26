@@ -12,16 +12,25 @@ const {
   data: eventData,
   pending,
   error,
-  refresh,
 } = await useFetch(`/api/events/${eventId}`);
 
 const { data: serviceTypesData } = await useFetch("/api/service-types");
 const { data: salesData } = await useFetch("/api/sales");
-const { data: availabilityData, refresh: refreshAvailability } = await useFetch(
+const { data: availabilityData } = await useFetch(
   `/api/events/${eventId}/staff-availability`,
 );
 
 const currentEvent = computed(() => eventData.value?.data || null);
+
+async function refreshEventDetailInPlace() {
+  eventData.value = await $fetch(`/api/events/${eventId}`);
+}
+
+async function refreshAvailabilityInPlace() {
+  availabilityData.value = await $fetch(
+    `/api/events/${eventId}/staff-availability`,
+  );
+}
 
 const selectedStatus = ref("");
 const isUpdatingStatus = ref(false);
@@ -571,8 +580,8 @@ async function handleUpdateEvent() {
       },
     });
 
-    await refresh();
-    await refreshAvailability();
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
     isEditEventModalOpen.value = false;
   } catch (error) {
     editEventErrorMessage.value =
@@ -596,8 +605,8 @@ async function handleUpdateStatus() {
       },
     });
 
-    await refresh();
-    await refreshAvailability();
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
   } catch (error) {
     statusErrorMessage.value =
       error?.data?.statusMessage ||
@@ -650,8 +659,8 @@ async function handleSaveTeam() {
       },
     });
 
-    await refresh();
-    await refreshAvailability();
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
   } catch (error) {
     assignmentErrorMessage.value =
       error?.data?.statusMessage ||
@@ -678,8 +687,8 @@ async function handleUpdateAssignment(assignmentId) {
       },
     });
 
-    await refresh();
-    await refreshAvailability();
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
   } catch (error) {
     assignmentErrorMessage.value =
       error?.data?.statusMessage ||
@@ -700,8 +709,8 @@ async function handleDeleteAssignment(assignmentId) {
       method: "DELETE",
     });
 
-    await refresh();
-    await refreshAvailability();
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
   } catch (error) {
     alert(
       error?.data?.statusMessage ||
@@ -723,8 +732,8 @@ async function handleHardDeleteAssignment(assignmentId) {
       method: "DELETE",
     });
 
-    await refresh();
-    await refreshAvailability();
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
   } catch (error) {
     alert(
       error?.data?.statusMessage ||
@@ -829,7 +838,7 @@ async function handleSubmitEvaluationBundle() {
     }
 
     savingStaffEvaluationId.value = "";
-    await refresh();
+    await refreshEventDetailInPlace();
     isEditingEvaluationSubmission.value = false;
   } catch (error) {
     evaluationErrorMessage.value = getSaveErrorMessage(
@@ -871,7 +880,7 @@ async function handleSubmitEvaluationBundle() {
       </div>
     </div>
 
-    <UCard v-if="pending"> Loading event detail... </UCard>
+    <UCard v-if="pending && !currentEvent"> Loading event detail... </UCard>
 
     <UCard v-else-if="error">
       <p class="text-sm text-red-500">Failed to load event detail.</p>
@@ -1464,6 +1473,7 @@ async function handleSubmitEvaluationBundle() {
               </UBadge>
 
               <UButton
+                type="button"
                 :color="evaluationSubmitButtonColor"
                 :variant="evaluationSubmitButtonVariant"
                 :icon="evaluationSubmitButtonIcon"

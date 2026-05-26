@@ -50,7 +50,6 @@ const isEditEventModalOpen = ref(false);
 const postRibbonStart = ref("");
 const postRibbonEnd = ref("");
 const postEventErrorMessage = ref("");
-const isSavingPostEventData = ref(false);
 
 const postRibbonUsed = computed(() => {
   if (postRibbonStart.value === "" || postRibbonEnd.value === "") {
@@ -80,7 +79,8 @@ const clientSatisfactionOk = ref(false);
 const clientFeedback = ref("");
 const eventEvaluationNotes = ref("");
 const evaluationErrorMessage = ref("");
-const isSavingEventEvaluation = ref(false);
+const isSubmittingEvaluationBundle = ref(false);
+const isEditingEvaluationSubmission = ref(false);
 
 const staffEvaluationForms = ref({});
 const savingStaffEvaluationId = ref("");
@@ -203,6 +203,72 @@ const hasTeamChanges = computed(() => {
 
 const requiresRibbonTracking = computed(() => {
   return currentEvent.value?.serviceType?.requiresRibbonTracking === true;
+});
+
+const isPostEventDataSubmitted = computed(() => {
+  const event = currentEvent.value;
+
+  if (!event) return false;
+
+  return (
+    event.ribbonStart !== null &&
+    event.ribbonStart !== undefined &&
+    event.ribbonEnd !== null &&
+    event.ribbonEnd !== undefined
+  );
+});
+
+const isEventEvaluationSubmitted = computed(() => {
+  return Boolean(currentEvent.value?.eventEvaluation);
+});
+
+const areStaffEvaluationsSubmitted = computed(() => {
+  const evaluatedStaffIds = new Set(
+    currentEvent.value?.staffEvaluations?.map((evaluation) => {
+      return evaluation.staffId;
+    }) || [],
+  );
+
+  return activeAssignments.value.every((assignment) => {
+    return evaluatedStaffIds.has(assignment.staffId);
+  });
+});
+
+const isEvaluationSubmissionSubmitted = computed(() => {
+  return (
+    isPostEventDataSubmitted.value &&
+    isEventEvaluationSubmitted.value &&
+    areStaffEvaluationsSubmitted.value
+  );
+});
+
+const isEvaluationReadOnly = computed(() => {
+  return (
+    isEvaluationSubmissionSubmitted.value &&
+    !isEditingEvaluationSubmission.value
+  );
+});
+
+const evaluationSubmitButtonLabel = computed(() => {
+  return isEvaluationReadOnly.value ? "Edit" : "Submit";
+});
+
+const evaluationSubmitButtonIcon = computed(() => {
+  return isEvaluationReadOnly.value ? "i-lucide-pencil" : "i-lucide-send";
+});
+
+const evaluationSubmitButtonColor = computed(() => {
+  return isEvaluationReadOnly.value ? "neutral" : "success";
+});
+
+const evaluationSubmitButtonVariant = computed(() => {
+  return isEvaluationReadOnly.value ? "outline" : "solid";
+});
+
+const isEvaluationBundleBusy = computed(() => {
+  return (
+    isSubmittingEvaluationBundle.value || Boolean(savingStaffEvaluationId.value)
+  );
 });
 
 function syncEditEventForm(event) {
@@ -632,98 +698,110 @@ async function handleHardDeleteAssignment(assignmentId) {
   }
 }
 
-async function handleSavePostEventData() {
-  postEventErrorMessage.value = "";
+function getSaveErrorMessage(error, fallback) {
+  return (
+    error?.data?.statusMessage ||
+    error?.statusMessage ||
+    error?.message ||
+    fallback
+  );
+}
 
+function validatePostEventData() {
   if (postRibbonStart.value === "") {
     postEventErrorMessage.value = "Ribbon awal is required";
-    return;
+    return false;
   }
 
   if (postRibbonEnd.value === "") {
     postEventErrorMessage.value = "Ribbon akhir is required";
-    return;
+    return false;
   }
 
   if (Number(postRibbonUsed.value) < 0) {
     postEventErrorMessage.value =
       "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.";
+    return false;
+  }
+
+  return true;
+}
+
+async function savePostEventDataRequest() {
+  await $fetch(`/api/events/${eventId}/post-event-data`, {
+    method: "PATCH",
+    body: {
+      ribbonStart: postRibbonStart.value,
+      ribbonEnd: postRibbonEnd.value,
+    },
+  });
+}
+
+async function saveEventEvaluationRequest() {
+  await $fetch(`/api/events/${eventId}/evaluation`, {
+    method: "POST",
+    body: {
+      clientSatisfactionOk: clientSatisfactionOk.value,
+      clientFeedback: clientFeedback.value,
+      notes: eventEvaluationNotes.value,
+    },
+  });
+}
+
+async function saveStaffEvaluationRequest(staffId) {
+  const form = staffEvaluationForms.value[staffId];
+
+  if (!form) {
+    throw new Error("Staff evaluation form is not ready");
+  }
+
+  await $fetch(`/api/events/${eventId}/staff-evaluations`, {
+    method: "POST",
+    body: {
+      staffId,
+      sopOk: form.sopOk,
+      warehouseOk: form.warehouseOk,
+      groomingOk: form.groomingOk,
+      dataCollectionOk: form.dataCollectionOk,
+      notes: form.notes,
+    },
+  });
+}
+
+async function handleSubmitEvaluationBundle() {
+  if (isEvaluationReadOnly.value) {
+    isEditingEvaluationSubmission.value = true;
     return;
   }
 
-  isSavingPostEventData.value = true;
-
-  try {
-    await $fetch(`/api/events/${eventId}/post-event-data`, {
-      method: "PATCH",
-      body: {
-        ribbonStart: postRibbonStart.value,
-        ribbonEnd: postRibbonEnd.value,
-      },
-    });
-
-    await refresh();
-  } catch (error) {
-    postEventErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to save post event data";
-  } finally {
-    isSavingPostEventData.value = false;
-  }
-}
-
-async function handleSaveEventEvaluation() {
+  postEventErrorMessage.value = "";
   evaluationErrorMessage.value = "";
-  isSavingEventEvaluation.value = true;
 
-  try {
-    await $fetch(`/api/events/${eventId}/evaluation`, {
-      method: "POST",
-      body: {
-        clientSatisfactionOk: clientSatisfactionOk.value,
-        clientFeedback: clientFeedback.value,
-        notes: eventEvaluationNotes.value,
-      },
-    });
-
-    await refresh();
-  } catch (error) {
-    evaluationErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to save event evaluation";
-  } finally {
-    isSavingEventEvaluation.value = false;
+  if (!validatePostEventData()) {
+    return;
   }
-}
 
-async function handleSaveStaffEvaluation(staffId) {
-  evaluationErrorMessage.value = "";
-  savingStaffEvaluationId.value = staffId;
-
-  const form = staffEvaluationForms.value[staffId];
+  isSubmittingEvaluationBundle.value = true;
 
   try {
-    await $fetch(`/api/events/${eventId}/staff-evaluations`, {
-      method: "POST",
-      body: {
-        staffId,
-        sopOk: form.sopOk,
-        warehouseOk: form.warehouseOk,
-        groomingOk: form.groomingOk,
-        dataCollectionOk: form.dataCollectionOk,
-        notes: form.notes,
-      },
-    });
+    await savePostEventDataRequest();
+    await saveEventEvaluationRequest();
 
+    for (const assignment of activeAssignments.value) {
+      savingStaffEvaluationId.value = assignment.staffId;
+      await saveStaffEvaluationRequest(assignment.staffId);
+    }
+
+    savingStaffEvaluationId.value = "";
     await refresh();
+    isEditingEvaluationSubmission.value = false;
   } catch (error) {
-    evaluationErrorMessage.value =
-      error?.data?.statusMessage ||
-      error?.statusMessage ||
-      "Failed to save staff evaluation";
+    evaluationErrorMessage.value = getSaveErrorMessage(
+      error,
+      "Failed to submit evaluation",
+    );
   } finally {
+    isSubmittingEvaluationBundle.value = false;
     savingStaffEvaluationId.value = "";
   }
 }
@@ -1328,235 +1406,264 @@ async function handleSaveStaffEvaluation(staffId) {
           </div>
         </div>
       </UCard>
-      <div class="grid gap-4 lg:grid-cols-2">
-        <UCard>
-          <template #header>
-            <div
-              class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-            >
-              <div>
-                <h2 class="text-lg font-semibold">Post Event Data</h2>
-                <p class="text-sm text-muted">
-                  Input actual ribbon usage after the event.
-                </p>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <UBadge
-                  :color="requiresRibbonTracking ? 'warning' : 'neutral'"
-                  variant="soft"
-                >
-                  Ribbon tracking:
-                  {{ requiresRibbonTracking ? "Required" : "Optional" }}
-                </UBadge>
-              </div>
-            </div>
-          </template>
-
-          <form class="space-y-4" @submit.prevent="handleSavePostEventData">
-            <div class="grid gap-4 md:grid-cols-3">
-              <UFormField label="Ribbon Awal">
-                <UInput v-model="postRibbonStart" type="number" />
-              </UFormField>
-
-              <UFormField label="Ribbon Akhir">
-                <UInput v-model="postRibbonEnd" type="number" />
-              </UFormField>
-
-              <UFormField label="Total Penggunaan">
-                <UInput :model-value="postRibbonUsed" type="number" disabled />
-              </UFormField>
-            </div>
-
-            <p v-if="postEventErrorMessage" class="text-sm text-red-500">
-              {{ postEventErrorMessage }}
-            </p>
-
-            <div class="flex justify-end">
-              <UButton type="submit" :loading="isSavingPostEventData">
-                Save Post Event Data
-              </UButton>
-            </div>
-          </form>
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <div
-              class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-            >
-              <div>
-                <h2 class="text-lg font-semibold">Event Evaluation</h2>
-                <p class="text-sm text-muted">
-                  Client satisfaction and event-level feedback.
-                </p>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <UBadge
-                  :color="
-                    currentEvent.eventEvaluation?.clientSatisfactionOk
-                      ? 'success'
-                      : 'warning'
-                  "
-                  variant="soft"
-                >
-                  <span class="font-medium">
-                    {{
-                      formatBoolean(
-                        currentEvent.eventEvaluation?.clientSatisfactionOk,
-                      )
-                    }}
-                  </span>
-                </UBadge>
-              </div>
-            </div>
-          </template>
-
-          <form class="space-y-4" @submit.prevent="handleSaveEventEvaluation">
-            <UCheckbox
-              v-model="clientSatisfactionOk"
-              label="Client Satisfaction OK"
-            />
-
-            <UFormField label="Client Feedback">
-              <UTextarea
-                v-model="clientFeedback"
-                class="w-full"
-                placeholder="Client feedback"
-                :rows="3"
-              />
-            </UFormField>
-
-            <UFormField label="Internal Notes">
-              <UTextarea
-                v-model="eventEvaluationNotes"
-                class="w-full"
-                placeholder="Internal notes"
-                :rows="3"
-              />
-            </UFormField>
-
-            <p v-if="evaluationErrorMessage" class="text-sm text-red-500">
-              {{ evaluationErrorMessage }}
-            </p>
-
-            <div class="flex flex-col items-end">
-              <UButton
-                class="w-fit"
-                type="submit"
-                :loading="isSavingEventEvaluation"
-              >
-                Save Event Evaluation
-              </UButton>
-            </div>
-          </form>
-        </UCard>
-      </div>
-
       <UCard>
         <template #header>
-          <div>
-            <h2 class="text-lg font-semibold">Staff Evaluation</h2>
-            <p class="text-sm text-muted">
-              Evaluate only active assigned staff.
-            </p>
+          <div
+            class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+          >
+            <div>
+              <h2 class="text-lg font-semibold">Post Event Reports</h2>
+              <p class="text-sm text-muted">
+                Review completed events and document post-event results, notes,
+                and feedback.
+              </p>
+            </div>
+            <div class="mt-6 flex justify-end">
+              <UButton
+                :color="evaluationSubmitButtonColor"
+                :variant="evaluationSubmitButtonVariant"
+                :icon="evaluationSubmitButtonIcon"
+                :loading="isEvaluationBundleBusy"
+                @click="handleSubmitEvaluationBundle"
+              >
+                {{ evaluationSubmitButtonLabel }}
+              </UButton>
+            </div>
           </div>
         </template>
-
-        <p v-if="!activeAssignments.length" class="text-sm text-muted">
-          No active staff assignment for evaluation.
-        </p>
-
-        <p v-if="evaluationErrorMessage" class="mb-4 text-sm text-red-500">
-          {{ evaluationErrorMessage }}
-        </p>
-
-        <div class="grid gap-4 xl:grid-cols-2">
-          <div
-            v-for="assignment in activeAssignments"
-            :key="assignment.id"
-            class="rounded-lg border border-default p-4"
-          >
-            <div
-              class="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
-            >
-              <div>
-                <p class="font-medium">
-                  {{ assignment.staff?.name }} - {{ assignment.roleInEvent }}
-                </p>
-
-                <p class="text-sm text-muted">
-                  {{ assignment.staff?.defaultRole }}
-                </p>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <UCard>
+            <template #header>
+              <div
+                class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <h2 class="text-lg font-semibold">Post Event Data</h2>
+                  <p class="text-sm text-muted">
+                    Input actual ribbon usage after the event.
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <UBadge
+                    :color="requiresRibbonTracking ? 'warning' : 'neutral'"
+                    variant="soft"
+                  >
+                    Ribbon tracking:
+                    {{ requiresRibbonTracking ? "Required" : "Optional" }}
+                  </UBadge>
+                </div>
               </div>
-              <div class="flex flex-wrap gap-2">
-                <UBadge
-                  :color="
-                    getStaffEvaluation(assignment.staffId)?.isSuccess
-                      ? 'success'
-                      : 'neutral'
-                  "
-                  variant="soft"
-                >
-                  {{
-                    getStaffEvaluation(assignment.staffId)?.isSuccess
-                      ? "SUCCESS"
-                      : "NOT SUCCESS / NOT EVALUATED"
-                  }}
-                </UBadge>
-              </div>
-            </div>
+            </template>
 
-            <div
-              v-if="staffEvaluationForms[assignment.staffId]"
+            <form
               class="space-y-4"
+              @submit.prevent="handleSubmitEvaluationBundle"
             >
-              <div class="grid gap-3 md:grid-cols-2">
-                <UCheckbox
-                  v-model="staffEvaluationForms[assignment.staffId].sopOk"
-                  label="SOP OK"
-                />
+              <div class="grid gap-4 md:grid-cols-3">
+                <UFormField label="Ribbon Awal">
+                  <UInput
+                    v-model="postRibbonStart"
+                    type="number"
+                    :disabled="isEvaluationReadOnly"
+                  />
+                </UFormField>
 
-                <UCheckbox
-                  v-model="staffEvaluationForms[assignment.staffId].warehouseOk"
-                  label="Warehouse OK"
-                />
+                <UFormField label="Ribbon Akhir">
+                  <UInput
+                    v-model="postRibbonEnd"
+                    type="number"
+                    :disabled="isEvaluationReadOnly"
+                  />
+                </UFormField>
 
-                <UCheckbox
-                  v-model="staffEvaluationForms[assignment.staffId].groomingOk"
-                  label="Grooming OK"
-                />
-
-                <UCheckbox
-                  v-model="
-                    staffEvaluationForms[assignment.staffId].dataCollectionOk
-                  "
-                  label="Data Collection OK"
-                />
+                <UFormField label="Total Penggunaan">
+                  <UInput
+                    :model-value="postRibbonUsed"
+                    type="number"
+                    disabled
+                  />
+                </UFormField>
               </div>
 
-              <UFormField label="Notes">
+              <p v-if="postEventErrorMessage" class="text-sm text-red-500">
+                {{ postEventErrorMessage }}
+              </p>
+            </form>
+          </UCard>
+
+          <UCard>
+            <template #header>
+              <div
+                class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <h2 class="text-lg font-semibold">Event Evaluation</h2>
+                  <p class="text-sm text-muted">
+                    Client satisfaction and event-level feedback.
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <UBadge
+                    :color="
+                      currentEvent.eventEvaluation?.clientSatisfactionOk
+                        ? 'success'
+                        : 'warning'
+                    "
+                    variant="soft"
+                  >
+                    <span class="font-medium">
+                      {{
+                        formatBoolean(
+                          currentEvent.eventEvaluation?.clientSatisfactionOk,
+                        )
+                      }}
+                    </span>
+                  </UBadge>
+                </div>
+              </div>
+            </template>
+
+            <form
+              class="space-y-4"
+              @submit.prevent="handleSubmitEvaluationBundle"
+            >
+              <UCheckbox
+                v-model="clientSatisfactionOk"
+                label="Client Satisfaction OK"
+                :disabled="isEvaluationReadOnly"
+              />
+
+              <UFormField label="Client Feedback">
                 <UTextarea
-                  v-model="staffEvaluationForms[assignment.staffId].notes"
+                  v-model="clientFeedback"
                   class="w-full"
-                  placeholder="Staff evaluation notes"
-                  :rows="2"
+                  placeholder="Client feedback"
+                  :rows="3"
+                  :disabled="isEvaluationReadOnly"
                 />
               </UFormField>
 
-              <div class="flex justify-end">
-                <UButton
-                  size="sm"
-                  :loading="savingStaffEvaluationId === assignment.staffId"
-                  @click="handleSaveStaffEvaluation(assignment.staffId)"
-                >
-                  Save Staff Evaluation
-                </UButton>
+              <UFormField label="Internal Notes">
+                <UTextarea
+                  v-model="eventEvaluationNotes"
+                  class="w-full"
+                  placeholder="Internal notes"
+                  :rows="3"
+                  :disabled="isEvaluationReadOnly"
+                />
+              </UFormField>
+
+              <p v-if="evaluationErrorMessage" class="text-sm text-red-500">
+                {{ evaluationErrorMessage }}
+              </p>
+            </form>
+          </UCard>
+        </div>
+
+        <UCard>
+          <template #header>
+            <div>
+              <h2 class="text-lg font-semibold">Staff Evaluation</h2>
+              <p class="text-sm text-muted">
+                Evaluate only active assigned staff.
+              </p>
+            </div>
+          </template>
+
+          <p v-if="!activeAssignments.length" class="text-sm text-muted">
+            No active staff assignment for evaluation.
+          </p>
+
+          <p v-if="evaluationErrorMessage" class="mb-4 text-sm text-red-500">
+            {{ evaluationErrorMessage }}
+          </p>
+
+          <div class="grid gap-4 xl:grid-cols-2">
+            <div
+              v-for="assignment in activeAssignments"
+              :key="assignment.id"
+              class="rounded-lg border border-default p-4"
+            >
+              <div
+                class="mb-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
+              >
+                <div>
+                  <p class="font-medium">
+                    {{ assignment.staff?.name }} - {{ assignment.roleInEvent }}
+                  </p>
+
+                  <p class="text-sm text-muted">
+                    {{ assignment.staff?.defaultRole }}
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <UBadge
+                    :color="
+                      getStaffEvaluation(assignment.staffId)?.isSuccess
+                        ? 'success'
+                        : 'neutral'
+                    "
+                    variant="soft"
+                  >
+                    {{
+                      getStaffEvaluation(assignment.staffId)?.isSuccess
+                        ? "SUCCESS"
+                        : "NOT SUCCESS / NOT EVALUATED"
+                    }}
+                  </UBadge>
+                </div>
+              </div>
+
+              <div
+                v-if="staffEvaluationForms[assignment.staffId]"
+                class="space-y-4"
+              >
+                <div class="grid gap-3 md:grid-cols-2">
+                  <UCheckbox
+                    v-model="staffEvaluationForms[assignment.staffId].sopOk"
+                    label="SOP OK"
+                    :disabled="isEvaluationReadOnly"
+                  />
+
+                  <UCheckbox
+                    v-model="
+                      staffEvaluationForms[assignment.staffId].warehouseOk
+                    "
+                    label="Warehouse OK"
+                    :disabled="isEvaluationReadOnly"
+                  />
+
+                  <UCheckbox
+                    v-model="
+                      staffEvaluationForms[assignment.staffId].groomingOk
+                    "
+                    label="Grooming OK"
+                    :disabled="isEvaluationReadOnly"
+                  />
+
+                  <UCheckbox
+                    v-model="
+                      staffEvaluationForms[assignment.staffId].dataCollectionOk
+                    "
+                    label="Data Collection OK"
+                    :disabled="isEvaluationReadOnly"
+                  />
+                </div>
+
+                <UFormField label="Notes">
+                  <UTextarea
+                    v-model="staffEvaluationForms[assignment.staffId].notes"
+                    class="w-full"
+                    placeholder="Staff evaluation notes"
+                    :rows="2"
+                    :disabled="isEvaluationReadOnly"
+                  />
+                </UFormField>
               </div>
             </div>
           </div>
-        </div>
+        </UCard>
       </UCard>
-
       <UCard>
         <template #header>
           <div>

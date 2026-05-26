@@ -58,48 +58,79 @@ async function handleChangePassword() {
 </script>
 
 <template>
-  <section>
-    <h1>Change Password</h1>
-    <p>Update your own account password.</p>
-
-    <hr />
-
-    <form @submit.prevent="handleChangePassword">
+  <div class="p-6">
+    <div class="mx-auto max-w-xl space-y-6">
       <div>
-        <label>Current Password</label>
-        <br />
-        <input v-model="currentPassword" type="password" />
+        <h1 class="text-2xl font-semibold">Change Password</h1>
+        <p class="mt-1 text-sm text-muted">
+          Update your account password.
+        </p>
       </div>
 
-      <br />
+      <UCard>
+        <form class="space-y-5" @submit.prevent="handleChangePassword">
+          <UFormField label="Current Password" required>
+            <UInput
+              v-model="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              icon="i-lucide-lock-keyhole"
+              class="w-full"
+            />
+          </UFormField>
 
-      <div>
-        <label>New Password</label>
-        <br />
-        <input v-model="newPassword" type="password" />
-      </div>
+          <UFormField
+            label="New Password"
+            description="Minimum 8 characters."
+            required
+          >
+            <UInput
+              v-model="newPassword"
+              type="password"
+              autocomplete="new-password"
+              icon="i-lucide-key-round"
+              class="w-full"
+            />
+          </UFormField>
 
-      <br />
+          <UFormField label="Confirm New Password" required>
+            <UInput
+              v-model="confirmNewPassword"
+              type="password"
+              autocomplete="new-password"
+              icon="i-lucide-key-round"
+              class="w-full"
+            />
+          </UFormField>
 
-      <div>
-        <label>Confirm New Password</label>
-        <br />
-        <input v-model="confirmNewPassword" type="password" />
-      </div>
+          <UAlert
+            v-if="errorMessage"
+            color="error"
+            variant="soft"
+            icon="i-lucide-circle-alert"
+            :title="errorMessage"
+          />
 
-      <br />
+          <UAlert
+            v-if="successMessage"
+            color="success"
+            variant="soft"
+            icon="i-lucide-circle-check"
+            :title="successMessage"
+          />
 
-      <p v-if="errorMessage" style="color: red">
-        {{ errorMessage }}
-      </p>
-
-      <p v-if="successMessage" style="color: green">
-        {{ successMessage }}
-      </p>
-
-      <button type="submit" :disabled="isSubmitting">
-        {{ isSubmitting ? "Saving..." : "Change Password" }}
-      </button>
-    </form>
-  </section>
+          <div class="flex justify-end">
+            <UButton
+              type="submit"
+              color="primary"
+              icon="i-lucide-save"
+              :loading="isSubmitting"
+            >
+              Change Password
+            </UButton>
+          </div>
+        </form>
+      </UCard>
+    </div>
+  </div>
 </template>

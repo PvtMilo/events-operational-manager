@@ -25,6 +25,103 @@ defineProps({
     required: true,
   },
 });
+
+function getDateKey(dateValue) {
+  if (!dateValue) return "";
+
+  return new Date(dateValue).toISOString().slice(0, 10);
+}
+
+function getLoadingDateTime(row) {
+  if (!row.loadingDate || !row.loadingTime) return null;
+
+  const dateKey = getDateKey(row.loadingDate);
+
+  return new Date(`${dateKey}T${row.loadingTime}:00`);
+}
+
+function formatOverdue(minutesLate) {
+  if (minutesLate < 60) {
+    return `Terlambat ${minutesLate} menit`;
+  }
+
+  const hoursLate = Math.floor(minutesLate / 60);
+  const remainingMinutes = minutesLate % 60;
+
+  if (remainingMinutes === 0) {
+    return `Terlambat ${hoursLate} jam`;
+  }
+
+  return `Terlambat ${hoursLate} jam ${remainingMinutes} menit`;
+}
+
+function getLoadingReminder(row) {
+  if (row.loadingStatus === "LOADED") {
+    return {
+      label: "Selesai loading",
+      color: "success",
+    };
+  }
+
+  const loadingDateTime = getLoadingDateTime(row);
+
+  if (!loadingDateTime) {
+    return {
+      label: "Lengkapi jam loading",
+      color: "error",
+    };
+  }
+
+  const now = new Date();
+  const diffMs = loadingDateTime.getTime() - now.getTime();
+  const diffMinutes = Math.ceil(diffMs / 60000);
+
+  if (diffMinutes > 1440) {
+    const days = Math.ceil(diffMinutes / 1440);
+
+    return {
+      label: `${days} hari lagi`,
+      color: "neutral",
+    };
+  }
+
+  if (diffMinutes > 120) {
+    const hours = Math.ceil(diffMinutes / 60);
+
+    return {
+      label: `${hours} jam lagi`,
+      color: "neutral",
+    };
+  }
+
+  if (diffMinutes > 60) {
+    return {
+      label: "2 jam lagi",
+      color: "primary",
+    };
+  }
+
+  if (diffMinutes > 30) {
+    return {
+      label: "1 jam lagi",
+      color: "warning",
+    };
+  }
+
+  if (diffMinutes >= -30) {
+    return {
+      label: "Loading sekarang",
+      color: "error",
+    };
+  }
+
+  const minutesLate = Math.abs(diffMinutes);
+
+  return {
+    label: formatOverdue(minutesLate),
+    color: "error",
+  };
+}
 </script>
 
 <template>
@@ -97,7 +194,19 @@ defineProps({
           </td>
 
           <td class="whitespace-nowrap px-3 py-3">
-            {{ row.loadingTime || "-" }}
+            <div class="flex flex-col items-start gap-1">
+              <span>
+                {{ row.loadingTime || "-" }}
+              </span>
+
+              <UBadge
+                size="xs"
+                :color="getLoadingReminder(row).color"
+                variant="soft"
+              >
+                {{ getLoadingReminder(row).label }}
+              </UBadge>
+            </div>
           </td>
 
           <td class=" px-3 py-3">

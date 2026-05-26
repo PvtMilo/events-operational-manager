@@ -49,6 +49,19 @@ enum AssignmentStatus {
   CANCELLED
 }
 
+enum StaffAvailabilityType {
+  LIBUR
+  IZIN
+  SAKIT
+  CUTI
+  BLOCKED
+}
+
+enum StaffAvailabilityStatus {
+  ACTIVE
+  CANCELLED
+}
+
 model User {
   id           String        @id @default(cuid())
   name         String
@@ -95,11 +108,41 @@ model Staff {
 
   assignments      EventAssignment[]
   staffEvaluations StaffEventEvaluation[]
+  availabilityBlocks StaffAvailabilityBlock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("staff")
+}
+
+model StaffAvailabilityBlock {
+  id        String @id @default(cuid())
+
+  staffId   String
+  staff     Staff  @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  type      StaffAvailabilityType
+  status    StaffAvailabilityStatus @default(ACTIVE)
+
+  startDate DateTime
+  endDate   DateTime
+
+  isFullDay Boolean @default(true)
+  startTime String?
+  endTime   String?
+
+  reason    String?
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([staffId])
+  @@index([type])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
 }
 
 model ServiceType {

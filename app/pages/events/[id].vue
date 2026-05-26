@@ -423,6 +423,7 @@ function getAvailabilityColor(status) {
   if (status === "AVAILABLE") return "success";
   if (status === "SAME_DAY_AVAILABLE") return "warning";
   if (status === "TIME_CONFLICT") return "error";
+  if (status === "UNAVAILABLE") return "error";
 
   return "neutral";
 }
@@ -623,6 +624,11 @@ function handleAddAvailableStaff(staff) {
   if (staff.availabilityStatus === "TIME_CONFLICT") {
     assignmentErrorMessage.value =
       "Staff has time conflict and cannot be assigned";
+    return;
+  }
+
+  if (staff.availabilityStatus === "UNAVAILABLE") {
+    assignmentErrorMessage.value = "Staff is unavailable on this event date";
     return;
   }
 
@@ -1432,6 +1438,17 @@ async function handleSubmitEvaluationBundle() {
                       }}
                       - {{ staff.sameDayEvent.endTime }})
                     </p>
+
+                    <p
+                      v-if="staff.availabilityStatus === 'UNAVAILABLE'"
+                      class="pt-1 text-xs text-red-500"
+                    >
+                      Unavailable:
+                      {{ staff.unavailableBlock?.label || staff.unavailableType }}
+                      <span v-if="staff.unavailableReason">
+                        — {{ staff.unavailableReason }}
+                      </span>
+                    </p>
                   </div>
                   <div class="flex flex-wrap gap-2">
                     <UButton
@@ -1439,7 +1456,10 @@ async function handleSubmitEvaluationBundle() {
                       color="primary"
                       variant="soft"
                       icon="i-lucide-arrow-left"
-                      :disabled="staff.availabilityStatus === 'TIME_CONFLICT'"
+                      :disabled="
+                        staff.availabilityStatus === 'TIME_CONFLICT' ||
+                        staff.availabilityStatus === 'UNAVAILABLE'
+                      "
                       @click="handleAddAvailableStaff(staff)"
                     >
                       Add

@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   Sales: 'Sales',
   Staff: 'Staff',
+  StaffAvailabilityBlock: 'StaffAvailabilityBlock',
   ServiceType: 'ServiceType',
   Event: 'Event',
   EventAssignment: 'EventAssignment',
@@ -408,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "sales" | "staff" | "serviceType" | "event" | "eventAssignment" | "eventEvaluation" | "staffEventEvaluation" | "eventActivityLog"
+    modelProps: "user" | "sales" | "staff" | "staffAvailabilityBlock" | "serviceType" | "event" | "eventAssignment" | "eventEvaluation" | "staffEventEvaluation" | "eventActivityLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -631,6 +632,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.StaffCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.StaffCountAggregateOutputType> | number
+        }
+      }
+    }
+    StaffAvailabilityBlock: {
+      payload: Prisma.$StaffAvailabilityBlockPayload<ExtArgs>
+      fields: Prisma.StaffAvailabilityBlockFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StaffAvailabilityBlockFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StaffAvailabilityBlockFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>
+        }
+        findFirst: {
+          args: Prisma.StaffAvailabilityBlockFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StaffAvailabilityBlockFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>
+        }
+        findMany: {
+          args: Prisma.StaffAvailabilityBlockFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>[]
+        }
+        create: {
+          args: Prisma.StaffAvailabilityBlockCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>
+        }
+        createMany: {
+          args: Prisma.StaffAvailabilityBlockCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StaffAvailabilityBlockCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>[]
+        }
+        delete: {
+          args: Prisma.StaffAvailabilityBlockDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>
+        }
+        update: {
+          args: Prisma.StaffAvailabilityBlockUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>
+        }
+        deleteMany: {
+          args: Prisma.StaffAvailabilityBlockDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StaffAvailabilityBlockUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StaffAvailabilityBlockUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>[]
+        }
+        upsert: {
+          args: Prisma.StaffAvailabilityBlockUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StaffAvailabilityBlockPayload>
+        }
+        aggregate: {
+          args: Prisma.StaffAvailabilityBlockAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStaffAvailabilityBlock>
+        }
+        groupBy: {
+          args: Prisma.StaffAvailabilityBlockGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StaffAvailabilityBlockGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StaffAvailabilityBlockCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StaffAvailabilityBlockCountAggregateOutputType> | number
         }
       }
     }
@@ -1161,6 +1236,25 @@ export const StaffScalarFieldEnum = {
 export type StaffScalarFieldEnum = (typeof StaffScalarFieldEnum)[keyof typeof StaffScalarFieldEnum]
 
 
+export const StaffAvailabilityBlockScalarFieldEnum = {
+  id: 'id',
+  staffId: 'staffId',
+  type: 'type',
+  status: 'status',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  isFullDay: 'isFullDay',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  reason: 'reason',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StaffAvailabilityBlockScalarFieldEnum = (typeof StaffAvailabilityBlockScalarFieldEnum)[keyof typeof StaffAvailabilityBlockScalarFieldEnum]
+
+
 export const ServiceTypeScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1386,6 +1480,34 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'StaffAvailabilityType'
+ */
+export type EnumStaffAvailabilityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StaffAvailabilityType'>
+    
+
+
+/**
+ * Reference to a field of type 'StaffAvailabilityType[]'
+ */
+export type ListEnumStaffAvailabilityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StaffAvailabilityType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'StaffAvailabilityStatus'
+ */
+export type EnumStaffAvailabilityStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StaffAvailabilityStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'StaffAvailabilityStatus[]'
+ */
+export type ListEnumStaffAvailabilityStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StaffAvailabilityStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'EventStatus'
  */
 export type EnumEventStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventStatus'>
@@ -1581,6 +1703,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   sales?: Prisma.SalesOmit
   staff?: Prisma.StaffOmit
+  staffAvailabilityBlock?: Prisma.StaffAvailabilityBlockOmit
   serviceType?: Prisma.ServiceTypeOmit
   event?: Prisma.EventOmit
   eventAssignment?: Prisma.EventAssignmentOmit

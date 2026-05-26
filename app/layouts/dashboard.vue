@@ -69,14 +69,24 @@ const links = computed(() => {
   ];
 
   if (!isStaff) {
-    mainLinks.push({
-      label: "Reports",
-      icon: "i-lucide-chart-column",
-      to: "/reports",
-      onSelect: () => {
-        open.value = false;
+    mainLinks.push(
+      {
+        label: "Staff Availability",
+        icon: "i-lucide-calendar-off",
+        to: "/staff-availability",
+        onSelect: () => {
+          open.value = false;
+        },
       },
-    });
+      {
+        label: "Reports",
+        icon: "i-lucide-chart-column",
+        to: "/reports",
+        onSelect: () => {
+          open.value = false;
+        },
+      },
+    );
   }
 
   const settingsChildren = [

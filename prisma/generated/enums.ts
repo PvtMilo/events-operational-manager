@@ -67,3 +67,22 @@ export const AssignmentStatus = {
 } as const
 
 export type AssignmentStatus = (typeof AssignmentStatus)[keyof typeof AssignmentStatus]
+
+
+export const StaffAvailabilityType = {
+  LIBUR: 'LIBUR',
+  IZIN: 'IZIN',
+  SAKIT: 'SAKIT',
+  CUTI: 'CUTI',
+  BLOCKED: 'BLOCKED'
+} as const
+
+export type StaffAvailabilityType = (typeof StaffAvailabilityType)[keyof typeof StaffAvailabilityType]
+
+
+export const StaffAvailabilityStatus = {
+  ACTIVE: 'ACTIVE',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type StaffAvailabilityStatus = (typeof StaffAvailabilityStatus)[keyof typeof StaffAvailabilityStatus]

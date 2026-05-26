@@ -33,6 +33,11 @@ export type Sales = Prisma.SalesModel
  */
 export type Staff = Prisma.StaffModel
 /**
+ * Model StaffAvailabilityBlock
+ * 
+ */
+export type StaffAvailabilityBlock = Prisma.StaffAvailabilityBlockModel
+/**
  * Model ServiceType
  * 
  */

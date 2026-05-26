@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Sales: 'Sales',
   Staff: 'Staff',
+  StaffAvailabilityBlock: 'StaffAvailabilityBlock',
   ServiceType: 'ServiceType',
   Event: 'Event',
   EventAssignment: 'EventAssignment',
@@ -120,6 +121,25 @@ export const StaffScalarFieldEnum = {
 } as const
 
 export type StaffScalarFieldEnum = (typeof StaffScalarFieldEnum)[keyof typeof StaffScalarFieldEnum]
+
+
+export const StaffAvailabilityBlockScalarFieldEnum = {
+  id: 'id',
+  staffId: 'staffId',
+  type: 'type',
+  status: 'status',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  isFullDay: 'isFullDay',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  reason: 'reason',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StaffAvailabilityBlockScalarFieldEnum = (typeof StaffAvailabilityBlockScalarFieldEnum)[keyof typeof StaffAvailabilityBlockScalarFieldEnum]
 
 
 export const ServiceTypeScalarFieldEnum = {

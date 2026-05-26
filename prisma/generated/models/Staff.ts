@@ -224,6 +224,7 @@ export type StaffWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Staff"> | Date | string
   assignments?: Prisma.EventAssignmentListRelationFilter
   staffEvaluations?: Prisma.StaffEventEvaluationListRelationFilter
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockListRelationFilter
 }
 
 export type StaffOrderByWithRelationInput = {
@@ -239,6 +240,7 @@ export type StaffOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   assignments?: Prisma.EventAssignmentOrderByRelationAggregateInput
   staffEvaluations?: Prisma.StaffEventEvaluationOrderByRelationAggregateInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockOrderByRelationAggregateInput
 }
 
 export type StaffWhereUniqueInput = Prisma.AtLeast<{
@@ -257,6 +259,7 @@ export type StaffWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Staff"> | Date | string
   assignments?: Prisma.EventAssignmentListRelationFilter
   staffEvaluations?: Prisma.StaffEventEvaluationListRelationFilter
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockListRelationFilter
 }, "id">
 
 export type StaffOrderByWithAggregationInput = {
@@ -304,6 +307,7 @@ export type StaffCreateInput = {
   updatedAt?: Date | string
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutStaffInput
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutStaffInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockCreateNestedManyWithoutStaffInput
 }
 
 export type StaffUncheckedCreateInput = {
@@ -319,6 +323,7 @@ export type StaffUncheckedCreateInput = {
   updatedAt?: Date | string
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutStaffInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutStaffInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type StaffUpdateInput = {
@@ -334,6 +339,7 @@ export type StaffUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.EventAssignmentUpdateManyWithoutStaffNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutStaffNestedInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUpdateManyWithoutStaffNestedInput
 }
 
 export type StaffUncheckedUpdateInput = {
@@ -349,6 +355,7 @@ export type StaffUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutStaffNestedInput
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutStaffNestedInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUncheckedUpdateManyWithoutStaffNestedInput
 }
 
 export type StaffCreateManyInput = {
@@ -442,6 +449,20 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type StaffCreateNestedOneWithoutAvailabilityBlocksInput = {
+  create?: Prisma.XOR<Prisma.StaffCreateWithoutAvailabilityBlocksInput, Prisma.StaffUncheckedCreateWithoutAvailabilityBlocksInput>
+  connectOrCreate?: Prisma.StaffCreateOrConnectWithoutAvailabilityBlocksInput
+  connect?: Prisma.StaffWhereUniqueInput
+}
+
+export type StaffUpdateOneRequiredWithoutAvailabilityBlocksNestedInput = {
+  create?: Prisma.XOR<Prisma.StaffCreateWithoutAvailabilityBlocksInput, Prisma.StaffUncheckedCreateWithoutAvailabilityBlocksInput>
+  connectOrCreate?: Prisma.StaffCreateOrConnectWithoutAvailabilityBlocksInput
+  upsert?: Prisma.StaffUpsertWithoutAvailabilityBlocksInput
+  connect?: Prisma.StaffWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.StaffUpdateToOneWithWhereWithoutAvailabilityBlocksInput, Prisma.StaffUpdateWithoutAvailabilityBlocksInput>, Prisma.StaffUncheckedUpdateWithoutAvailabilityBlocksInput>
+}
+
 export type StaffCreateNestedOneWithoutAssignmentsInput = {
   create?: Prisma.XOR<Prisma.StaffCreateWithoutAssignmentsInput, Prisma.StaffUncheckedCreateWithoutAssignmentsInput>
   connectOrCreate?: Prisma.StaffCreateOrConnectWithoutAssignmentsInput
@@ -470,6 +491,82 @@ export type StaffUpdateOneRequiredWithoutStaffEvaluationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.StaffUpdateToOneWithWhereWithoutStaffEvaluationsInput, Prisma.StaffUpdateWithoutStaffEvaluationsInput>, Prisma.StaffUncheckedUpdateWithoutStaffEvaluationsInput>
 }
 
+export type StaffCreateWithoutAvailabilityBlocksInput = {
+  id?: string
+  name: string
+  phone?: string | null
+  birthDate?: Date | string | null
+  defaultRole: $Enums.StaffRole
+  canBeAssignedToEvent?: boolean
+  status?: $Enums.AccountStatus
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.EventAssignmentCreateNestedManyWithoutStaffInput
+  staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutStaffInput
+}
+
+export type StaffUncheckedCreateWithoutAvailabilityBlocksInput = {
+  id?: string
+  name: string
+  phone?: string | null
+  birthDate?: Date | string | null
+  defaultRole: $Enums.StaffRole
+  canBeAssignedToEvent?: boolean
+  status?: $Enums.AccountStatus
+  notes?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutStaffInput
+  staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutStaffInput
+}
+
+export type StaffCreateOrConnectWithoutAvailabilityBlocksInput = {
+  where: Prisma.StaffWhereUniqueInput
+  create: Prisma.XOR<Prisma.StaffCreateWithoutAvailabilityBlocksInput, Prisma.StaffUncheckedCreateWithoutAvailabilityBlocksInput>
+}
+
+export type StaffUpsertWithoutAvailabilityBlocksInput = {
+  update: Prisma.XOR<Prisma.StaffUpdateWithoutAvailabilityBlocksInput, Prisma.StaffUncheckedUpdateWithoutAvailabilityBlocksInput>
+  create: Prisma.XOR<Prisma.StaffCreateWithoutAvailabilityBlocksInput, Prisma.StaffUncheckedCreateWithoutAvailabilityBlocksInput>
+  where?: Prisma.StaffWhereInput
+}
+
+export type StaffUpdateToOneWithWhereWithoutAvailabilityBlocksInput = {
+  where?: Prisma.StaffWhereInput
+  data: Prisma.XOR<Prisma.StaffUpdateWithoutAvailabilityBlocksInput, Prisma.StaffUncheckedUpdateWithoutAvailabilityBlocksInput>
+}
+
+export type StaffUpdateWithoutAvailabilityBlocksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  defaultRole?: Prisma.EnumStaffRoleFieldUpdateOperationsInput | $Enums.StaffRole
+  canBeAssignedToEvent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumAccountStatusFieldUpdateOperationsInput | $Enums.AccountStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.EventAssignmentUpdateManyWithoutStaffNestedInput
+  staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutStaffNestedInput
+}
+
+export type StaffUncheckedUpdateWithoutAvailabilityBlocksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  defaultRole?: Prisma.EnumStaffRoleFieldUpdateOperationsInput | $Enums.StaffRole
+  canBeAssignedToEvent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.EnumAccountStatusFieldUpdateOperationsInput | $Enums.AccountStatus
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutStaffNestedInput
+  staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutStaffNestedInput
+}
+
 export type StaffCreateWithoutAssignmentsInput = {
   id?: string
   name: string
@@ -482,6 +579,7 @@ export type StaffCreateWithoutAssignmentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   staffEvaluations?: Prisma.StaffEventEvaluationCreateNestedManyWithoutStaffInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockCreateNestedManyWithoutStaffInput
 }
 
 export type StaffUncheckedCreateWithoutAssignmentsInput = {
@@ -496,6 +594,7 @@ export type StaffUncheckedCreateWithoutAssignmentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedCreateNestedManyWithoutStaffInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type StaffCreateOrConnectWithoutAssignmentsInput = {
@@ -526,6 +625,7 @@ export type StaffUpdateWithoutAssignmentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   staffEvaluations?: Prisma.StaffEventEvaluationUpdateManyWithoutStaffNestedInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUpdateManyWithoutStaffNestedInput
 }
 
 export type StaffUncheckedUpdateWithoutAssignmentsInput = {
@@ -540,6 +640,7 @@ export type StaffUncheckedUpdateWithoutAssignmentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   staffEvaluations?: Prisma.StaffEventEvaluationUncheckedUpdateManyWithoutStaffNestedInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUncheckedUpdateManyWithoutStaffNestedInput
 }
 
 export type StaffCreateWithoutStaffEvaluationsInput = {
@@ -554,6 +655,7 @@ export type StaffCreateWithoutStaffEvaluationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.EventAssignmentCreateNestedManyWithoutStaffInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockCreateNestedManyWithoutStaffInput
 }
 
 export type StaffUncheckedCreateWithoutStaffEvaluationsInput = {
@@ -568,6 +670,7 @@ export type StaffUncheckedCreateWithoutStaffEvaluationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   assignments?: Prisma.EventAssignmentUncheckedCreateNestedManyWithoutStaffInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUncheckedCreateNestedManyWithoutStaffInput
 }
 
 export type StaffCreateOrConnectWithoutStaffEvaluationsInput = {
@@ -598,6 +701,7 @@ export type StaffUpdateWithoutStaffEvaluationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.EventAssignmentUpdateManyWithoutStaffNestedInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUpdateManyWithoutStaffNestedInput
 }
 
 export type StaffUncheckedUpdateWithoutStaffEvaluationsInput = {
@@ -612,6 +716,7 @@ export type StaffUncheckedUpdateWithoutStaffEvaluationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   assignments?: Prisma.EventAssignmentUncheckedUpdateManyWithoutStaffNestedInput
+  availabilityBlocks?: Prisma.StaffAvailabilityBlockUncheckedUpdateManyWithoutStaffNestedInput
 }
 
 
@@ -622,11 +727,13 @@ export type StaffUncheckedUpdateWithoutStaffEvaluationsInput = {
 export type StaffCountOutputType = {
   assignments: number
   staffEvaluations: number
+  availabilityBlocks: number
 }
 
 export type StaffCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | StaffCountOutputTypeCountAssignmentsArgs
   staffEvaluations?: boolean | StaffCountOutputTypeCountStaffEvaluationsArgs
+  availabilityBlocks?: boolean | StaffCountOutputTypeCountAvailabilityBlocksArgs
 }
 
 /**
@@ -653,6 +760,13 @@ export type StaffCountOutputTypeCountStaffEvaluationsArgs<ExtArgs extends runtim
   where?: Prisma.StaffEventEvaluationWhereInput
 }
 
+/**
+ * StaffCountOutputType without action
+ */
+export type StaffCountOutputTypeCountAvailabilityBlocksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StaffAvailabilityBlockWhereInput
+}
+
 
 export type StaffSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -667,6 +781,7 @@ export type StaffSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   updatedAt?: boolean
   assignments?: boolean | Prisma.Staff$assignmentsArgs<ExtArgs>
   staffEvaluations?: boolean | Prisma.Staff$staffEvaluationsArgs<ExtArgs>
+  availabilityBlocks?: boolean | Prisma.Staff$availabilityBlocksArgs<ExtArgs>
   _count?: boolean | Prisma.StaffCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["staff"]>
 
@@ -713,6 +828,7 @@ export type StaffOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
 export type StaffInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | Prisma.Staff$assignmentsArgs<ExtArgs>
   staffEvaluations?: boolean | Prisma.Staff$staffEvaluationsArgs<ExtArgs>
+  availabilityBlocks?: boolean | Prisma.Staff$availabilityBlocksArgs<ExtArgs>
   _count?: boolean | Prisma.StaffCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type StaffIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -723,6 +839,7 @@ export type $StaffPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     assignments: Prisma.$EventAssignmentPayload<ExtArgs>[]
     staffEvaluations: Prisma.$StaffEventEvaluationPayload<ExtArgs>[]
+    availabilityBlocks: Prisma.$StaffAvailabilityBlockPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1131,6 +1248,7 @@ export interface Prisma__StaffClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   assignments<T extends Prisma.Staff$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Staff$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EventAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   staffEvaluations<T extends Prisma.Staff$staffEvaluationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Staff$staffEvaluationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StaffEventEvaluationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  availabilityBlocks<T extends Prisma.Staff$availabilityBlocksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Staff$availabilityBlocksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StaffAvailabilityBlockPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1608,6 +1726,30 @@ export type Staff$staffEvaluationsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.StaffEventEvaluationScalarFieldEnum | Prisma.StaffEventEvaluationScalarFieldEnum[]
+}
+
+/**
+ * Staff.availabilityBlocks
+ */
+export type Staff$availabilityBlocksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StaffAvailabilityBlock
+   */
+  select?: Prisma.StaffAvailabilityBlockSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StaffAvailabilityBlock
+   */
+  omit?: Prisma.StaffAvailabilityBlockOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StaffAvailabilityBlockInclude<ExtArgs> | null
+  where?: Prisma.StaffAvailabilityBlockWhereInput
+  orderBy?: Prisma.StaffAvailabilityBlockOrderByWithRelationInput | Prisma.StaffAvailabilityBlockOrderByWithRelationInput[]
+  cursor?: Prisma.StaffAvailabilityBlockWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StaffAvailabilityBlockScalarFieldEnum | Prisma.StaffAvailabilityBlockScalarFieldEnum[]
 }
 
 /**

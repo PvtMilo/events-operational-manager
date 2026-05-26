@@ -265,6 +265,22 @@ const evaluationSubmitButtonVariant = computed(() => {
   return isEvaluationReadOnly.value ? "outline" : "solid";
 });
 
+const isEventEvaluationSuccess = computed(() => {
+  if (!isEvaluationSubmissionSubmitted.value) return false;
+
+  return activeAssignments.value.every((assignment) => {
+    return getStaffEvaluation(assignment.staffId)?.isSuccess === true;
+  });
+});
+
+const eventEvaluationResultLabel = computed(() => {
+  return isEventEvaluationSuccess.value ? "EVENT SUCCESS" : "EVENT NOT SUCCESS";
+});
+
+const eventEvaluationResultColor = computed(() => {
+  return isEventEvaluationSuccess.value ? "success" : "error";
+});
+
 const isEvaluationBundleBusy = computed(() => {
   return (
     isSubmittingEvaluationBundle.value || Boolean(savingStaffEvaluationId.value)
@@ -470,6 +486,26 @@ function getStaffEvaluation(staffId) {
   return currentEvent.value?.staffEvaluations?.find((item) => {
     return item.staffId === staffId;
   });
+}
+
+function getStaffEvaluationLabel(staffId) {
+  const evaluation = getStaffEvaluation(staffId);
+
+  if (!evaluation) return "NOT EVALUATED";
+
+  return evaluation.isSuccess ? "SUCCESS" : "NOT SUCCESS";
+}
+
+function getStaffEvaluationColor(staffId) {
+  const evaluation = getStaffEvaluation(staffId);
+
+  if (!evaluation) return "neutral";
+
+  return evaluation.isSuccess ? "success" : "error";
+}
+
+function getStaffEvaluationVariant(staffId) {
+  return getStaffEvaluation(staffId) ? "soft" : "outline";
 }
 
 function handleOpenEditEventModal() {
@@ -1418,7 +1454,15 @@ async function handleSubmitEvaluationBundle() {
                 and feedback.
               </p>
             </div>
-            <div class="mt-6 flex justify-end">
+            <div class="mt-6 flex flex-wrap items-center justify-end gap-2">
+              <UBadge
+                v-if="isEvaluationSubmissionSubmitted"
+                :color="eventEvaluationResultColor"
+                variant="soft"
+              >
+                {{ eventEvaluationResultLabel }}
+              </UBadge>
+
               <UButton
                 :color="evaluationSubmitButtonColor"
                 :variant="evaluationSubmitButtonVariant"
@@ -1598,18 +1642,10 @@ async function handleSubmitEvaluationBundle() {
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <UBadge
-                    :color="
-                      getStaffEvaluation(assignment.staffId)?.isSuccess
-                        ? 'success'
-                        : 'neutral'
-                    "
-                    variant="soft"
+                    :color="getStaffEvaluationColor(assignment.staffId)"
+                    :variant="getStaffEvaluationVariant(assignment.staffId)"
                   >
-                    {{
-                      getStaffEvaluation(assignment.staffId)?.isSuccess
-                        ? "SUCCESS"
-                        : "NOT SUCCESS / NOT EVALUATED"
-                    }}
+                    {{ getStaffEvaluationLabel(assignment.staffId) }}
                   </UBadge>
                 </div>
               </div>

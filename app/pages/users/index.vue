@@ -4,6 +4,8 @@ definePageMeta({
   middleware: ["auth", "no-staff-users"],
 });
 
+const { user } = useUserSession();
+
 const name = ref("");
 const email = ref("");
 const password = ref("");
@@ -273,6 +275,28 @@ async function handleUpdate() {
   }
 }
 
+async function handleHardDeleteUser(id) {
+  const confirmed = confirm(
+    "HARD DELETE this user? This action cannot be undone.",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await $fetch(`/api/developer/users/${id}`, {
+      method: "DELETE",
+    });
+
+    await refresh();
+  } catch (error) {
+    alert(
+      error?.data?.statusMessage ||
+        error?.statusMessage ||
+        "Failed to hard delete user",
+    );
+  }
+}
+
 function getStatusColor(status) {
   if (status === "ACTIVE") return "success";
   if (status === "INACTIVE") return "neutral";
@@ -286,19 +310,30 @@ function formatDateTime(dateValue) {
   return new Date(dateValue).toLocaleString();
 }
 
-function getUserActionItems(user) {
-  return [
+function getUserActionItems(item) {
+  const items = [
     {
       label: "Edit",
       icon: "i-lucide-pencil",
-      onSelect: () => startEdit(user),
+      onSelect: () => startEdit(item),
     },
     {
       label: "Reset Password",
       icon: "i-lucide-key-round",
-      onSelect: () => startResetPassword(user),
+      onSelect: () => startResetPassword(item),
     },
   ];
+
+  if (user.value?.role === "DEVELOPER" && user.value?.id !== item.id) {
+    items.push({
+      label: "Hard Delete",
+      icon: "i-lucide-trash-2",
+      color: "error",
+      onSelect: () => handleHardDeleteUser(item.id),
+    });
+  }
+
+  return items;
 }
 </script>
 

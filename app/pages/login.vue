@@ -42,7 +42,8 @@ async function handleLogin() {
         <p class="text-sm font-semibold text-slate-500">EventOps Manager</p>
         <h1 class="mt-2 text-2xl font-bold text-slate-900">Login</h1>
         <p class="mt-2 text-sm text-slate-500">
-          Masuk untuk mengelola event, crew mapping, dan evaluasi operasional.
+          Sign in to manage events, crew assignments, and operational
+          evaluations.
         </p>
       </div>
 

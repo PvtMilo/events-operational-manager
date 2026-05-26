@@ -110,10 +110,10 @@ const eventStatusOptions = [
 ];
 
 const loadingStatusOptions = [
-  { label: "Belum Disiapkan", value: "NOT_PREPARED" },
-  { label: "Sedang Disiapkan", value: "PREPARING" },
-  { label: "Loading Berjalan", value: "LOADING" },
-  { label: "Sudah Loading", value: "LOADED" },
+  { label: "Not Prepared", value: "NOT_PREPARED" },
+  { label: "Preparing", value: "PREPARING" },
+  { label: "Loading in Progress", value: "LOADING" },
+  { label: "Loading Complete", value: "LOADED" },
 ];
 
 const roleOptions = [
@@ -440,12 +440,12 @@ function getLoadingStatusColor(status) {
 }
 
 function getLoadingStatusLabel(status) {
-  if (status === "NOT_PREPARED") return "Belum Disiapkan";
-  if (status === "PREPARING") return "Sedang Disiapkan";
-  if (status === "LOADING") return "Loading Berjalan";
-  if (status === "LOADED") return "Sudah Loading";
+  if (status === "NOT_PREPARED") return "Not Prepared";
+  if (status === "PREPARING") return "Preparing";
+  if (status === "LOADING") return "Loading in Progress";
+  if (status === "LOADED") return "Loading Complete";
 
-  return status || "Belum Disiapkan";
+  return status || "Not Prepared";
 }
 
 function getAvailabilityColor(status) {
@@ -813,18 +813,18 @@ function getSaveErrorMessage(error, fallback) {
 
 function validatePostEventData() {
   if (postRibbonStart.value === "") {
-    postEventErrorMessage.value = "Ribbon awal is required";
+    postEventErrorMessage.value = "Starting ribbon count is required";
     return false;
   }
 
   if (postRibbonEnd.value === "") {
-    postEventErrorMessage.value = "Ribbon akhir is required";
+    postEventErrorMessage.value = "Ending ribbon count is required";
     return false;
   }
 
   if (Number(postRibbonUsed.value) < 0) {
     postEventErrorMessage.value =
-      "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.";
+      "Total ribbon used cannot be negative. Check starting and ending ribbon counts.";
     return false;
   }
 
@@ -1039,7 +1039,7 @@ async function handleSubmitEvaluationBundle() {
           </div>
 
           <div>
-            <p class="text-xs text-muted">Vendor Sewa</p>
+            <p class="text-xs text-muted">Rental Vendor</p>
             <p class="font-medium">
               {{ formatCapitalCase(currentEvent.vendorSewa) }}
             </p>
@@ -1287,7 +1287,7 @@ async function handleSubmitEvaluationBundle() {
                 />
               </UFormField>
 
-              <UFormField label="Vendor Sewa">
+              <UFormField label="Rental Vendor">
                 <UInput
                   v-model="editVendorSewa"
                   placeholder="Optional vendor rental info"
@@ -1673,7 +1673,7 @@ async function handleSubmitEvaluationBundle() {
               @submit.prevent="handleSubmitEvaluationBundle"
             >
               <div class="grid gap-4 md:grid-cols-3">
-                <UFormField label="Ribbon Awal">
+                <UFormField label="Starting Ribbon Count">
                   <UInput
                     v-model="postRibbonStart"
                     type="number"
@@ -1681,7 +1681,7 @@ async function handleSubmitEvaluationBundle() {
                   />
                 </UFormField>
 
-                <UFormField label="Ribbon Akhir">
+                <UFormField label="Ending Ribbon Count">
                   <UInput
                     v-model="postRibbonEnd"
                     type="number"
@@ -1689,7 +1689,7 @@ async function handleSubmitEvaluationBundle() {
                   />
                 </UFormField>
 
-                <UFormField label="Total Penggunaan">
+                <UFormField label="Total Ribbon Used">
                   <UInput
                     :model-value="postRibbonUsed"
                     type="number"

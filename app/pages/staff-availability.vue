@@ -118,18 +118,18 @@ const staffOptions = computed(() => {
 
 const typeOptions = [
   { label: "All Types", value: "ALL" },
-  { label: "Libur", value: "LIBUR" },
-  { label: "Izin", value: "IZIN" },
-  { label: "Sakit", value: "SAKIT" },
-  { label: "Cuti", value: "CUTI" },
+  { label: "Day Off", value: "LIBUR" },
+  { label: "Personal Leave", value: "IZIN" },
+  { label: "Sick Leave", value: "SAKIT" },
+  { label: "Leave", value: "CUTI" },
   { label: "Blocked", value: "BLOCKED" },
 ];
 
 const formTypeOptions = [
-  { label: "Libur", value: "LIBUR" },
-  { label: "Izin", value: "IZIN" },
-  { label: "Sakit", value: "SAKIT" },
-  { label: "Cuti", value: "CUTI" },
+  { label: "Day Off", value: "LIBUR" },
+  { label: "Personal Leave", value: "IZIN" },
+  { label: "Sick Leave", value: "SAKIT" },
+  { label: "Leave", value: "CUTI" },
   { label: "Blocked", value: "BLOCKED" },
 ];
 

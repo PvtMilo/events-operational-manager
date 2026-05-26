@@ -76,12 +76,12 @@ function getLoadingStatusColor(status) {
 }
 
 function getLoadingStatusLabel(status) {
-  if (status === "NOT_PREPARED") return "Belum Disiapkan";
-  if (status === "PREPARING") return "Sedang Disiapkan";
-  if (status === "LOADING") return "Loading Berjalan";
-  if (status === "LOADED") return "Sudah Loading";
+  if (status === "NOT_PREPARED") return "Not Prepared";
+  if (status === "PREPARING") return "Preparing";
+  if (status === "LOADING") return "Loading in Progress";
+  if (status === "LOADED") return "Loading Complete";
 
-  return status || "Belum Disiapkan";
+  return status || "Not Prepared";
 }
 </script>
 

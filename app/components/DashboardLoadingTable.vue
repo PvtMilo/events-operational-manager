@@ -42,23 +42,23 @@ function getLoadingDateTime(row) {
 
 function formatOverdue(minutesLate) {
   if (minutesLate < 60) {
-    return `Terlambat ${minutesLate} menit`;
+    return `Late by ${minutesLate} Minutes`;
   }
 
   const hoursLate = Math.floor(minutesLate / 60);
   const remainingMinutes = minutesLate % 60;
 
   if (remainingMinutes === 0) {
-    return `Terlambat ${hoursLate} jam`;
+    return `Late by ${hoursLate} Hours`;
   }
 
-  return `Terlambat ${hoursLate} jam ${remainingMinutes} menit`;
+  return `Late by ${hoursLate} Hours ${remainingMinutes} Minutes`;
 }
 
 function getLoadingReminder(row) {
   if (row.loadingStatus === "LOADED") {
     return {
-      label: "Selesai loading",
+      label: "Loading Complete",
       color: "success",
     };
   }
@@ -67,7 +67,7 @@ function getLoadingReminder(row) {
 
   if (!loadingDateTime) {
     return {
-      label: "Lengkapi jam loading",
+      label: "Set Loading Time",
       color: "error",
     };
   }
@@ -80,7 +80,7 @@ function getLoadingReminder(row) {
     const days = Math.ceil(diffMinutes / 1440);
 
     return {
-      label: `${days} hari lagi`,
+      label: `${days} Days Remaining`,
       color: "neutral",
     };
   }
@@ -89,28 +89,28 @@ function getLoadingReminder(row) {
     const hours = Math.ceil(diffMinutes / 60);
 
     return {
-      label: `${hours} jam lagi`,
+      label: `${hours} Hours Remaining`,
       color: "neutral",
     };
   }
 
   if (diffMinutes > 60) {
     return {
-      label: "2 jam lagi",
+      label: "2 Hours Remaining",
       color: "primary",
     };
   }
 
   if (diffMinutes > 30) {
     return {
-      label: "1 jam lagi",
+      label: "1 Hour Remaining",
       color: "warning",
     };
   }
 
   if (diffMinutes >= -30) {
     return {
-      label: "Loading sekarang",
+      label: "Loading Now",
       color: "error",
     };
   }

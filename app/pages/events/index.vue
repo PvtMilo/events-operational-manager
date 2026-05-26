@@ -585,7 +585,7 @@ async function handleHardDeleteEvent(id) {
               />
             </UFormField>
 
-            <UFormField label="Vendor Sewa" class="md:col-span-2">
+            <UFormField label="Rental Vendor" class="md:col-span-2">
               <UInput
                 v-model="vendorSewa"
                 placeholder="Optional vendor rental info"

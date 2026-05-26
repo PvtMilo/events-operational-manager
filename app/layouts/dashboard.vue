@@ -1,9 +1,35 @@
 <script setup>
 const { user, clear } = useUserSession();
 const colorMode = useColorMode();
+const { t, locale, setLocale } = useI18n();
 
 const open = ref(false);
 const collapsed = ref(false);
+const selectedLocale = computed({
+  get: () => {
+    return locale.value;
+  },
+  set: (value) => {
+    setLocale(value);
+  },
+});
+
+const languageOptions = computed(() => {
+  return [
+    {
+      label: t("common.language.english"),
+      value: "en",
+    },
+    {
+      label: t("common.language.indonesian"),
+      value: "id",
+    },
+  ];
+});
+
+const collapsedLanguageLabel = computed(() => {
+  return locale.value.toUpperCase();
+});
 
 async function handleLogout() {
   await $fetch("/api/auth/logout", {
@@ -19,7 +45,7 @@ const links = computed(() => {
 
   const mainLinks = [
     {
-      label: "Dashboard",
+      label: t("navigation.dashboard"),
       icon: "i-lucide-house",
       to: "/dashboard",
       onSelect: () => {
@@ -27,7 +53,7 @@ const links = computed(() => {
       },
     },
     {
-      label: "Events",
+      label: t("navigation.events"),
       icon: "i-lucide-calendar-days",
       to: "/events",
       onSelect: () => {
@@ -35,7 +61,7 @@ const links = computed(() => {
       },
     },
     {
-      label: "Staff",
+      label: t("navigation.staff"),
       icon: "i-lucide-users",
       to: "/staff",
       onSelect: () => {
@@ -43,7 +69,7 @@ const links = computed(() => {
       },
     },
     {
-      label: "Sales",
+      label: t("navigation.sales"),
       icon: "i-lucide-user-round",
       to: "/sales",
       onSelect: () => {
@@ -51,7 +77,7 @@ const links = computed(() => {
       },
     },
     {
-      label: "Service Types",
+      label: t("navigation.serviceTypes"),
       icon: "i-lucide-box",
       to: "/service-types",
       onSelect: () => {
@@ -59,7 +85,7 @@ const links = computed(() => {
       },
     },
     {
-      label: "Crew Schedule",
+      label: t("navigation.crewSchedule"),
       icon: "i-lucide-calendar-check-2",
       to: "/crew-schedule",
       onSelect: () => {
@@ -71,7 +97,7 @@ const links = computed(() => {
   if (!isStaff) {
     mainLinks.push(
       {
-        label: "Staff Availability",
+        label: t("navigation.staffAvailability"),
         icon: "i-lucide-calendar-off",
         to: "/staff-availability",
         onSelect: () => {
@@ -79,7 +105,7 @@ const links = computed(() => {
         },
       },
       {
-        label: "Reports",
+        label: t("navigation.reports"),
         icon: "i-lucide-chart-column",
         to: "/reports",
         onSelect: () => {
@@ -91,12 +117,12 @@ const links = computed(() => {
 
   const settingsChildren = [
     {
-      label: "Appearance",
+      label: t("navigation.appearance"),
       icon: "i-lucide-palette",
       type: "trigger",
       children: [
         {
-          label: "Light",
+          label: t("navigation.light"),
           icon: "i-lucide-sun",
           onSelect: () => {
             colorMode.preference = "light";
@@ -104,7 +130,7 @@ const links = computed(() => {
           },
         },
         {
-          label: "Dark",
+          label: t("navigation.dark"),
           icon: "i-lucide-moon",
           onSelect: () => {
             colorMode.preference = "dark";
@@ -114,7 +140,7 @@ const links = computed(() => {
       ],
     },
     {
-      label: "Change Password",
+      label: t("navigation.changePassword"),
       icon: "i-lucide-key-round",
       to: "/change-password",
       onSelect: () => {
@@ -125,7 +151,7 @@ const links = computed(() => {
 
   if (!isStaff) {
     settingsChildren.unshift({
-      label: "Users",
+      label: t("navigation.users"),
       icon: "i-lucide-user-cog",
       to: "/users",
       onSelect: () => {
@@ -136,7 +162,7 @@ const links = computed(() => {
 
   const settingsLinks = [
     {
-      label: "Settings",
+      label: t("navigation.settings"),
       icon: "i-lucide-settings",
       type: "trigger",
       children: settingsChildren,
@@ -162,9 +188,13 @@ const links = computed(() => {
     >
       <template #header="{ collapsed, collapse }">
         <div class="flex items-center justify-between gap-2 px-2 py-3">
-          <p v-if="!collapsed" class="font-semibold">EventOps Manager</p>
+          <p v-if="!collapsed" class="font-semibold">
+            {{ t("common.brand") }}
+          </p>
 
-          <p v-else class="font-semibold">EO</p>
+          <p v-else class="font-semibold">
+            {{ t("common.shortBrand") }}
+          </p>
         </div>
       </template>
 
@@ -189,6 +219,31 @@ const links = computed(() => {
 
       <template #footer="{ collapsed }">
         <div class="p-2">
+          <div class="mb-2">
+            <USelect
+              v-if="!collapsed"
+              v-model="selectedLocale"
+              :items="languageOptions"
+              :aria-label="t('common.language.select')"
+              icon="i-lucide-languages"
+              size="sm"
+              class="w-full"
+            />
+
+            <UButton
+              v-else
+              block
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-languages"
+              :aria-label="t('common.language.switch')"
+              @click="setLocale(locale === 'en' ? 'id' : 'en')"
+            >
+              {{ collapsedLanguageLabel }}
+            </UButton>
+          </div>
+
           <div v-if="!collapsed" class="mb-2">
             <p class="text-sm font-medium">
               {{ user?.name || "-" }}
@@ -206,7 +261,7 @@ const links = computed(() => {
             icon="i-lucide-log-out"
             @click="handleLogout"
           >
-            <span v-if="!collapsed">Logout</span>
+            <span v-if="!collapsed">{{ t("common.logout") }}</span>
           </UButton>
         </div>
       </template>
@@ -217,7 +272,9 @@ const links = computed(() => {
         class="sticky top-0 z-10 flex items-center gap-2 border-b border-default bg-default/95 p-3 backdrop-blur lg:hidden"
       >
         <UDashboardSidebarToggle />
-        <p class="font-semibold">EventOps Manager</p>
+        <p class="font-semibold">
+          {{ t("common.brand") }}
+        </p>
       </header>
 
       <slot />

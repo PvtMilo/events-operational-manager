@@ -1,0 +1,132 @@
+{
+  "common": {
+    "brand": "EventOps Manager",
+    "shortBrand": "EO",
+    "detail": "Detail",
+    "logout": "Logout",
+    "refresh": "Refresh",
+    "language": {
+      "english": "English",
+      "indonesian": "Indonesian",
+      "select": "Select Language",
+      "switch": "Switch Language"
+    },
+    "table": {
+      "event": "Event",
+      "client": "Client",
+      "service": "Service",
+      "date": "Date",
+      "time": "Time",
+      "location": "Location",
+      "action": "Action",
+      "staff": "Staff"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "events": "Events",
+    "staff": "Staff",
+    "sales": "Sales",
+    "serviceTypes": "Service Types",
+    "crewSchedule": "Crew Schedule",
+    "staffAvailability": "Staff Availability",
+    "reports": "Reports",
+    "appearance": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "changePassword": "Change Password",
+    "users": "Users",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "description": "Sign in to manage events, crew assignments, and operational evaluations.",
+      "email": "Email",
+      "password": "Password",
+      "passwordPlaceholder": "********",
+      "submit": "Login",
+      "loading": "Logging in...",
+      "failed": "Login failed",
+      "demoAccount": "Demo Account"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Operational reminder for loading, preparation, and event assignment.",
+    "loading": "Loading dashboard...",
+    "failedToLoad": "Failed to load dashboard.",
+    "summary": {
+      "loadingToday": "Loading Today",
+      "loadingTodayHint": "Based on loading date",
+      "upcomingLoading": "Upcoming Loading",
+      "upcomingLoadingHint": "Tomorrow and H+2 loading",
+      "needAttention": "Need Attention",
+      "needAttentionHint": "Missing loading date/time",
+      "todayEvents": "Today Events",
+      "todayEventsHint": "Events running today",
+      "pendingEvaluation": "Pending Evaluation",
+      "pendingEvaluationHint": "Need post-event evaluation"
+    },
+    "assignment": {
+      "title": "Events Need Assignment",
+      "description": "Events this month without active PIC/crew.",
+      "eventsCount": "{count} events",
+      "empty": "No event needs assignment.",
+      "assignStaff": "Assign Staff"
+    },
+    "loadingReminders": {
+      "title": "Loading Reminders",
+      "description": "Loading schedule based on loading date. Sales and event status are intentionally hidden.",
+      "badges": {
+        "today": "Today {count}",
+        "upcoming": "Upcoming {count}",
+        "attention": "Attention {count}"
+      },
+      "loadingTodayTitle": "Loading Today",
+      "loadingTodayDescription": "Events that should be prepared or loaded today.",
+      "loadingTodayEmpty": "No loading scheduled today.",
+      "upcomingLoadingTitle": "Upcoming Loading",
+      "upcomingLoadingDescription": "Loading schedule for tomorrow and the next 2 days.",
+      "upcomingLoadingEmpty": "No upcoming loading schedule.",
+      "missingInfoTitle": "Missing Loading Info",
+      "missingInfoDescription": "Upcoming events with missing loading date or loading time.",
+      "missingInfoEmpty": "No missing loading information."
+    },
+    "loadingStatus": {
+      "notPrepared": "Not Prepared",
+      "preparing": "Preparing",
+      "loadingInProgress": "Loading in Progress",
+      "loadingComplete": "Loading Complete"
+    },
+    "loadingReminder": {
+      "setLoadingTime": "Set Loading Time",
+      "daysRemaining": "{count} Days Remaining",
+      "hoursRemaining": "{count} Hours Remaining",
+      "twoHoursRemaining": "2 Hours Remaining",
+      "oneHourRemaining": "1 Hour Remaining",
+      "loadingNow": "Loading Now",
+      "lateByMinutes": "Late by {count} Minutes",
+      "lateByHours": "Late by {count} Hours",
+      "lateByHoursMinutes": "Late by {hours} Hours {minutes} Minutes"
+    },
+    "loadingTable": {
+      "due": "Due",
+      "loadingDate": "Loading Date",
+      "loadingTime": "Loading Time",
+      "eventDate": "Event Date",
+      "eventTime": "Event Time",
+      "loadingStatus": "Loading Status"
+    }
+  },
+  "event": {},
+  "staffAvailability": {},
+  "crewSchedule": {},
+  "reports": {},
+  "serviceTypes": {},
+  "staff": {},
+  "sales": {},
+  "validation": {},
+  "toast": {},
+  "confirmation": {}
+}

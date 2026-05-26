@@ -1,0 +1,132 @@
+{
+  "common": {
+    "brand": "EventOps Manager",
+    "shortBrand": "EO",
+    "detail": "Detail",
+    "logout": "Keluar",
+    "refresh": "Muat Ulang",
+    "language": {
+      "english": "English",
+      "indonesian": "Indonesia",
+      "select": "Pilih Bahasa",
+      "switch": "Ganti Bahasa"
+    },
+    "table": {
+      "event": "Event",
+      "client": "Client",
+      "service": "Layanan",
+      "date": "Tanggal",
+      "time": "Waktu",
+      "location": "Lokasi",
+      "action": "Aksi",
+      "staff": "Staff"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "events": "Events",
+    "staff": "Staff",
+    "sales": "Sales",
+    "serviceTypes": "Jenis Layanan",
+    "crewSchedule": "Jadwal Crew",
+    "staffAvailability": "Ketersediaan Staff",
+    "reports": "Laporan",
+    "appearance": "Tampilan",
+    "light": "Terang",
+    "dark": "Gelap",
+    "changePassword": "Ubah Password",
+    "users": "Pengguna",
+    "settings": "Pengaturan"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "description": "Masuk untuk mengelola events, penugasan crew, dan evaluasi operasional.",
+      "email": "Email",
+      "password": "Password",
+      "passwordPlaceholder": "********",
+      "submit": "Login",
+      "loading": "Sedang login...",
+      "failed": "Login gagal",
+      "demoAccount": "Akun Demo"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Pengingat operasional untuk loading, persiapan, dan penugasan event.",
+    "loading": "Memuat dashboard...",
+    "failedToLoad": "Gagal memuat dashboard.",
+    "summary": {
+      "loadingToday": "Loading Hari Ini",
+      "loadingTodayHint": "Berdasarkan tanggal loading",
+      "upcomingLoading": "Loading Mendatang",
+      "upcomingLoadingHint": "Loading besok dan H+2",
+      "needAttention": "Perlu Perhatian",
+      "needAttentionHint": "Tanggal/jam loading belum lengkap",
+      "todayEvents": "Event Hari Ini",
+      "todayEventsHint": "Event berjalan hari ini",
+      "pendingEvaluation": "Menunggu Evaluasi",
+      "pendingEvaluationHint": "Perlu evaluasi setelah event"
+    },
+    "assignment": {
+      "title": "Event Perlu Penugasan",
+      "description": "Event bulan ini tanpa PIC/crew aktif.",
+      "eventsCount": "{count} event",
+      "empty": "Tidak ada event yang perlu penugasan.",
+      "assignStaff": "Tugaskan Staff"
+    },
+    "loadingReminders": {
+      "title": "Pengingat Loading",
+      "description": "Jadwal loading berdasarkan tanggal loading. Sales dan status event sengaja disembunyikan.",
+      "badges": {
+        "today": "Hari Ini {count}",
+        "upcoming": "Mendatang {count}",
+        "attention": "Perhatian {count}"
+      },
+      "loadingTodayTitle": "Loading Hari Ini",
+      "loadingTodayDescription": "Event yang harus disiapkan atau loading hari ini.",
+      "loadingTodayEmpty": "Tidak ada jadwal loading hari ini.",
+      "upcomingLoadingTitle": "Loading Mendatang",
+      "upcomingLoadingDescription": "Jadwal loading untuk besok dan 2 hari ke depan.",
+      "upcomingLoadingEmpty": "Tidak ada jadwal loading mendatang.",
+      "missingInfoTitle": "Info Loading Belum Lengkap",
+      "missingInfoDescription": "Event mendatang dengan tanggal loading atau jam loading belum lengkap.",
+      "missingInfoEmpty": "Tidak ada info loading yang belum lengkap."
+    },
+    "loadingStatus": {
+      "notPrepared": "Belum Disiapkan",
+      "preparing": "Sedang Disiapkan",
+      "loadingInProgress": "Loading Berjalan",
+      "loadingComplete": "Loading Selesai"
+    },
+    "loadingReminder": {
+      "setLoadingTime": "Atur Waktu Loading",
+      "daysRemaining": "{count} Hari Lagi",
+      "hoursRemaining": "{count} Jam Lagi",
+      "twoHoursRemaining": "2 Jam Lagi",
+      "oneHourRemaining": "1 Jam Lagi",
+      "loadingNow": "Loading Sekarang",
+      "lateByMinutes": "Terlambat {count} Menit",
+      "lateByHours": "Terlambat {count} Jam",
+      "lateByHoursMinutes": "Terlambat {hours} Jam {minutes} Menit"
+    },
+    "loadingTable": {
+      "due": "Deadline",
+      "loadingDate": "Tanggal Loading",
+      "loadingTime": "Waktu Loading",
+      "eventDate": "Tanggal Event",
+      "eventTime": "Waktu Event",
+      "loadingStatus": "Status Loading"
+    }
+  },
+  "event": {},
+  "staffAvailability": {},
+  "crewSchedule": {},
+  "reports": {},
+  "serviceTypes": {},
+  "staff": {},
+  "sales": {},
+  "validation": {},
+  "toast": {},
+  "confirmation": {}
+}

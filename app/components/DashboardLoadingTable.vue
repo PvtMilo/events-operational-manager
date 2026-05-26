@@ -26,6 +26,8 @@ defineProps({
   },
 });
 
+const { t } = useI18n();
+
 function getDateKey(dateValue) {
   if (!dateValue) return "";
 
@@ -42,23 +44,30 @@ function getLoadingDateTime(row) {
 
 function formatOverdue(minutesLate) {
   if (minutesLate < 60) {
-    return `Late by ${minutesLate} Minutes`;
+    return t("dashboard.loadingReminder.lateByMinutes", {
+      count: minutesLate,
+    });
   }
 
   const hoursLate = Math.floor(minutesLate / 60);
   const remainingMinutes = minutesLate % 60;
 
   if (remainingMinutes === 0) {
-    return `Late by ${hoursLate} Hours`;
+    return t("dashboard.loadingReminder.lateByHours", {
+      count: hoursLate,
+    });
   }
 
-  return `Late by ${hoursLate} Hours ${remainingMinutes} Minutes`;
+  return t("dashboard.loadingReminder.lateByHoursMinutes", {
+    hours: hoursLate,
+    minutes: remainingMinutes,
+  });
 }
 
 function getLoadingReminder(row) {
   if (row.loadingStatus === "LOADED") {
     return {
-      label: "Loading Complete",
+      label: t("dashboard.loadingStatus.loadingComplete"),
       color: "success",
     };
   }
@@ -67,7 +76,7 @@ function getLoadingReminder(row) {
 
   if (!loadingDateTime) {
     return {
-      label: "Set Loading Time",
+      label: t("dashboard.loadingReminder.setLoadingTime"),
       color: "error",
     };
   }
@@ -80,7 +89,7 @@ function getLoadingReminder(row) {
     const days = Math.ceil(diffMinutes / 1440);
 
     return {
-      label: `${days} Days Remaining`,
+      label: t("dashboard.loadingReminder.daysRemaining", { count: days }),
       color: "neutral",
     };
   }
@@ -89,28 +98,28 @@ function getLoadingReminder(row) {
     const hours = Math.ceil(diffMinutes / 60);
 
     return {
-      label: `${hours} Hours Remaining`,
+      label: t("dashboard.loadingReminder.hoursRemaining", { count: hours }),
       color: "neutral",
     };
   }
 
   if (diffMinutes > 60) {
     return {
-      label: "2 Hours Remaining",
+      label: t("dashboard.loadingReminder.twoHoursRemaining"),
       color: "primary",
     };
   }
 
   if (diffMinutes > 30) {
     return {
-      label: "1 Hour Remaining",
+      label: t("dashboard.loadingReminder.oneHourRemaining"),
       color: "warning",
     };
   }
 
   if (diffMinutes >= -30) {
     return {
-      label: "Loading Now",
+      label: t("dashboard.loadingReminder.loadingNow"),
       color: "error",
     };
   }
@@ -130,40 +139,40 @@ function getLoadingReminder(row) {
       <thead>
         <tr class="border-b border-default bg-muted/30 text-xs uppercase text-muted">
           <th class="whitespace-nowrap px-3 py-3">
-            Due
+            {{ t("dashboard.loadingTable.due") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Loading Date
+            {{ t("dashboard.loadingTable.loadingDate") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Loading Time
+            {{ t("dashboard.loadingTable.loadingTime") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Event
+            {{ t("common.table.event") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Client
+            {{ t("common.table.client") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Service
+            {{ t("common.table.service") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Event Date
+            {{ t("dashboard.loadingTable.eventDate") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Event Time
+            {{ t("dashboard.loadingTable.eventTime") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Staff
+            {{ t("common.table.staff") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Location
+            {{ t("common.table.location") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Loading Status
+            {{ t("dashboard.loadingTable.loadingStatus") }}
           </th>
           <th class="whitespace-nowrap px-3 py-3">
-            Action
+            {{ t("common.table.action") }}
           </th>
         </tr>
       </thead>
@@ -263,7 +272,7 @@ function getLoadingReminder(row) {
               variant="soft"
               :to="`/events/${row.id}`"
             >
-              Detail
+              {{ t("common.detail") }}
             </UButton>
           </td>
         </tr>

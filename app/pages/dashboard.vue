@@ -4,6 +4,8 @@ definePageMeta({
   middleware: "auth",
 });
 
+const { t } = useI18n();
+
 const {
   data: dashboardData,
   pending,
@@ -76,12 +78,12 @@ function getLoadingStatusColor(status) {
 }
 
 function getLoadingStatusLabel(status) {
-  if (status === "NOT_PREPARED") return "Not Prepared";
-  if (status === "PREPARING") return "Preparing";
-  if (status === "LOADING") return "Loading in Progress";
-  if (status === "LOADED") return "Loading Complete";
+  if (status === "NOT_PREPARED") return t("dashboard.loadingStatus.notPrepared");
+  if (status === "PREPARING") return t("dashboard.loadingStatus.preparing");
+  if (status === "LOADING") return t("dashboard.loadingStatus.loadingInProgress");
+  if (status === "LOADED") return t("dashboard.loadingStatus.loadingComplete");
 
-  return status || "Not Prepared";
+  return status || t("dashboard.loadingStatus.notPrepared");
 }
 </script>
 
@@ -92,11 +94,11 @@ function getLoadingStatusLabel(status) {
     >
       <div>
         <h1 class="text-2xl font-semibold">
-          Dashboard
+          {{ t("dashboard.title") }}
         </h1>
 
         <p class="text-sm text-muted">
-          Operational reminder for loading, preparation, and event assignment.
+          {{ t("dashboard.description") }}
         </p>
       </div>
 
@@ -107,17 +109,17 @@ function getLoadingStatusLabel(status) {
         variant="outline"
         @click="refresh"
       >
-        Refresh
+        {{ t("common.refresh") }}
       </UButton>
     </div>
 
     <UCard v-if="pending">
-      Loading dashboard...
+      {{ t("dashboard.loading") }}
     </UCard>
 
     <UCard v-else-if="error">
       <p class="text-sm text-red-500">
-        Failed to load dashboard.
+        {{ t("dashboard.failedToLoad") }}
       </p>
     </UCard>
 
@@ -125,7 +127,7 @@ function getLoadingStatusLabel(status) {
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <UCard>
           <p class="text-sm text-muted">
-            Loading Today
+            {{ t("dashboard.summary.loadingToday") }}
           </p>
 
           <p class="mt-1 text-2xl font-semibold">
@@ -133,13 +135,13 @@ function getLoadingStatusLabel(status) {
           </p>
 
           <p class="mt-1 text-xs text-muted">
-            Based on loading date
+            {{ t("dashboard.summary.loadingTodayHint") }}
           </p>
         </UCard>
 
         <UCard>
           <p class="text-sm text-muted">
-            Upcoming Loading
+            {{ t("dashboard.summary.upcomingLoading") }}
           </p>
 
           <p class="mt-1 text-2xl font-semibold">
@@ -147,13 +149,13 @@ function getLoadingStatusLabel(status) {
           </p>
 
           <p class="mt-1 text-xs text-muted">
-            Tomorrow and H+2 loading
+            {{ t("dashboard.summary.upcomingLoadingHint") }}
           </p>
         </UCard>
 
         <UCard>
           <p class="text-sm text-muted">
-            Need Attention
+            {{ t("dashboard.summary.needAttention") }}
           </p>
 
           <p class="mt-1 text-2xl font-semibold">
@@ -161,13 +163,13 @@ function getLoadingStatusLabel(status) {
           </p>
 
           <p class="mt-1 text-xs text-muted">
-            Missing loading date/time
+            {{ t("dashboard.summary.needAttentionHint") }}
           </p>
         </UCard>
 
         <UCard>
           <p class="text-sm text-muted">
-            Today Events
+            {{ t("dashboard.summary.todayEvents") }}
           </p>
 
           <p class="mt-1 text-2xl font-semibold">
@@ -175,13 +177,13 @@ function getLoadingStatusLabel(status) {
           </p>
 
           <p class="mt-1 text-xs text-muted">
-            Events running today
+            {{ t("dashboard.summary.todayEventsHint") }}
           </p>
         </UCard>
 
         <UCard>
           <p class="text-sm text-muted">
-            Pending Evaluation
+            {{ t("dashboard.summary.pendingEvaluation") }}
           </p>
 
           <p class="mt-1 text-2xl font-semibold">
@@ -189,7 +191,7 @@ function getLoadingStatusLabel(status) {
           </p>
 
           <p class="mt-1 text-xs text-muted">
-            Need post-event evaluation
+            {{ t("dashboard.summary.pendingEvaluationHint") }}
           </p>
         </UCard>
       </div>
@@ -201,22 +203,22 @@ function getLoadingStatusLabel(status) {
           >
             <div>
               <h2 class="text-lg font-semibold">
-                Events Need Assignment
+                {{ t("dashboard.assignment.title") }}
               </h2>
 
               <p class="text-sm text-muted">
-                Events this month without active PIC/crew.
+                {{ t("dashboard.assignment.description") }}
               </p>
             </div>
 
             <UBadge color="warning" variant="soft">
-              {{ summary.needAssignment }} events
+              {{ t("dashboard.assignment.eventsCount", { count: summary.needAssignment }) }}
             </UBadge>
           </div>
         </template>
 
         <p v-if="needAssignment.length === 0" class="text-sm text-muted">
-          No event needs assignment.
+          {{ t("dashboard.assignment.empty") }}
         </p>
 
         <div v-else class="overflow-x-auto">
@@ -224,25 +226,25 @@ function getLoadingStatusLabel(status) {
             <thead>
               <tr class="border-b border-default text-xs uppercase text-muted">
                 <th class="whitespace-nowrap px-3 py-3">
-                  Event
+                  {{ t("common.table.event") }}
                 </th>
                 <th class="whitespace-nowrap px-3 py-3">
-                  Client
+                  {{ t("common.table.client") }}
                 </th>
                 <th class="whitespace-nowrap px-3 py-3">
-                  Service
+                  {{ t("common.table.service") }}
                 </th>
                 <th class="whitespace-nowrap px-3 py-3">
-                  Date
+                  {{ t("common.table.date") }}
                 </th>
                 <th class="whitespace-nowrap px-3 py-3">
-                  Time
+                  {{ t("common.table.time") }}
                 </th>
                 <th class="whitespace-nowrap px-3 py-3">
-                  Location
+                  {{ t("common.table.location") }}
                 </th>
                 <th class="whitespace-nowrap px-3 py-3">
-                  Action
+                  {{ t("common.table.action") }}
                 </th>
               </tr>
             </thead>
@@ -284,7 +286,7 @@ function getLoadingStatusLabel(status) {
                     variant="soft"
                     :to="`/events/${item.id}`"
                   >
-                    Assign Staff
+                    {{ t("dashboard.assignment.assignStaff") }}
                   </UButton>
                 </td>
               </tr>
@@ -300,26 +302,25 @@ function getLoadingStatusLabel(status) {
           >
             <div>
               <h2 class="text-lg font-semibold">
-                Loading Reminders
+                {{ t("dashboard.loadingReminders.title") }}
               </h2>
 
               <p class="text-sm text-muted">
-                Loading schedule based on loading date. Sales and event status
-                are intentionally hidden.
+                {{ t("dashboard.loadingReminders.description") }}
               </p>
             </div>
 
             <div class="flex flex-wrap gap-2">
               <UBadge color="error" variant="soft">
-                Today {{ loadingToday.length }}
+                {{ t("dashboard.loadingReminders.badges.today", { count: loadingToday.length }) }}
               </UBadge>
 
               <UBadge color="primary" variant="soft">
-                Upcoming {{ upcomingLoading.length }}
+                {{ t("dashboard.loadingReminders.badges.upcoming", { count: upcomingLoading.length }) }}
               </UBadge>
 
               <UBadge color="warning" variant="soft">
-                Attention {{ missingLoadingInfo.length }}
+                {{ t("dashboard.loadingReminders.badges.attention", { count: missingLoadingInfo.length }) }}
               </UBadge>
             </div>
           </div>
@@ -330,17 +331,17 @@ function getLoadingStatusLabel(status) {
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
                 <h3 class="font-medium">
-                  Loading Today
+                  {{ t("dashboard.loadingReminders.loadingTodayTitle") }}
                 </h3>
 
                 <p class="text-sm text-muted">
-                  Events that should be prepared or loaded today.
+                  {{ t("dashboard.loadingReminders.loadingTodayDescription") }}
                 </p>
               </div>
             </div>
 
             <p v-if="loadingToday.length === 0" class="text-sm text-muted">
-              No loading scheduled today.
+              {{ t("dashboard.loadingReminders.loadingTodayEmpty") }}
             </p>
 
             <DashboardLoadingTable
@@ -358,17 +359,17 @@ function getLoadingStatusLabel(status) {
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
                 <h3 class="font-medium">
-                  Upcoming Loading
+                  {{ t("dashboard.loadingReminders.upcomingLoadingTitle") }}
                 </h3>
 
                 <p class="text-sm text-muted">
-                  Loading schedule for tomorrow and the next 2 days.
+                  {{ t("dashboard.loadingReminders.upcomingLoadingDescription") }}
                 </p>
               </div>
             </div>
 
             <p v-if="upcomingLoading.length === 0" class="text-sm text-muted">
-              No upcoming loading schedule.
+              {{ t("dashboard.loadingReminders.upcomingLoadingEmpty") }}
             </p>
 
             <DashboardLoadingTable
@@ -386,11 +387,11 @@ function getLoadingStatusLabel(status) {
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
                 <h3 class="font-medium">
-                  Missing Loading Info
+                  {{ t("dashboard.loadingReminders.missingInfoTitle") }}
                 </h3>
 
                 <p class="text-sm text-muted">
-                  Upcoming events with missing loading date or loading time.
+                  {{ t("dashboard.loadingReminders.missingInfoDescription") }}
                 </p>
               </div>
             </div>
@@ -399,7 +400,7 @@ function getLoadingStatusLabel(status) {
               v-if="missingLoadingInfo.length === 0"
               class="text-sm text-muted"
             >
-              No missing loading information.
+              {{ t("dashboard.loadingReminders.missingInfoEmpty") }}
             </p>
 
             <DashboardLoadingTable

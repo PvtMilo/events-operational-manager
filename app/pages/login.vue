@@ -9,6 +9,7 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 
 const { fetch } = useUserSession();
+const { t } = useI18n();
 
 async function handleLogin() {
   errorMessage.value = "";
@@ -28,7 +29,9 @@ async function handleLogin() {
     await navigateTo("/dashboard");
   } catch (error) {
     errorMessage.value =
-      error?.statusMessage || error?.data?.statusMessage || "Login failed";
+      error?.statusMessage ||
+      error?.data?.statusMessage ||
+      t("auth.login.failed");
   } finally {
     isLoading.value = false;
   }
@@ -39,18 +42,21 @@ async function handleLogin() {
   <main class="min-h-screen bg-slate-950 flex items-center justify-center px-4">
     <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
       <div class="mb-8">
-        <p class="text-sm font-semibold text-slate-500">EventOps Manager</p>
-        <h1 class="mt-2 text-2xl font-bold text-slate-900">Login</h1>
+        <p class="text-sm font-semibold text-slate-500">
+          {{ t("common.brand") }}
+        </p>
+        <h1 class="mt-2 text-2xl font-bold text-slate-900">
+          {{ t("auth.login.title") }}
+        </h1>
         <p class="mt-2 text-sm text-slate-500">
-          Sign in to manage events, crew assignments, and operational
-          evaluations.
+          {{ t("auth.login.description") }}
         </p>
       </div>
 
       <form class="space-y-5" @submit.prevent="handleLogin">
         <div>
           <label class="mb-2 block text-sm font-medium text-slate-700">
-            Email
+            {{ t("auth.login.email") }}
           </label>
           <input
             v-model="email"
@@ -62,13 +68,13 @@ async function handleLogin() {
 
         <div>
           <label class="mb-2 block text-sm font-medium text-slate-700">
-            Password
+            {{ t("auth.login.password") }}
           </label>
           <input
             v-model="password"
             type="password"
             class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
-            placeholder="••••••••"
+            :placeholder="t('auth.login.passwordPlaceholder')"
           />
         </div>
 
@@ -84,14 +90,18 @@ async function handleLogin() {
           :disabled="isLoading"
           class="w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ isLoading ? "Logging in..." : "Login" }}
+          {{ isLoading ? t("auth.login.loading") : t("auth.login.submit") }}
         </button>
       </form>
 
       <div class="mt-6 rounded-xl bg-slate-100 p-4 text-xs text-slate-600">
-        <p class="font-semibold text-slate-800">Demo Account</p>
-        <p class="mt-1">Email: admin@eventops.test</p>
-        <p>Password: admin12345</p>
+        <p class="font-semibold text-slate-800">
+          {{ t("auth.login.demoAccount") }}
+        </p>
+        <p class="mt-1">
+          {{ t("auth.login.email") }}: admin@eventops.test
+        </p>
+        <p>{{ t("auth.login.password") }}: admin12345</p>
       </div>
     </div>
   </main>

@@ -8,7 +8,7 @@ const { data, pending, error, refresh } = await useFetch("/api/dashboard/summary
 
 const summary = computed(() => {
   return data.value?.data || {
-    totalEvents: 0,
+    upcomingLoadingEvents: 0,
     upcomingEvents: 0,
     completedEvents: 0,
     pendingEvaluationEvents: 0,
@@ -20,9 +20,9 @@ const summary = computed(() => {
 
 const summaryCards = computed(() => [
   {
-    label: "Total Events",
-    value: summary.value.totalEvents,
-    description: "This month, excluding cancelled",
+    label: "Upcoming Loading",
+    value: summary.value.upcomingLoadingEvents,
+    description: "Loading from today",
   },
   {
     label: "Upcoming Events",

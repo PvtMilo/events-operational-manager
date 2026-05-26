@@ -12,8 +12,15 @@ function getCurrentMonthRange() {
   };
 }
 
+function getTodayStart() {
+  const now = new Date();
+
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
 export default defineEventHandler(async () => {
   const { start: monthStart, end: monthEnd } = getCurrentMonthRange();
+  const todayStart = getTodayStart();
 
   const baseThisMonthWhere = {
     eventDate: {
@@ -26,7 +33,7 @@ export default defineEventHandler(async () => {
   };
 
   const [
-    totalEvents,
+    upcomingLoadingEvents,
     upcomingEvents,
     completedEvents,
     pendingEvaluationEvents,
@@ -34,7 +41,15 @@ export default defineEventHandler(async () => {
     recentEvents,
   ] = await Promise.all([
     prisma.event.count({
-      where: baseThisMonthWhere,
+      where: {
+        loadingDate: {
+          gte: todayStart,
+          lt: monthEnd,
+        },
+        status: {
+          notIn: ["CANCELLED", "COMPLETED"],
+        },
+      },
     }),
 
     prisma.event.count({
@@ -117,7 +132,7 @@ export default defineEventHandler(async () => {
     data: {
       monthStart,
       monthEnd,
-      totalEvents,
+      upcomingLoadingEvents,
       upcomingEvents,
       completedEvents,
       pendingEvaluationEvents,

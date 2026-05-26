@@ -169,6 +169,7 @@ export const EventScalarFieldEnum = {
   loadingTime: 'loadingTime',
   location: 'location',
   status: 'status',
+  loadingStatus: 'loadingStatus',
   vehicleName: 'vehicleName',
   driverName: 'driverName',
   ribbonStart: 'ribbonStart',

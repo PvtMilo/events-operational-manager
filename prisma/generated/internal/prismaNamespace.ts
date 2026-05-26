@@ -1282,6 +1282,7 @@ export const EventScalarFieldEnum = {
   loadingTime: 'loadingTime',
   location: 'location',
   status: 'status',
+  loadingStatus: 'loadingStatus',
   vehicleName: 'vehicleName',
   driverName: 'driverName',
   ribbonStart: 'ribbonStart',
@@ -1518,6 +1519,20 @@ export type EnumEventStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pris
  * Reference to a field of type 'EventStatus[]'
  */
 export type ListEnumEventStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'EventLoadingStatus'
+ */
+export type EnumEventLoadingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventLoadingStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EventLoadingStatus[]'
+ */
+export type ListEnumEventLoadingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventLoadingStatus[]'>
     
 
 

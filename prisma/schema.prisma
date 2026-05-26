@@ -37,6 +37,13 @@ enum EventStatus {
   CANCELLED
 }
 
+enum EventLoadingStatus {
+  NOT_PREPARED
+  PREPARING
+  LOADING
+  LOADED
+}
+
 enum RoleInEvent {
   PIC
   CREW
@@ -175,8 +182,9 @@ model Event {
   loadingDate DateTime?
   loadingTime String?
 
-  location String?
-  status   EventStatus @default(DRAFTED)
+  location      String?
+  status        EventStatus        @default(DRAFTED)
+  loadingStatus EventLoadingStatus @default(NOT_PREPARED)
 
   vehicleName String?
   driverName  String?

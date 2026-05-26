@@ -53,6 +53,7 @@ export type EventMinAggregateOutputType = {
   loadingTime: string | null
   location: string | null
   status: $Enums.EventStatus | null
+  loadingStatus: $Enums.EventLoadingStatus | null
   vehicleName: string | null
   driverName: string | null
   ribbonStart: number | null
@@ -79,6 +80,7 @@ export type EventMaxAggregateOutputType = {
   loadingTime: string | null
   location: string | null
   status: $Enums.EventStatus | null
+  loadingStatus: $Enums.EventLoadingStatus | null
   vehicleName: string | null
   driverName: string | null
   ribbonStart: number | null
@@ -105,6 +107,7 @@ export type EventCountAggregateOutputType = {
   loadingTime: number
   location: number
   status: number
+  loadingStatus: number
   vehicleName: number
   driverName: number
   ribbonStart: number
@@ -145,6 +148,7 @@ export type EventMinAggregateInputType = {
   loadingTime?: true
   location?: true
   status?: true
+  loadingStatus?: true
   vehicleName?: true
   driverName?: true
   ribbonStart?: true
@@ -171,6 +175,7 @@ export type EventMaxAggregateInputType = {
   loadingTime?: true
   location?: true
   status?: true
+  loadingStatus?: true
   vehicleName?: true
   driverName?: true
   ribbonStart?: true
@@ -197,6 +202,7 @@ export type EventCountAggregateInputType = {
   loadingTime?: true
   location?: true
   status?: true
+  loadingStatus?: true
   vehicleName?: true
   driverName?: true
   ribbonStart?: true
@@ -310,6 +316,7 @@ export type EventGroupByOutputType = {
   loadingTime: string | null
   location: string | null
   status: $Enums.EventStatus
+  loadingStatus: $Enums.EventLoadingStatus
   vehicleName: string | null
   driverName: string | null
   ribbonStart: number | null
@@ -359,6 +366,7 @@ export type EventWhereInput = {
   loadingTime?: Prisma.StringNullableFilter<"Event"> | string | null
   location?: Prisma.StringNullableFilter<"Event"> | string | null
   status?: Prisma.EnumEventStatusFilter<"Event"> | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFilter<"Event"> | $Enums.EventLoadingStatus
   vehicleName?: Prisma.StringNullableFilter<"Event"> | string | null
   driverName?: Prisma.StringNullableFilter<"Event"> | string | null
   ribbonStart?: Prisma.IntNullableFilter<"Event"> | number | null
@@ -391,6 +399,7 @@ export type EventOrderByWithRelationInput = {
   loadingTime?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  loadingStatus?: Prisma.SortOrder
   vehicleName?: Prisma.SortOrderInput | Prisma.SortOrder
   driverName?: Prisma.SortOrderInput | Prisma.SortOrder
   ribbonStart?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -426,6 +435,7 @@ export type EventWhereUniqueInput = Prisma.AtLeast<{
   loadingTime?: Prisma.StringNullableFilter<"Event"> | string | null
   location?: Prisma.StringNullableFilter<"Event"> | string | null
   status?: Prisma.EnumEventStatusFilter<"Event"> | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFilter<"Event"> | $Enums.EventLoadingStatus
   vehicleName?: Prisma.StringNullableFilter<"Event"> | string | null
   driverName?: Prisma.StringNullableFilter<"Event"> | string | null
   ribbonStart?: Prisma.IntNullableFilter<"Event"> | number | null
@@ -458,6 +468,7 @@ export type EventOrderByWithAggregationInput = {
   loadingTime?: Prisma.SortOrderInput | Prisma.SortOrder
   location?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  loadingStatus?: Prisma.SortOrder
   vehicleName?: Prisma.SortOrderInput | Prisma.SortOrder
   driverName?: Prisma.SortOrderInput | Prisma.SortOrder
   ribbonStart?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -492,6 +503,7 @@ export type EventScalarWhereWithAggregatesInput = {
   loadingTime?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   location?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   status?: Prisma.EnumEventStatusWithAggregatesFilter<"Event"> | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusWithAggregatesFilter<"Event"> | $Enums.EventLoadingStatus
   vehicleName?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   driverName?: Prisma.StringNullableWithAggregatesFilter<"Event"> | string | null
   ribbonStart?: Prisma.IntNullableWithAggregatesFilter<"Event"> | number | null
@@ -516,6 +528,7 @@ export type EventCreateInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -548,6 +561,7 @@ export type EventUncheckedCreateInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -576,6 +590,7 @@ export type EventUpdateInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -608,6 +623,7 @@ export type EventUncheckedUpdateInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -638,6 +654,7 @@ export type EventCreateManyInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -662,6 +679,7 @@ export type EventUpdateManyMutationInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -688,6 +706,7 @@ export type EventUncheckedUpdateManyInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -724,6 +743,7 @@ export type EventCountOrderByAggregateInput = {
   loadingTime?: Prisma.SortOrder
   location?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  loadingStatus?: Prisma.SortOrder
   vehicleName?: Prisma.SortOrder
   driverName?: Prisma.SortOrder
   ribbonStart?: Prisma.SortOrder
@@ -756,6 +776,7 @@ export type EventMaxOrderByAggregateInput = {
   loadingTime?: Prisma.SortOrder
   location?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  loadingStatus?: Prisma.SortOrder
   vehicleName?: Prisma.SortOrder
   driverName?: Prisma.SortOrder
   ribbonStart?: Prisma.SortOrder
@@ -782,6 +803,7 @@ export type EventMinOrderByAggregateInput = {
   loadingTime?: Prisma.SortOrder
   location?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  loadingStatus?: Prisma.SortOrder
   vehicleName?: Prisma.SortOrder
   driverName?: Prisma.SortOrder
   ribbonStart?: Prisma.SortOrder
@@ -892,6 +914,10 @@ export type EnumEventStatusFieldUpdateOperationsInput = {
   set?: $Enums.EventStatus
 }
 
+export type EnumEventLoadingStatusFieldUpdateOperationsInput = {
+  set?: $Enums.EventLoadingStatus
+}
+
 export type NullableIntFieldUpdateOperationsInput = {
   set?: number | null
   increment?: number
@@ -969,6 +995,7 @@ export type EventCreateWithoutSalesInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -999,6 +1026,7 @@ export type EventUncheckedCreateWithoutSalesInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1058,6 +1086,7 @@ export type EventScalarWhereInput = {
   loadingTime?: Prisma.StringNullableFilter<"Event"> | string | null
   location?: Prisma.StringNullableFilter<"Event"> | string | null
   status?: Prisma.EnumEventStatusFilter<"Event"> | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFilter<"Event"> | $Enums.EventLoadingStatus
   vehicleName?: Prisma.StringNullableFilter<"Event"> | string | null
   driverName?: Prisma.StringNullableFilter<"Event"> | string | null
   ribbonStart?: Prisma.IntNullableFilter<"Event"> | number | null
@@ -1082,6 +1111,7 @@ export type EventCreateWithoutServiceTypeInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1112,6 +1142,7 @@ export type EventUncheckedCreateWithoutServiceTypeInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1166,6 +1197,7 @@ export type EventCreateWithoutAssignmentsInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1197,6 +1229,7 @@ export type EventUncheckedCreateWithoutAssignmentsInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1240,6 +1273,7 @@ export type EventUpdateWithoutAssignmentsInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1271,6 +1305,7 @@ export type EventUncheckedUpdateWithoutAssignmentsInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1298,6 +1333,7 @@ export type EventCreateWithoutEventEvaluationInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1329,6 +1365,7 @@ export type EventUncheckedCreateWithoutEventEvaluationInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1372,6 +1409,7 @@ export type EventUpdateWithoutEventEvaluationInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1403,6 +1441,7 @@ export type EventUncheckedUpdateWithoutEventEvaluationInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1430,6 +1469,7 @@ export type EventCreateWithoutStaffEvaluationsInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1461,6 +1501,7 @@ export type EventUncheckedCreateWithoutStaffEvaluationsInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1504,6 +1545,7 @@ export type EventUpdateWithoutStaffEvaluationsInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1535,6 +1577,7 @@ export type EventUncheckedUpdateWithoutStaffEvaluationsInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1562,6 +1605,7 @@ export type EventCreateWithoutActivityLogsInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1593,6 +1637,7 @@ export type EventUncheckedCreateWithoutActivityLogsInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1636,6 +1681,7 @@ export type EventUpdateWithoutActivityLogsInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1667,6 +1713,7 @@ export type EventUncheckedUpdateWithoutActivityLogsInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1695,6 +1742,7 @@ export type EventCreateManySalesInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1719,6 +1767,7 @@ export type EventUpdateWithoutSalesInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1749,6 +1798,7 @@ export type EventUncheckedUpdateWithoutSalesInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1778,6 +1828,7 @@ export type EventUncheckedUpdateManyWithoutSalesInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1803,6 +1854,7 @@ export type EventCreateManyServiceTypeInput = {
   loadingTime?: string | null
   location?: string | null
   status?: $Enums.EventStatus
+  loadingStatus?: $Enums.EventLoadingStatus
   vehicleName?: string | null
   driverName?: string | null
   ribbonStart?: number | null
@@ -1827,6 +1879,7 @@ export type EventUpdateWithoutServiceTypeInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1857,6 +1910,7 @@ export type EventUncheckedUpdateWithoutServiceTypeInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1886,6 +1940,7 @@ export type EventUncheckedUpdateManyWithoutServiceTypeInput = {
   loadingTime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumEventStatusFieldUpdateOperationsInput | $Enums.EventStatus
+  loadingStatus?: Prisma.EnumEventLoadingStatusFieldUpdateOperationsInput | $Enums.EventLoadingStatus
   vehicleName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   driverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ribbonStart?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1961,6 +2016,7 @@ export type EventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   loadingTime?: boolean
   location?: boolean
   status?: boolean
+  loadingStatus?: boolean
   vehicleName?: boolean
   driverName?: boolean
   ribbonStart?: boolean
@@ -1994,6 +2050,7 @@ export type EventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   loadingTime?: boolean
   location?: boolean
   status?: boolean
+  loadingStatus?: boolean
   vehicleName?: boolean
   driverName?: boolean
   ribbonStart?: boolean
@@ -2022,6 +2079,7 @@ export type EventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   loadingTime?: boolean
   location?: boolean
   status?: boolean
+  loadingStatus?: boolean
   vehicleName?: boolean
   driverName?: boolean
   ribbonStart?: boolean
@@ -2050,6 +2108,7 @@ export type EventSelectScalar = {
   loadingTime?: boolean
   location?: boolean
   status?: boolean
+  loadingStatus?: boolean
   vehicleName?: boolean
   driverName?: boolean
   ribbonStart?: boolean
@@ -2061,7 +2120,7 @@ export type EventSelectScalar = {
   updatedAt?: boolean
 }
 
-export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventName" | "clientName" | "clientPhone" | "serviceTypeId" | "equipmentSetup" | "salesId" | "eventDate" | "startTime" | "endTime" | "loadingDate" | "loadingTime" | "location" | "status" | "vehicleName" | "driverName" | "ribbonStart" | "ribbonEnd" | "ribbonUsed" | "vendorSewa" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
+export type EventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "eventName" | "clientName" | "clientPhone" | "serviceTypeId" | "equipmentSetup" | "salesId" | "eventDate" | "startTime" | "endTime" | "loadingDate" | "loadingTime" | "location" | "status" | "loadingStatus" | "vehicleName" | "driverName" | "ribbonStart" | "ribbonEnd" | "ribbonUsed" | "vendorSewa" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["event"]>
 export type EventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   serviceType?: boolean | Prisma.ServiceTypeDefaultArgs<ExtArgs>
   sales?: boolean | Prisma.Event$salesArgs<ExtArgs>
@@ -2105,6 +2164,7 @@ export type $EventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     loadingTime: string | null
     location: string | null
     status: $Enums.EventStatus
+    loadingStatus: $Enums.EventLoadingStatus
     vehicleName: string | null
     driverName: string | null
     ribbonStart: number | null
@@ -2557,6 +2617,7 @@ export interface EventFieldRefs {
   readonly loadingTime: Prisma.FieldRef<"Event", 'String'>
   readonly location: Prisma.FieldRef<"Event", 'String'>
   readonly status: Prisma.FieldRef<"Event", 'EventStatus'>
+  readonly loadingStatus: Prisma.FieldRef<"Event", 'EventLoadingStatus'>
   readonly vehicleName: Prisma.FieldRef<"Event", 'String'>
   readonly driverName: Prisma.FieldRef<"Event", 'String'>
   readonly ribbonStart: Prisma.FieldRef<"Event", 'Int'>

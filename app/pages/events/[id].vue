@@ -35,6 +35,9 @@ async function refreshAvailabilityInPlace() {
 const selectedStatus = ref("");
 const isUpdatingStatus = ref(false);
 const statusErrorMessage = ref("");
+const selectedLoadingStatus = ref("NOT_PREPARED");
+const isUpdatingLoadingStatus = ref(false);
+const loadingStatusErrorMessage = ref("");
 
 const editEventName = ref("");
 const editClientName = ref("");
@@ -104,6 +107,13 @@ const eventStatusOptions = [
   { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
   { label: "COMPLETED", value: "COMPLETED" },
   { label: "CANCELLED", value: "CANCELLED" },
+];
+
+const loadingStatusOptions = [
+  { label: "Belum Disiapkan", value: "NOT_PREPARED" },
+  { label: "Sedang Disiapkan", value: "PREPARING" },
+  { label: "Loading Berjalan", value: "LOADING" },
+  { label: "Sudah Loading", value: "LOADED" },
 ];
 
 const roleOptions = [
@@ -321,6 +331,7 @@ watch(
     if (!event) return;
 
     selectedStatus.value = event.status || "";
+    selectedLoadingStatus.value = event.loadingStatus || "NOT_PREPARED";
     syncEditEventForm(event);
     syncTeamDraftFromEvent(event);
 
@@ -417,6 +428,24 @@ function getStatusColor(status) {
   if (status === "READY") return "info";
 
   return "neutral";
+}
+
+function getLoadingStatusColor(status) {
+  if (status === "LOADED") return "success";
+  if (status === "LOADING") return "primary";
+  if (status === "PREPARING") return "warning";
+  if (status === "NOT_PREPARED") return "neutral";
+
+  return "neutral";
+}
+
+function getLoadingStatusLabel(status) {
+  if (status === "NOT_PREPARED") return "Belum Disiapkan";
+  if (status === "PREPARING") return "Sedang Disiapkan";
+  if (status === "LOADING") return "Loading Berjalan";
+  if (status === "LOADED") return "Sudah Loading";
+
+  return status || "Belum Disiapkan";
 }
 
 function getAvailabilityColor(status) {
@@ -615,6 +644,30 @@ async function handleUpdateStatus() {
       "Failed to update event status";
   } finally {
     isUpdatingStatus.value = false;
+  }
+}
+
+async function handleUpdateLoadingStatus() {
+  loadingStatusErrorMessage.value = "";
+  isUpdatingLoadingStatus.value = true;
+
+  try {
+    await $fetch(`/api/events/${eventId}/loading-status`, {
+      method: "PATCH",
+      body: {
+        loadingStatus: selectedLoadingStatus.value,
+      },
+    });
+
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
+  } catch (error) {
+    loadingStatusErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update loading status";
+  } finally {
+    isUpdatingLoadingStatus.value = false;
   }
 }
 
@@ -1010,45 +1063,131 @@ async function handleSubmitEvaluationBundle() {
               {{ formatCapitalCase(currentEvent.status) }}
             </UBadge>
           </div>
+
+          <div>
+            <p class="text-xs text-muted">Loading Status</p>
+            <UBadge
+              :color="
+                getLoadingStatusColor(
+                  currentEvent.loadingStatus || 'NOT_PREPARED',
+                )
+              "
+              variant="soft"
+            >
+              {{
+                getLoadingStatusLabel(
+                  currentEvent.loadingStatus || "NOT_PREPARED",
+                )
+              }}
+            </UBadge>
+          </div>
         </div>
       </UCard>
       <UCard>
         <template #header>
           <div>
-            <h2 class="text-lg font-semibold">Status Flow</h2>
+            <h2 class="text-lg font-semibold">Operational Status</h2>
             <p class="text-sm text-muted">
-              Update event status with backend validation.
+              Manage event lifecycle and warehouse loading progress separately.
             </p>
           </div>
         </template>
 
-        <form
-          class="flex flex-col gap-4 md:flex-row md:items-end"
-          @submit.prevent="handleUpdateStatus"
-        >
-          <UFormField label="Current Status" class="md:w-64">
-            <UBadge :color="getStatusColor(currentEvent.status)" variant="soft">
-              {{ currentEvent.status }}
-            </UBadge>
-          </UFormField>
+        <div class="grid gap-6 xl:grid-cols-2">
+          <form
+            class="space-y-4 rounded-lg border border-default p-4"
+            @submit.prevent="handleUpdateStatus"
+          >
+            <div>
+              <h3 class="font-medium">Event Status</h3>
+              <p class="text-sm text-muted">
+                Controls the main event lifecycle.
+              </p>
+            </div>
 
-          <UFormField label="Change Status" class="md:w-72">
-            <USelect v-model="selectedStatus" :items="eventStatusOptions" />
-          </UFormField>
-          <div class="flex flex-wrap gap-2">
-            <UButton
-              type="submit"
-              :loading="isUpdatingStatus"
-              icon="i-lucide-refresh-cw"
-            >
-              Update Status
-            </UButton>
-          </div>
-        </form>
+            <div class="grid gap-4 md:grid-cols-[1fr_1.5fr_auto] md:items-end">
+              <UFormField label="Current">
+                <UBadge
+                  :color="getStatusColor(currentEvent.status)"
+                  variant="soft"
+                >
+                  {{ currentEvent.status }}
+                </UBadge>
+              </UFormField>
 
-        <p v-if="statusErrorMessage" class="mt-3 text-sm text-red-500">
-          {{ statusErrorMessage }}
-        </p>
+              <UFormField label="Change Event Status">
+                <USelect
+                  v-model="selectedStatus"
+                  :items="eventStatusOptions"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UButton
+                type="submit"
+                :loading="isUpdatingStatus"
+                icon="i-lucide-refresh-cw"
+              >
+                Update
+              </UButton>
+            </div>
+
+            <p v-if="statusErrorMessage" class="text-sm text-red-500">
+              {{ statusErrorMessage }}
+            </p>
+          </form>
+
+          <form
+            class="space-y-4 rounded-lg border border-default p-4"
+            @submit.prevent="handleUpdateLoadingStatus"
+          >
+            <div>
+              <h3 class="font-medium">Loading Status</h3>
+              <p class="text-sm text-muted">
+                Tracks equipment preparation and loading progress.
+              </p>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-[1fr_1.5fr_auto] md:items-end">
+              <UFormField label="Current">
+                <UBadge
+                  :color="
+                    getLoadingStatusColor(
+                      currentEvent.loadingStatus || 'NOT_PREPARED',
+                    )
+                  "
+                  variant="soft"
+                >
+                  {{
+                    getLoadingStatusLabel(
+                      currentEvent.loadingStatus || "NOT_PREPARED",
+                    )
+                  }}
+                </UBadge>
+              </UFormField>
+
+              <UFormField label="Change Loading Status">
+                <USelect
+                  v-model="selectedLoadingStatus"
+                  :items="loadingStatusOptions"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UButton
+                type="submit"
+                :loading="isUpdatingLoadingStatus"
+                icon="i-lucide-truck"
+              >
+                Update
+              </UButton>
+            </div>
+
+            <p v-if="loadingStatusErrorMessage" class="text-sm text-red-500">
+              {{ loadingStatusErrorMessage }}
+            </p>
+          </form>
+        </div>
       </UCard>
 
       <UModal

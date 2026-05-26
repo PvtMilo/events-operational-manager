@@ -51,6 +51,16 @@ export const EventStatus = {
 export type EventStatus = (typeof EventStatus)[keyof typeof EventStatus]
 
 
+export const EventLoadingStatus = {
+  NOT_PREPARED: 'NOT_PREPARED',
+  PREPARING: 'PREPARING',
+  LOADING: 'LOADING',
+  LOADED: 'LOADED'
+} as const
+
+export type EventLoadingStatus = (typeof EventLoadingStatus)[keyof typeof EventLoadingStatus]
+
+
 export const RoleInEvent = {
   PIC: 'PIC',
   CREW: 'CREW'

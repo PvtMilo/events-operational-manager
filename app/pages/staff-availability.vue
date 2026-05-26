@@ -27,6 +27,7 @@ const filterEndDate = ref(formatDateInput(getMonthEnd(now)));
 
 const isModalOpen = ref(false);
 const isEditMode = ref(false);
+const isFilterModalOpen = ref(false);
 const editingId = ref("");
 
 const formStaffId = ref("");
@@ -143,6 +144,29 @@ const formStatusOptions = [
   { label: "Cancelled", value: "CANCELLED" },
 ];
 
+const defaultFilterStartDate = computed(() => {
+  return formatDateInput(getMonthStart(new Date()));
+});
+
+const defaultFilterEndDate = computed(() => {
+  return formatDateInput(getMonthEnd(new Date()));
+});
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+
+  if (filterType.value !== "ALL") count += 1;
+  if (filterStatus.value !== "ACTIVE") count += 1;
+  if (
+    filterStartDate.value !== defaultFilterStartDate.value ||
+    filterEndDate.value !== defaultFilterEndDate.value
+  ) {
+    count += 1;
+  }
+
+  return count;
+});
+
 function getTypeLabel(type) {
   const item = formTypeOptions.find((option) => option.value === type);
   return item?.label || type;
@@ -235,7 +259,8 @@ async function handleSaveAvailabilityBlock() {
   }
 
   if (!formIsFullDay.value && (!formStartTime.value || !formEndTime.value)) {
-    formErrorMessage.value = "Start time and end time are required for partial day";
+    formErrorMessage.value =
+      "Start time and end time are required for partial day";
     return;
   }
 
@@ -300,20 +325,43 @@ async function handleCancelBlock(id) {
   }
 }
 
+function getAvailabilityActionItems(row) {
+  const items = [
+    {
+      label: "Edit",
+      icon: "i-lucide-pencil",
+      onSelect: () => handleOpenEditModal(row),
+    },
+  ];
+
+  if (row.status === "ACTIVE") {
+    items.push({
+      label: "Cancel",
+      icon: "i-lucide-ban",
+      color: "warning",
+      onSelect: () => handleCancelBlock(row.id),
+    });
+  }
+
+  return items;
+}
+
 async function handleApplyFilter() {
   page.value = 1;
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function handleResetFilter() {
   search.value = "";
   filterType.value = "ALL";
   filterStatus.value = "ACTIVE";
-  filterStartDate.value = formatDateInput(getMonthStart(new Date()));
-  filterEndDate.value = formatDateInput(getMonthEnd(new Date()));
+  filterStartDate.value = defaultFilterStartDate.value;
+  filterEndDate.value = defaultFilterEndDate.value;
   page.value = 1;
 
   await refresh();
+  isFilterModalOpen.value = false;
 }
 
 async function goToPreviousPage() {
@@ -333,14 +381,15 @@ async function goToNextPage() {
 
 <template>
   <div class="space-y-6 p-6">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div
+      class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+    >
       <div>
-        <h1 class="text-2xl font-semibold">
-          Staff Availability
-        </h1>
+        <h1 class="text-2xl font-semibold">Staff Availability</h1>
 
         <p class="text-sm text-muted">
-          Manage staff leave, sick days, day off, and blocked availability dates.
+          Manage staff leave, sick days, day off, and blocked availability
+          dates.
         </p>
       </div>
 
@@ -356,9 +405,7 @@ async function goToNextPage() {
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <UCard>
-        <p class="text-sm text-muted">
-          Total Staff
-        </p>
+        <p class="text-sm text-muted">Total Staff</p>
 
         <p class="mt-1 text-2xl font-semibold">
           {{ summary.totalStaff }}
@@ -366,9 +413,7 @@ async function goToNextPage() {
       </UCard>
 
       <UCard>
-        <p class="text-sm text-muted">
-          Available Today
-        </p>
+        <p class="text-sm text-muted">Available Today</p>
 
         <p class="mt-1 text-2xl font-semibold">
           {{ summary.availableToday }}
@@ -376,9 +421,7 @@ async function goToNextPage() {
       </UCard>
 
       <UCard>
-        <p class="text-sm text-muted">
-          Unavailable Today
-        </p>
+        <p class="text-sm text-muted">Unavailable Today</p>
 
         <p class="mt-1 text-2xl font-semibold">
           {{ summary.unavailableToday }}
@@ -386,9 +429,7 @@ async function goToNextPage() {
       </UCard>
 
       <UCard>
-        <p class="text-sm text-muted">
-          Upcoming 7 Days
-        </p>
+        <p class="text-sm text-muted">Upcoming 7 Days</p>
 
         <p class="mt-1 text-2xl font-semibold">
           {{ summary.upcoming7Days }}
@@ -396,9 +437,7 @@ async function goToNextPage() {
       </UCard>
 
       <UCard>
-        <p class="text-sm text-muted">
-          This Month Blocks
-        </p>
+        <p class="text-sm text-muted">This Month Blocks</p>
 
         <p class="mt-1 text-2xl font-semibold">
           {{ summary.thisMonthBlocks }}
@@ -410,9 +449,7 @@ async function goToNextPage() {
       <UCard>
         <template #header>
           <div>
-            <h2 class="text-lg font-semibold">
-              Unavailable Today
-            </h2>
+            <h2 class="text-lg font-semibold">Unavailable Today</h2>
 
             <p class="text-sm text-muted">
               Staff who cannot be assigned today.
@@ -430,7 +467,9 @@ async function goToNextPage() {
             :key="item.id"
             class="rounded-lg border border-default p-3"
           >
-            <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div
+              class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
+            >
               <div>
                 <p class="font-medium">
                   {{ item.staffName }}
@@ -456,9 +495,7 @@ async function goToNextPage() {
       <UCard>
         <template #header>
           <div>
-            <h2 class="text-lg font-semibold">
-              Available Today
-            </h2>
+            <h2 class="text-lg font-semibold">Available Today</h2>
 
             <p class="text-sm text-muted">
               Active staff with no availability block today.
@@ -486,9 +523,7 @@ async function goToNextPage() {
     <UCard>
       <template #header>
         <div>
-          <h2 class="text-lg font-semibold">
-            7 Days Availability Matrix
-          </h2>
+          <h2 class="text-lg font-semibold">7 Days Availability Matrix</h2>
 
           <p class="text-sm text-muted">
             Quick view of staff availability for the next 7 days.
@@ -500,9 +535,7 @@ async function goToNextPage() {
         <table class="min-w-full text-sm">
           <thead>
             <tr class="border-b border-default text-left">
-              <th class="whitespace-nowrap py-2 pr-4">
-                Staff
-              </th>
+              <th class="whitespace-nowrap py-2 pr-4">Staff</th>
 
               <th
                 v-for="day in days"
@@ -515,10 +548,7 @@ async function goToNextPage() {
           </thead>
 
           <tbody class="divide-y divide-default">
-            <tr
-              v-for="row in matrix"
-              :key="row.staffId"
-            >
+            <tr v-for="row in matrix" :key="row.staffId">
               <td class="whitespace-nowrap py-3 pr-4">
                 <p class="font-medium">
                   {{ row.staffName }}
@@ -534,19 +564,11 @@ async function goToNextPage() {
                 :key="day.date"
                 class="px-3 py-3 text-center"
               >
-                <UBadge
-                  v-if="day.isAvailable"
-                  color="success"
-                  variant="soft"
-                >
+                <UBadge v-if="day.isAvailable" color="success" variant="soft">
                   Available
                 </UBadge>
 
-                <UBadge
-                  v-else
-                  :color="getTypeColor(day.type)"
-                  variant="soft"
-                >
+                <UBadge v-else :color="getTypeColor(day.type)" variant="soft">
                   {{ getTypeLabel(day.type) }}
                 </UBadge>
               </td>
@@ -557,48 +579,86 @@ async function goToNextPage() {
     </UCard>
 
     <UCard>
-      <template #header>
-        <div>
-          <h2 class="text-lg font-semibold">
-            Availability Records
-          </h2>
-
-          <p class="text-sm text-muted">
-            Search, filter, edit, or cancel staff availability blocks.
-          </p>
-        </div>
-      </template>
-
-      <form class="space-y-4" @submit.prevent="handleApplyFilter">
-        <div class="grid gap-3 lg:grid-cols-[1.5fr_1fr_1fr]">
+      <div
+        class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+      >
+        <div class="w-full lg:max-w-sm">
           <UInput
             v-model="search"
             icon="i-lucide-search"
             placeholder="Search staff, reason, or notes"
-          />
-
-          <USelect
-            v-model="filterType"
-            :items="typeOptions"
-          />
-
-          <USelect
-            v-model="filterStatus"
-            :items="statusOptions"
+            class="w-full"
+            size="md"
+            @keyup.enter="handleApplyFilter"
           />
         </div>
 
-        <div class="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
-          <UInput
-            v-model="filterStartDate"
-            type="date"
+        <div class="flex w-full flex-wrap items-center gap-2 md:justify-end">
+          <USelect
+            v-model="filterType"
+            :items="typeOptions"
+            size="md"
+            class="w-full md:w-40"
+            @update:model-value="handleApplyFilter"
           />
 
-          <UInput
-            v-model="filterEndDate"
-            type="date"
-          />
+          <UButton
+            type="button"
+            size="md"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-sliders-horizontal"
+            @click="isFilterModalOpen = true"
+          >
+            Filter
+            <UBadge
+              v-if="activeFilterCount > 0"
+              color="primary"
+              variant="solid"
+              size="md"
+              class="ml-1"
+            >
+              {{ activeFilterCount }}
+            </UBadge>
+          </UButton>
+        </div>
+      </div>
+    </UCard>
 
+    <UModal
+      v-model:open="isFilterModalOpen"
+      title="Filter Availability Records"
+      description="Apply advanced filters to staff availability records."
+      :ui="{ content: 'max-w-2xl' }"
+    >
+      <template #body>
+        <form
+          id="availability-filter-form"
+          class="space-y-4"
+          @submit.prevent="handleApplyFilter"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <UFormField label="Type">
+              <USelect
+                v-model="filterType"
+                :items="typeOptions"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField label="Start Date">
+              <UInput v-model="filterStartDate" type="date" class="w-full" />
+            </UFormField>
+
+            <UFormField label="End Date">
+              <UInput v-model="filterEndDate" type="date" class="w-full" />
+            </UFormField>
+          </div>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="flex w-full justify-end gap-2">
           <UButton
             type="button"
             color="neutral"
@@ -609,15 +669,28 @@ async function goToNextPage() {
           </UButton>
 
           <UButton
+            form="availability-filter-form"
             type="submit"
             color="primary"
           >
             Apply Filter
           </UButton>
         </div>
-      </form>
+      </template>
+    </UModal>
 
-      <div class="mt-6">
+    <UCard>
+      <template #header>
+        <div>
+          <h2 class="text-lg font-semibold">Availability Records</h2>
+
+          <p class="text-sm text-muted">
+            Search, filter, edit, or cancel staff availability blocks.
+          </p>
+        </div>
+      </template>
+
+      <div>
         <p v-if="pending" class="text-sm text-muted">
           Loading availability records...
         </p>
@@ -630,27 +703,12 @@ async function goToNextPage() {
           <table class="min-w-full text-left text-sm">
             <thead>
               <tr class="border-b border-default text-xs uppercase text-muted">
-                <th class="whitespace-nowrap px-3 py-3">
-                  Staff
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Type
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Date
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Time / Duration
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Reason
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Status
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Action
-                </th>
+                <th class="whitespace-nowrap px-3 py-3">Staff</th>
+                <th class="whitespace-nowrap px-3 py-3">Type</th>
+                <th class="whitespace-nowrap px-3 py-3">Date</th>
+                <th class="whitespace-nowrap px-3 py-3">Time / Duration</th>
+                <th class="whitespace-nowrap px-3 py-3">Reason</th>
+                <th class="whitespace-nowrap px-3 py-3">Action</th>
               </tr>
             </thead>
 
@@ -661,11 +719,7 @@ async function goToNextPage() {
                 </td>
               </tr>
 
-              <tr
-                v-for="row in records"
-                :key="row.id"
-                class="align-top"
-              >
+              <tr v-for="row in records" :key="row.id" class="align-top">
                 <td class="min-w-44 px-3 py-3">
                   <p class="font-medium">
                     {{ row.staffName }}
@@ -690,7 +744,7 @@ async function goToNextPage() {
                   {{ row.durationLabel }}
                 </td>
 
-                <td class="min-w-64 px-3 py-3">
+                <td class="px-3 py-3">
                   <p>{{ row.reason || "-" }}</p>
                   <p v-if="row.notes" class="text-xs text-muted">
                     {{ row.notes }}
@@ -698,32 +752,18 @@ async function goToNextPage() {
                 </td>
 
                 <td class="whitespace-nowrap px-3 py-3">
-                  <UBadge :color="getStatusColor(row.status)" variant="soft">
-                    {{ row.status }}
-                  </UBadge>
-                </td>
-
-                <td class="whitespace-nowrap px-3 py-3">
-                  <div class="flex flex-wrap gap-2">
+                  <UDropdownMenu
+                    :items="getAvailabilityActionItems(row)"
+                    :content="{ align: 'end' }"
+                  >
                     <UButton
+                      icon="i-lucide-ellipsis-vertical"
                       size="xs"
                       color="neutral"
-                      variant="outline"
-                      @click="handleOpenEditModal(row)"
-                    >
-                      Edit
-                    </UButton>
-
-                    <UButton
-                      v-if="row.status === 'ACTIVE'"
-                      size="xs"
-                      color="warning"
-                      variant="soft"
-                      @click="handleCancelBlock(row.id)"
-                    >
-                      Cancel
-                    </UButton>
-                  </div>
+                      variant="ghost"
+                      aria-label="Availability record actions"
+                    />
+                  </UDropdownMenu>
                 </td>
               </tr>
             </tbody>
@@ -732,10 +772,12 @@ async function goToNextPage() {
       </div>
 
       <template #footer>
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
           <p class="text-sm text-muted">
-            Page {{ pagination.page }} of {{ pagination.totalPages }}
-            — Total {{ pagination.totalItems }} records
+            Page {{ pagination.page }} of {{ pagination.totalPages }} — Total
+            {{ pagination.totalItems }} records
           </p>
 
           <div class="flex gap-2">
@@ -794,25 +836,14 @@ async function goToNextPage() {
             </UFormField>
 
             <UFormField label="Start Date" required>
-              <UInput
-                v-model="formStartDate"
-                type="date"
-                class="w-full"
-              />
+              <UInput v-model="formStartDate" type="date" class="w-full" />
             </UFormField>
 
             <UFormField label="End Date" required>
-              <UInput
-                v-model="formEndDate"
-                type="date"
-                class="w-full"
-              />
+              <UInput v-model="formEndDate" type="date" class="w-full" />
             </UFormField>
 
-            <UFormField
-              v-if="isEditMode"
-              label="Status"
-            >
+            <UFormField v-if="isEditMode" label="Status">
               <USelect
                 v-model="formStatus"
                 :items="formStatusOptions"
@@ -821,29 +852,15 @@ async function goToNextPage() {
             </UFormField>
           </div>
 
-          <UCheckbox
-            v-model="formIsFullDay"
-            label="Full day unavailable"
-          />
+          <UCheckbox v-model="formIsFullDay" label="Full day unavailable" />
 
-          <div
-            v-if="!formIsFullDay"
-            class="grid gap-4 md:grid-cols-2"
-          >
+          <div v-if="!formIsFullDay" class="grid gap-4 md:grid-cols-2">
             <UFormField label="Start Time" required>
-              <UInput
-                v-model="formStartTime"
-                type="time"
-                class="w-full"
-              />
+              <UInput v-model="formStartTime" type="time" class="w-full" />
             </UFormField>
 
             <UFormField label="End Time" required>
-              <UInput
-                v-model="formEndTime"
-                type="time"
-                class="w-full"
-              />
+              <UInput v-model="formEndTime" type="time" class="w-full" />
             </UFormField>
           </div>
 

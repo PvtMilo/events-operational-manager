@@ -224,6 +224,11 @@ function getEventActionItems(event) {
       to: `/events/${event.id}`,
     },
     {
+      label: "Duplicate",
+      icon: "i-lucide-copy",
+      onSelect: () => handleDuplicateEvent(event.id),
+    },
+    {
       label: "Cancel",
       icon: "i-lucide-ban",
       color: "warning",
@@ -406,6 +411,32 @@ async function handleCreate() {
       "Failed to create event";
   } finally {
     isSubmitting.value = false;
+  }
+}
+
+async function handleDuplicateEvent(id) {
+  const confirmed = confirm(
+    "Duplicate this event? Staff assignments and evaluation data will not be copied.",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await $fetch(`/api/events/${id}/duplicate`, {
+      method: "POST",
+    });
+
+    await refresh();
+
+    if (response?.data?.id) {
+      await navigateTo(`/events/${response.data.id}`);
+    }
+  } catch (error) {
+    alert(
+      error?.data?.statusMessage ||
+        error?.statusMessage ||
+        "Failed to duplicate event",
+    );
   }
 }
 

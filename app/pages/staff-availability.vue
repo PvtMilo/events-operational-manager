@@ -98,6 +98,37 @@ const matrix = computed(() => {
   return availabilityData.value?.matrix || [];
 });
 
+const matrixPage = ref(1);
+const matrixLimit = 20;
+
+const matrixPagination = computed(() => {
+  const totalItems = matrix.value.length;
+  const totalPages = Math.max(Math.ceil(totalItems / matrixLimit), 1);
+
+  return {
+    page: matrixPage.value,
+    limit: matrixLimit,
+    totalItems,
+    totalPages,
+  };
+});
+
+watch(
+  () => matrixPagination.value.totalPages,
+  (totalPages) => {
+    if (matrixPage.value > totalPages) {
+      matrixPage.value = totalPages;
+    }
+  },
+);
+
+const paginatedMatrix = computed(() => {
+  const start = (matrixPage.value - 1) * matrixLimit;
+  const end = start + matrixLimit;
+
+  return matrix.value.slice(start, end);
+});
+
 const pagination = computed(() => {
   return (
     availabilityData.value?.pagination || {
@@ -377,6 +408,18 @@ async function goToNextPage() {
   page.value += 1;
   await refresh();
 }
+
+function goToPreviousMatrixPage() {
+  if (matrixPage.value <= 1) return;
+
+  matrixPage.value -= 1;
+}
+
+function goToNextMatrixPage() {
+  if (matrixPage.value >= matrixPagination.value.totalPages) return;
+
+  matrixPage.value += 1;
+}
 </script>
 
 <template>
@@ -549,7 +592,16 @@ async function goToNextPage() {
           </thead>
 
           <tbody class="divide-y divide-default">
-            <tr v-for="row in matrix" :key="row.staffId">
+            <tr v-if="paginatedMatrix.length === 0">
+              <td
+                :colspan="days.length + 1"
+                class="px-3 py-8 text-center text-muted"
+              >
+                No staff found.
+              </td>
+            </tr>
+
+            <tr v-for="row in paginatedMatrix" :key="row.staffId">
               <td class="whitespace-nowrap py-3 pr-4">
                 <p class="font-medium">
                   {{ row.staffName }}
@@ -577,6 +629,40 @@ async function goToNextPage() {
           </tbody>
         </table>
       </div>
+
+      <template #footer>
+        <div
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <p class="text-sm text-muted">
+            Page {{ matrixPagination.page }} of
+            {{ matrixPagination.totalPages }} — Total
+            {{ matrixPagination.totalItems }} staff
+          </p>
+
+          <div class="flex gap-2">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="matrixPagination.page <= 1"
+              @click="goToPreviousMatrixPage"
+            >
+              Previous
+            </UButton>
+
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              :disabled="matrixPagination.page >= matrixPagination.totalPages"
+              @click="goToNextMatrixPage"
+            >
+              Next
+            </UButton>
+          </div>
+        </div>
+      </template>
     </UCard>
 
     <UCard>

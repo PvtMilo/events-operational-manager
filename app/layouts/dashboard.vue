@@ -148,7 +148,7 @@ const links = computed(() => {
 </script>
 
 <template>
-  <UDashboardGroup unit="rem">
+  <UDashboardGroup unit="rem" class="bottom-auto h-dvh">
     <UDashboardSidebar
       id="default"
       v-model:open="open"
@@ -212,7 +212,7 @@ const links = computed(() => {
       </template>
     </UDashboardSidebar>
 
-    <main class="min-h-screen flex-1 overflow-auto">
+    <main class="min-h-0 flex-1 overflow-auto pb-16 lg:pb-0">
       <header
         class="sticky top-0 z-10 flex items-center gap-2 border-b border-default bg-default/95 p-3 backdrop-blur lg:hidden"
       >

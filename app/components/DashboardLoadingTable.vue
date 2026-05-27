@@ -125,7 +125,7 @@ function getLoadingReminder(row) {
 </script>
 
 <template>
-  <div class="overflow-x-auto rounded-lg border border-default">
+  <div class="touch-scroll-x overflow-x-auto rounded-lg border border-default">
     <table class="min-w-full text-left text-sm">
       <thead>
         <tr class="border-b border-default bg-muted/30 text-xs uppercase text-muted">

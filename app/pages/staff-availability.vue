@@ -392,15 +392,16 @@ async function goToNextPage() {
           dates.
         </p>
       </div>
-
-      <UButton
-        type="button"
-        icon="i-lucide-plus"
-        color="primary"
-        @click="handleOpenCreateModal"
-      >
-        Add Availability Block
-      </UButton>
+      <div class="flex flex-wrap gap-2">
+        <UButton
+          type="button"
+          icon="i-lucide-plus"
+          color="primary"
+          @click="handleOpenCreateModal"
+        >
+          Add Availability Block
+        </UButton>
+      </div>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -531,7 +532,7 @@ async function goToNextPage() {
         </div>
       </template>
 
-      <div class="overflow-x-auto">
+      <div class="touch-scroll-x overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
             <tr class="border-b border-default text-left">
@@ -699,7 +700,7 @@ async function goToNextPage() {
           Failed to load availability records.
         </p>
 
-        <div v-else class="overflow-x-auto">
+        <div v-else class="touch-scroll-x overflow-x-auto">
           <table class="min-w-full text-left text-sm">
             <thead>
               <tr class="border-b border-default text-xs uppercase text-muted">

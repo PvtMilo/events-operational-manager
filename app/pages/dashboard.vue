@@ -91,106 +91,81 @@ function getLoadingStatusLabel(status) {
       class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
     >
       <div>
-        <h1 class="text-2xl font-semibold">
-          Dashboard
-        </h1>
+        <h1 class="text-2xl font-semibold">Dashboard</h1>
 
         <p class="text-sm text-muted">
           Operational reminder for loading, preparation, and event assignment.
         </p>
       </div>
-
-      <UButton
-        type="button"
-        icon="i-lucide-refresh-cw"
-        color="neutral"
-        variant="outline"
-        @click="refresh"
-      >
-        Refresh
-      </UButton>
+      <div class="flex flex-wrap gap-2">
+        <UButton
+          type="button"
+          icon="i-lucide-refresh-cw"
+          color="neutral"
+          variant="outline"
+          @click="refresh"
+        >
+          Refresh
+        </UButton>
+      </div>
     </div>
 
-    <UCard v-if="pending">
-      Loading dashboard...
-    </UCard>
+    <UCard v-if="pending"> Loading dashboard... </UCard>
 
     <UCard v-else-if="error">
-      <p class="text-sm text-red-500">
-        Failed to load dashboard.
-      </p>
+      <p class="text-sm text-red-500">Failed to load dashboard.</p>
     </UCard>
 
     <template v-else>
       <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <UCard>
-          <p class="text-sm text-muted">
-            Loading Today
-          </p>
+          <p class="text-sm text-muted">Loading Today</p>
 
           <p class="mt-1 text-2xl font-semibold">
             {{ summary.loadingToday }}
           </p>
 
-          <p class="mt-1 text-xs text-muted">
-            Based on loading date
-          </p>
+          <p class="mt-1 text-xs text-muted">Based on loading date</p>
         </UCard>
 
         <UCard>
-          <p class="text-sm text-muted">
-            Upcoming Loading
-          </p>
+          <p class="text-sm text-muted">Upcoming Loading</p>
 
           <p class="mt-1 text-2xl font-semibold">
             {{ summary.upcomingLoading }}
           </p>
 
-          <p class="mt-1 text-xs text-muted">
-            Tomorrow and H+2 loading
-          </p>
+          <p class="mt-1 text-xs text-muted">Tomorrow and H+2 loading</p>
         </UCard>
 
         <UCard>
-          <p class="text-sm text-muted">
-            Need Attention
-          </p>
+          <p class="text-sm text-muted">Need Attention</p>
 
           <p class="mt-1 text-2xl font-semibold">
             {{ summary.needAttention }}
           </p>
 
-          <p class="mt-1 text-xs text-muted">
-            Missing loading date/time
-          </p>
+          <p class="mt-1 text-xs text-muted">Missing loading date/time</p>
         </UCard>
 
         <UCard>
-          <p class="text-sm text-muted">
-            Today Events
-          </p>
+          <p class="text-sm text-muted">Today Events</p>
 
           <p class="mt-1 text-2xl font-semibold">
             {{ summary.todayEvents }}
           </p>
 
-          <p class="mt-1 text-xs text-muted">
-            Events running today
-          </p>
+          <p class="mt-1 text-xs text-muted">Events running today</p>
         </UCard>
 
         <UCard>
-          <p class="text-sm text-muted">
-            Pending Evaluation
-          </p>
+          <p class="text-sm text-muted">Pending Evaluation</p>
 
           <p class="mt-1 text-2xl font-semibold">
             {{ summary.pendingEvaluation }}
           </p>
 
-          <p class="mt-1 text-xs text-muted">
-            Need post-event evaluation
-          </p>
+          <p class="mt-1 text-xs text-muted">Need post-event evaluation</p>
         </UCard>
       </div>
 
@@ -200,9 +175,7 @@ function getLoadingStatusLabel(status) {
             class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
           >
             <div>
-              <h2 class="text-lg font-semibold">
-                Events Need Assignment
-              </h2>
+              <h2 class="text-lg font-semibold">Events Need Assignment</h2>
 
               <p class="text-sm text-muted">
                 Events this month without active PIC/crew.
@@ -219,31 +192,17 @@ function getLoadingStatusLabel(status) {
           No event needs assignment.
         </p>
 
-        <div v-else class="overflow-x-auto">
+        <div v-else class="touch-scroll-x overflow-x-auto">
           <table class="min-w-full text-left text-sm">
             <thead>
               <tr class="border-b border-default text-xs uppercase text-muted">
-                <th class="whitespace-nowrap px-3 py-3">
-                  Event
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Client
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Service
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Date
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Time
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Location
-                </th>
-                <th class="whitespace-nowrap px-3 py-3">
-                  Action
-                </th>
+                <th class="whitespace-nowrap px-3 py-3">Event</th>
+                <th class="whitespace-nowrap px-3 py-3">Client</th>
+                <th class="whitespace-nowrap px-3 py-3">Service</th>
+                <th class="whitespace-nowrap px-3 py-3">Date</th>
+                <th class="whitespace-nowrap px-3 py-3">Time</th>
+                <th class="whitespace-nowrap px-3 py-3">Location</th>
+                <th class="whitespace-nowrap px-3 py-3">Action</th>
               </tr>
             </thead>
 
@@ -299,9 +258,7 @@ function getLoadingStatusLabel(status) {
             class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
           >
             <div>
-              <h2 class="text-lg font-semibold">
-                Loading Reminders
-              </h2>
+              <h2 class="text-lg font-semibold">Loading Reminders</h2>
 
               <p class="text-sm text-muted">
                 Loading schedule based on loading date. Sales and event status
@@ -329,9 +286,7 @@ function getLoadingStatusLabel(status) {
           <section>
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
-                <h3 class="font-medium">
-                  Loading Today
-                </h3>
+                <h3 class="font-medium">Loading Today</h3>
 
                 <p class="text-sm text-muted">
                   Events that should be prepared or loaded today.
@@ -357,9 +312,7 @@ function getLoadingStatusLabel(status) {
           <section>
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
-                <h3 class="font-medium">
-                  Upcoming Loading
-                </h3>
+                <h3 class="font-medium">Upcoming Loading</h3>
 
                 <p class="text-sm text-muted">
                   Loading schedule for tomorrow and the next 2 days.
@@ -385,9 +338,7 @@ function getLoadingStatusLabel(status) {
           <section>
             <div class="mb-3 flex items-center justify-between gap-2">
               <div>
-                <h3 class="font-medium">
-                  Missing Loading Info
-                </h3>
+                <h3 class="font-medium">Missing Loading Info</h3>
 
                 <p class="text-sm text-muted">
                   Upcoming events with missing loading date or loading time.

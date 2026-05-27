@@ -1881,7 +1881,7 @@ async function handleSubmitEvaluationBundle() {
           No activity log yet.
         </p>
 
-        <div v-else class="overflow-x-auto">
+        <div v-else class="touch-scroll-x overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-default text-left">

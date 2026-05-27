@@ -16,3 +16,18 @@
     --color-green-900: #0A5331;
     --color-green-950: #052E16;
 }
+
+@layer utilities {
+    .touch-scroll-y {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+    }
+
+    .touch-scroll-x {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+        overflow-y: hidden;
+        touch-action: pan-x pan-y;
+    }
+}

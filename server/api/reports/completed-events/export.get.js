@@ -88,6 +88,7 @@ export default defineEventHandler(async (event) => {
     "Is Success",
     "Staff Evaluation Notes",
     "Client Feedback",
+    "Internal Notes",
     "Event Notes",
   ];
 
@@ -126,6 +127,7 @@ export default defineEventHandler(async (event) => {
         staffEvaluation?.isSuccess ? "SUCCESS" : "NOT SUCCESS",
         staffEvaluation?.notes,
         eventData.eventEvaluation?.clientFeedback,
+        eventData.eventEvaluation?.notes,
         eventData.notes,
       ]);
     }

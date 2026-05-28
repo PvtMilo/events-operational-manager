@@ -534,7 +534,7 @@ function getLoadingStatusColor(status) {
   if (status === "LOADED") return "success";
   if (status === "LOADING") return "primary";
   if (status === "PREPARING") return "warning";
-  if (status === "NOT_PREPARED") return "neutral";
+  if (status === "NOT_PREPARED") return "error";
 
   return "neutral";
 }

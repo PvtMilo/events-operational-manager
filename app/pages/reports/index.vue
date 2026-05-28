@@ -198,14 +198,18 @@ async function handleResetDateFilter(close) {
 }
 
 function handleExportStaffEvaluation() {
-  const queryString = getReportQueryString();
+  const params = new URLSearchParams(getReportQueryString());
+  params.set("format", "xlsx");
+  const queryString = params.toString();
   const url = `/api/reports/completed-events/export?${queryString}`;
 
   window.open(url, "_blank");
 }
 
 function handleExportEventSummary() {
-  const queryString = getReportQueryString();
+  const params = new URLSearchParams(getReportQueryString());
+  params.set("format", "xlsx");
+  const queryString = params.toString();
   const url = `/api/reports/completed-events/event-summary-export?${queryString}`;
 
   window.open(url, "_blank");
@@ -327,7 +331,7 @@ function getReviewColor(item) {
           variant="outline"
           @click="handleExportEventSummary"
         >
-          Event Summary CSV
+          Event Summary Excel
         </UButton>
 
         <UButton
@@ -335,7 +339,7 @@ function getReviewColor(item) {
           color="primary"
           @click="handleExportStaffEvaluation"
         >
-          Staff Evaluation CSV
+          Staff Evaluation Excel
         </UButton>
       </div>
     </div>

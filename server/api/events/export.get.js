@@ -1,5 +1,6 @@
 import { prisma } from "../../utils/prisma";
 import { syncAutomaticEventStatuses } from "../../utils/event-status-automation";
+import { createExcelBuffer } from "../../utils/excel-export";
 
 function getMonthRange(year, month) {
   if (!year || !month) return null;
@@ -183,6 +184,27 @@ export default defineEventHandler(async (event) => {
       eventData.notes,
     ];
   });
+
+  if (query.format?.toString().toLowerCase() === "xlsx") {
+    const buffer = await createExcelBuffer({
+      sheetName: "Events",
+      headers,
+      rows,
+    });
+
+    setHeader(
+      event,
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    setHeader(
+      event,
+      "Content-Disposition",
+      'attachment; filename="event-list-export.xlsx"',
+    );
+
+    return buffer;
+  }
 
   const csv = [
     headers.map(escapeCsv).join(","),

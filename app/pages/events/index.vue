@@ -301,6 +301,8 @@ function handleExportEvents() {
     if (filterMonth.value !== "ALL") params.set("month", filterMonth.value);
   }
 
+  params.set("format", "xlsx");
+
   const queryString = params.toString();
   const url = queryString
     ? `/api/events/export?${queryString}`
@@ -499,7 +501,7 @@ async function handleHardDeleteEvent(id) {
           variant="outline"
           @click="handleExportEvents"
         >
-          Export CSV
+          Export Excel
         </UButton>
 
         <UButton

@@ -1,6 +1,7 @@
 import { prisma } from "../../../utils/prisma";
 import { denyStaff } from "../../../utils/permission";
 import { getReportRange } from "../../../utils/report-date-range";
+import { createExcelBuffer } from "../../../utils/excel-export";
 
 function formatDate(dateValue) {
   if (!dateValue) return "";
@@ -131,6 +132,27 @@ export default defineEventHandler(async (event) => {
         eventData.notes,
       ]);
     }
+  }
+
+  if (query.format?.toString().toLowerCase() === "xlsx") {
+    const buffer = await createExcelBuffer({
+      sheetName: "Staff Evaluation",
+      headers,
+      rows,
+    });
+
+    setHeader(
+      event,
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    setHeader(
+      event,
+      "Content-Disposition",
+      `attachment; filename="completed-events-${range.fileLabel}.xlsx"`,
+    );
+
+    return buffer;
   }
 
   const csv = [

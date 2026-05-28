@@ -120,12 +120,13 @@ export default defineEventHandler(async (event) => {
       if (
         eventData.ribbonStart === null ||
         eventData.ribbonEnd === null ||
-        eventData.ribbonUsed === null
+        eventData.ribbonUsed === null ||
+        eventData.ribbonUsed <= 0
       ) {
         throw createError({
           statusCode: 400,
           statusMessage:
-            "Ribbon awal, ribbon akhir, dan total penggunaan wajib diisi untuk service type ini before set to COMPLETED",
+            "Ribbon awal, ribbon akhir, dan total penggunaan > 0 wajib diisi untuk service type ini before set to COMPLETED",
         });
       }
     }

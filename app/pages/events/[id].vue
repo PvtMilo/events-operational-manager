@@ -911,32 +911,80 @@ function getSaveErrorMessage(error, fallback) {
   );
 }
 
+function isBlankRibbonValue(value) {
+  return value === "" || value === null || value === undefined;
+}
+
+function getNormalizedPostEventRibbonData() {
+  const startBlank = isBlankRibbonValue(postRibbonStart.value);
+  const endBlank = isBlankRibbonValue(postRibbonEnd.value);
+
+  if (!requiresRibbonTracking.value && startBlank && endBlank) {
+    return {
+      ribbonStart: 0,
+      ribbonEnd: 0,
+      ribbonUsed: 0,
+    };
+  }
+
+  if (startBlank) {
+    throw new Error("Ribbon awal is required");
+  }
+
+  if (endBlank) {
+    throw new Error("Ribbon akhir is required");
+  }
+
+  const ribbonStart = Number(postRibbonStart.value);
+  const ribbonEnd = Number(postRibbonEnd.value);
+
+  if (Number.isNaN(ribbonStart)) {
+    throw new Error("Ribbon awal is required");
+  }
+
+  if (Number.isNaN(ribbonEnd)) {
+    throw new Error("Ribbon akhir is required");
+  }
+
+  const ribbonUsed = ribbonStart - ribbonEnd;
+
+  if (ribbonUsed < 0) {
+    throw new Error(
+      "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.",
+    );
+  }
+
+  if (requiresRibbonTracking.value && ribbonUsed <= 0) {
+    throw new Error(
+      "Total penggunaan must be greater than 0 for this service type.",
+    );
+  }
+
+  return {
+    ribbonStart,
+    ribbonEnd,
+    ribbonUsed,
+  };
+}
+
 function validatePostEventData() {
-  if (postRibbonStart.value === "") {
-    postEventErrorMessage.value = "Ribbon awal is required";
+  try {
+    getNormalizedPostEventRibbonData();
+    return true;
+  } catch (error) {
+    postEventErrorMessage.value = error.message;
     return false;
   }
-
-  if (postRibbonEnd.value === "") {
-    postEventErrorMessage.value = "Ribbon akhir is required";
-    return false;
-  }
-
-  if (Number(postRibbonUsed.value) < 0) {
-    postEventErrorMessage.value =
-      "Total penggunaan tidak boleh minus. Cek ribbon awal dan akhir.";
-    return false;
-  }
-
-  return true;
 }
 
 async function savePostEventDataRequest() {
+  const ribbonData = getNormalizedPostEventRibbonData();
+
   await $fetch(`/api/events/${eventId}/post-event-data`, {
     method: "PATCH",
     body: {
-      ribbonStart: postRibbonStart.value,
-      ribbonEnd: postRibbonEnd.value,
+      ribbonStart: ribbonData.ribbonStart,
+      ribbonEnd: ribbonData.ribbonEnd,
     },
   });
 }

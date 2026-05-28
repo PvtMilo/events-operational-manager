@@ -3,8 +3,8 @@ definePageMeta({
   middleware: "guest",
 });
 
-const email = ref("admin@eventops.test");
-const password = ref("admin12345");
+const email = ref("");
+const password = ref("");
 const isLoading = ref(false);
 const errorMessage = ref("");
 
@@ -36,38 +36,34 @@ async function handleLogin() {
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-    <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
-      <div class="mb-8">
-        <p class="text-sm font-semibold text-slate-500">EventOps Manager</p>
-        <h1 class="mt-2 text-2xl font-bold text-slate-900">Login</h1>
-        <p class="mt-2 text-sm text-slate-500">
-          Masuk untuk mengelola event, crew mapping, dan evaluasi operasional.
-        </p>
+  <main class="min-h-screen bg-zinc-200 flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-white rounded-lg overflow-hidden shadow-md">
+      <div class="text-center w-full bg-primary-400">
+        <h1 class="text-2xl font-light p-4 text-white">
+          Event Operational Manager
+        </h1>
       </div>
 
-      <form class="space-y-5" @submit.prevent="handleLogin">
+      <form class="space-y-4 p-8" @submit.prevent="handleLogin">
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">
-            Email
+          <label class="mb-2 block text-md font-medium text-slate-700">
+            Email :
           </label>
           <input
             v-model="email"
             type="email"
-            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
-            placeholder="admin@eventops.test"
+            class="w-full rounded-lg border border-slate-300 px-4 py-3 text-md outline-none focus:border-slate-900 text-black"
           />
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">
-            Password
+          <label class="mb-2 block text-md font-medium text-slate-700">
+            Password :
           </label>
           <input
             v-model="password"
             type="password"
-            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
-            placeholder="••••••••"
+            class="w-full rounded-lg border border-slate-300 px-4 py-3 text-md outline-none focus:border-slate-900 text-black"
           />
         </div>
 
@@ -77,21 +73,22 @@ async function handleLogin() {
         >
           {{ errorMessage }}
         </div>
-
-        <button
-          type="submit"
-          :disabled="isLoading"
-          class="w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {{ isLoading ? "Logging in..." : "Login" }}
-        </button>
+        <div class="w-full flex justify-center pt-4">
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class=" rounded-lg bg-primary-400 px-6 py-3 text-md font-semibold text-white transition hover:bg-primary-600"
+          >
+            {{ isLoading ? "Logging in..." : "Log in" }}
+          </button>
+        </div>
       </form>
 
-      <div class="mt-6 rounded-xl bg-slate-100 p-4 text-xs text-slate-600">
+      <!-- <div class="mt-6 rounded-xl bg-slate-100 p-4 text-xs text-slate-600">
         <p class="font-semibold text-slate-800">Demo Account</p>
         <p class="mt-1">Email: admin@eventops.test</p>
         <p>Password: admin12345</p>
-      </div>
+      </div> -->
     </div>
   </main>
 </template>

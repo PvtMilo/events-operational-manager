@@ -332,23 +332,8 @@ const { data: salesData } = await useFetch("/api/sales");
 async function handleCreate() {
   errorMessage.value = "";
 
-  if (!eventName.value.trim()) {
-    errorMessage.value = "Event name is required";
-    return;
-  }
-
-  if (!clientName.value.trim()) {
-    errorMessage.value = "Client name is required";
-    return;
-  }
-
   if (!serviceTypeId.value) {
     errorMessage.value = "Service type is required";
-    return;
-  }
-
-  if (!equipmentSetup.value.trim()) {
-    errorMessage.value = "Equipment setup is required";
     return;
   }
 
@@ -527,18 +512,18 @@ async function handleHardDeleteEvent(id) {
           @submit.prevent="handleCreate"
         >
           <div class="grid gap-4 md:grid-cols-2">
-            <UFormField label="Event Name" required>
+            <UFormField label="Event Name">
               <UInput
                 v-model="eventName"
-                placeholder="Example: Friskies CFD"
+                placeholder="Optional. Defaults to Untitled Event"
                 class="w-full"
               />
             </UFormField>
 
-            <UFormField label="Client Name" required>
+            <UFormField label="Client Name">
               <UInput
                 v-model="clientName"
-                placeholder="Example: Friskies"
+                placeholder="Optional. Defaults to Unknown Client"
                 class="w-full"
               />
             </UFormField>
@@ -624,10 +609,10 @@ async function handleHardDeleteEvent(id) {
             </UFormField>
           </div>
 
-          <UFormField label="Equipment Setup" required>
+          <UFormField label="Equipment Setup">
             <UTextarea
               v-model="equipmentSetup"
-              placeholder="Example: 1 photobooth, 1 printer, 2 lighting"
+              placeholder="Optional. Example: 1 photobooth, 1 printer, 2 lighting"
               class="w-full"
             />
           </UFormField>

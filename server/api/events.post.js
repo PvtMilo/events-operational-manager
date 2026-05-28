@@ -5,11 +5,11 @@ import { allowedEventStatuses } from "../utils/event-status-automation";
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  const eventName = body?.eventName?.trim();
-  const clientName = body?.clientName?.trim();
+  const eventName = body?.eventName?.trim() || "Untitled Event";
+  const clientName = body?.clientName?.trim() || "Unknown Client";
   const clientPhone = body?.clientPhone?.trim() || null;
   const serviceTypeId = body?.serviceTypeId;
-  const equipmentSetup = body?.equipmentSetup?.trim();
+  const equipmentSetup = body?.equipmentSetup?.trim() || "Not specified";
   const salesId = body?.salesId || null;
 
   const eventDate = body?.eventDate;
@@ -27,31 +27,10 @@ export default defineEventHandler(async (event) => {
   const vendorSewa = body?.vendorSewa?.trim() || null;
   const notes = body?.notes?.trim() || null;
 
-  if (!eventName) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Event name is required",
-    });
-  }
-
-  if (!clientName) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Client name is required",
-    });
-  }
-
   if (!serviceTypeId) {
     throw createError({
       statusCode: 400,
       statusMessage: "Service type is required",
-    });
-  }
-
-  if (!equipmentSetup) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Equipment setup is required",
     });
   }
 

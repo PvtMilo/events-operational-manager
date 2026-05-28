@@ -1,26 +1,12 @@
 import { prisma } from "../../../utils/prisma";
 import { denyStaff } from "../../../utils/permission";
-
-function getMonthRange(year, month) {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
-
-  return {
-    start,
-    end,
-  };
-}
+import { getReportRange } from "../../../utils/report-date-range";
 
 export default defineEventHandler(async (event) => {
   await denyStaff(event);
 
   const staffId = getRouterParam(event, "id");
   const query = getQuery(event);
-
-  const now = new Date();
-
-  const year = Number(query.year || now.getFullYear());
-  const month = Number(query.month || now.getMonth() + 1);
 
   if (!staffId) {
     throw createError({
@@ -29,14 +15,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (!year || !month || month < 1 || month > 12) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid year or month",
-    });
-  }
-
-  const { start, end } = getMonthRange(year, month);
+  const range = getReportRange(query);
 
   const staff = await prisma.staff.findUnique({
     where: {
@@ -59,8 +38,8 @@ export default defineEventHandler(async (event) => {
       },
       event: {
         eventDate: {
-          gte: start,
-          lt: end,
+          gte: range.start,
+          lt: range.end,
         },
       },
     },
@@ -85,8 +64,8 @@ export default defineEventHandler(async (event) => {
       staffId,
       event: {
         eventDate: {
-          gte: start,
-          lt: end,
+          gte: range.start,
+          lt: range.end,
         },
       },
     },
@@ -145,10 +124,12 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     meta: {
-      year,
-      month,
-      start,
-      end,
+      year: range.year || null,
+      month: range.month || null,
+      dateFrom: range.dateFrom,
+      dateTo: range.dateTo,
+      start: range.start,
+      end: range.end,
     },
     data: {
       staff,

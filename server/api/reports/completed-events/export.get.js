@@ -1,12 +1,6 @@
 import { prisma } from "../../../utils/prisma";
 import { denyStaff } from "../../../utils/permission";
-
-function getMonthRange(year, month) {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
-
-  return { start, end };
-}
+import { getReportRange } from "../../../utils/report-date-range";
 
 function formatDate(dateValue) {
   if (!dateValue) return "";
@@ -33,27 +27,14 @@ export default defineEventHandler(async (event) => {
   await denyStaff(event);
 
   const query = getQuery(event);
-
-  const now = new Date();
-
-  const year = Number(query.year || now.getFullYear());
-  const month = Number(query.month || now.getMonth() + 1);
-
-  if (!year || !month || month < 1 || month > 12) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid year or month",
-    });
-  }
-
-  const { start, end } = getMonthRange(year, month);
+  const range = getReportRange(query);
 
   const events = await prisma.event.findMany({
     where: {
       status: "COMPLETED",
       eventDate: {
-        gte: start,
-        lt: end,
+        gte: range.start,
+        lt: range.end,
       },
     },
     include: {
@@ -159,7 +140,7 @@ export default defineEventHandler(async (event) => {
   setHeader(
     event,
     "Content-Disposition",
-    `attachment; filename="completed-events-${year}-${month}.csv"`,
+    `attachment; filename="completed-events-${range.fileLabel}.csv"`,
   );
 
   return csv;

@@ -1,4 +1,6 @@
 <script setup>
+import { CalendarDate } from "@internationalized/date";
+
 definePageMeta({
   layout: "dashboard",
   middleware: ["auth", "no-staff-report"],
@@ -8,46 +10,38 @@ const now = new Date();
 const route = useRoute();
 const router = useRouter();
 
-const selectedYear = ref(getInitialYear(route.query.year));
-const selectedMonth = ref(getInitialMonth(route.query.month));
+const filterDateRange = ref(
+  getInitialDateRange(
+    route.query.dateFrom,
+    route.query.dateTo,
+    route.query.year,
+    route.query.month,
+  ),
+);
 
 const reportUrl = computed(() => {
-  return `/api/reports/crew-monthly?year=${selectedYear.value}&month=${selectedMonth.value}`;
+  const queryString = getReportQueryString();
+
+  return `/api/reports/crew-monthly?${queryString}`;
 });
 
 const { data, pending, error, refresh } = await useFetch(reportUrl);
 
-const months = [
-  { value: "1", label: "January" },
-  { value: "2", label: "February" },
-  { value: "3", label: "March" },
-  { value: "4", label: "April" },
-  { value: "5", label: "May" },
-  { value: "6", label: "June" },
-  { value: "7", label: "July" },
-  { value: "8", label: "August" },
-  { value: "9", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
-const years = computed(() => {
-  const currentYear = now.getFullYear();
-
-  return [
-    { label: String(currentYear - 1), value: String(currentYear - 1) },
-    { label: String(currentYear), value: String(currentYear) },
-    { label: String(currentYear + 1), value: String(currentYear + 1) },
-  ];
-});
-
 const rows = computed(() => data.value?.data || []);
 
 const periodLabel = computed(() => {
-  const month = months.find((item) => item.value === selectedMonth.value);
+  return filterDateLabel.value;
+});
 
-  return `${month?.label || selectedMonth.value} ${selectedYear.value}`;
+const filterDateLabel = computed(() => {
+  const { dateFrom, dateTo } = getDateRangeParams();
+  const start = formatDateFilterValue(dateFrom);
+  const end = formatDateFilterValue(dateTo);
+
+  if (start && end && start !== end) return `${start} - ${end}`;
+  if (start) return start;
+  if (end) return end;
+  return "Date";
 });
 
 const leaderboards = computed(() => [
@@ -86,46 +80,143 @@ const benchRows = computed(() => {
   return rows.value.filter((item) => item.totalAssigned === 0).slice(0, 5);
 });
 
-function getInitialYear(value) {
-  const number = Number(Array.isArray(value) ? value[0] : value);
-
-  if (!number || Number.isNaN(number)) return String(now.getFullYear());
-
-  return String(number);
+function getQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value;
 }
 
-function getInitialMonth(value) {
-  const number = Number(Array.isArray(value) ? value[0] : value);
+function parseDateParam(value) {
+  const stringValue = getQueryValue(value)?.toString() || "";
+  const match = stringValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
-  if (!number || Number.isNaN(number) || number < 1 || number > 12) {
-    return String(now.getMonth() + 1);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
   }
 
-  return String(number);
+  return new CalendarDate(year, month, day);
+}
+
+function getMonthRange(year, month) {
+  const lastDay = new Date(year, month, 0).getDate();
+
+  return {
+    start: new CalendarDate(year, month, 1),
+    end: new CalendarDate(year, month, lastDay),
+  };
+}
+
+function getInitialDateRange(dateFromValue, dateToValue, yearValue, monthValue) {
+  const dateFrom = parseDateParam(dateFromValue);
+  const dateTo = parseDateParam(dateToValue || dateFromValue);
+
+  if (dateFrom || dateTo) {
+    return {
+      start: dateFrom || dateTo,
+      end: dateTo || dateFrom,
+    };
+  }
+
+  const legacyYear = Number(getQueryValue(yearValue));
+  const legacyMonth = Number(getQueryValue(monthValue));
+
+  if (
+    legacyYear &&
+    !Number.isNaN(legacyYear) &&
+    legacyMonth &&
+    !Number.isNaN(legacyMonth) &&
+    legacyMonth >= 1 &&
+    legacyMonth <= 12
+  ) {
+    return getMonthRange(legacyYear, legacyMonth);
+  }
+
+  return getMonthRange(now.getFullYear(), now.getMonth() + 1);
+}
+
+function getDateRangeParams() {
+  const dateFrom = filterDateRange.value?.start?.toString() || "";
+  const dateTo =
+    filterDateRange.value?.end?.toString() ||
+    filterDateRange.value?.start?.toString() ||
+    "";
+
+  return { dateFrom, dateTo };
+}
+
+function getReportQueryString() {
+  const params = new URLSearchParams();
+  const { dateFrom, dateTo } = getDateRangeParams();
+
+  if (dateFrom) params.set("dateFrom", dateFrom);
+  if (dateTo) params.set("dateTo", dateTo);
+
+  return params.toString();
+}
+
+function formatDateFilterValue(dateValue) {
+  if (!dateValue) return "";
+
+  const [year, month, day] = dateValue.toString().split("-");
+
+  if (!year || !month || !day) return dateValue.toString();
+
+  return `${day}/${month}/${year}`;
 }
 
 async function handleFilter() {
+  const { dateFrom, dateTo } = getDateRangeParams();
+
   await router.replace({
     query: {
-      ...route.query,
-      year: selectedYear.value,
-      month: selectedMonth.value,
+      dateFrom,
+      dateTo,
     },
   });
 
   await refresh();
 }
 
+async function handleApplyDateFilter(close) {
+  await handleFilter();
+  close?.();
+}
+
+async function handleResetDateFilter(close) {
+  filterDateRange.value = getMonthRange(now.getFullYear(), now.getMonth() + 1);
+  await handleFilter();
+  close?.();
+}
+
 function handleExportStaffEvaluation() {
-  const url = `/api/reports/completed-events/export?year=${selectedYear.value}&month=${selectedMonth.value}`;
+  const queryString = getReportQueryString();
+  const url = `/api/reports/completed-events/export?${queryString}`;
 
   window.open(url, "_blank");
 }
 
 function handleExportEventSummary() {
-  const url = `/api/reports/completed-events/event-summary-export?year=${selectedYear.value}&month=${selectedMonth.value}`;
+  const queryString = getReportQueryString();
+  const url = `/api/reports/completed-events/event-summary-export?${queryString}`;
 
   window.open(url, "_blank");
+}
+
+function getStaffDetailTo(staffId) {
+  const queryString = getReportQueryString();
+
+  return queryString
+    ? `/reports/staff/${staffId}?${queryString}`
+    : `/reports/staff/${staffId}`;
 }
 
 function getSuccessColor(rate, evaluated = 1) {
@@ -225,7 +316,7 @@ function getReviewColor(item) {
       <div>
         <h1 class="text-2xl font-semibold">Reports</h1>
         <p class="text-sm text-muted">
-          Monthly staff performance, workload balance, and evaluation readiness.
+          Staff performance, workload balance, and evaluation readiness.
         </p>
       </div>
 
@@ -250,34 +341,59 @@ function getReviewColor(item) {
     </div>
 
     <UCard>
-      <form
-        class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between"
-        @submit.prevent="handleFilter"
-      >
-        <div class="grid w-full gap-3 md:max-w-xl md:grid-cols-2">
-          <UFormField label="Month">
-            <USelect
-              v-model="selectedMonth"
-              :items="months"
-              class="w-full"
-            />
-          </UFormField>
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <UFormField label="Date Range" class="w-full md:max-w-sm">
+          <UPopover :content="{ align: 'start' }">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-calendar"
+              class="w-full justify-center"
+            >
+              {{ filterDateLabel }}
+            </UButton>
 
-          <UFormField label="Year">
-            <USelect
-              v-model="selectedYear"
-              :items="years"
-              class="w-full"
-            />
-          </UFormField>
-        </div>
-      </form>
+            <template #content="{ close }">
+              <div class="space-y-3 p-3">
+                <UCalendar
+                  v-model="filterDateRange"
+                  range
+                  month-controls
+                  year-controls
+                />
+
+                <div class="flex justify-end gap-2">
+                  <UButton
+                    type="button"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    @click="handleResetDateFilter(close)"
+                  >
+                    Reset
+                  </UButton>
+
+                  <UButton
+                    type="button"
+                    color="primary"
+                    size="sm"
+                    @click="handleApplyDateFilter(close)"
+                  >
+                    Apply
+                  </UButton>
+                </div>
+              </div>
+            </template>
+          </UPopover>
+        </UFormField>
+      </div>
     </UCard>
     <UCard>
       <template #header>
         <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 class="text-lg font-semibold">Monthly Staff Leaderboard</h2>
+            <h2 class="text-lg font-semibold">Staff Leaderboard</h2>
             <p class="text-sm text-muted">
               Top performers by role for schedule maker reference.
             </p>
@@ -381,7 +497,7 @@ function getReviewColor(item) {
                     color="neutral"
                     variant="ghost"
                     icon="i-lucide-eye"
-                    :to="`/reports/staff/${item.staffId}?year=${selectedYear}&month=${selectedMonth}`"
+                    :to="getStaffDetailTo(item.staffId)"
                   >
                     Detail
                   </UButton>
@@ -476,7 +592,7 @@ function getReviewColor(item) {
                   color="neutral"
                   variant="ghost"
                   icon="i-lucide-eye"
-                  :to="`/reports/staff/${item.staffId}?year=${selectedYear}&month=${selectedMonth}`"
+                  :to="getStaffDetailTo(item.staffId)"
                 >
                   Detail
                 </UButton>

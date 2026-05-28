@@ -7,11 +7,15 @@ definePageMeta({
 const route = useRoute();
 
 const staffId = route.params.id;
-const year = route.query.year || new Date().getFullYear();
-const month = route.query.month || new Date().getMonth() + 1;
+const reportRange = getInitialReportRange(
+  route.query.dateFrom,
+  route.query.dateTo,
+  route.query.year,
+  route.query.month,
+);
 
 const reportUrl = computed(() => {
-  return `/api/reports/staff/${staffId}?year=${year}&month=${month}`;
+  return `/api/reports/staff/${staffId}?${getReportQueryString()}`;
 });
 
 const { data, pending, error, refresh } = await useFetch(reportUrl);
@@ -38,12 +42,13 @@ const summary = computed(() => {
 });
 
 const periodLabel = computed(() => {
-  const date = new Date(Number(year), Number(month) - 1, 1);
+  const start = formatDateFilterValue(reportRange.dateFrom);
+  const end = formatDateFilterValue(reportRange.dateTo);
 
-  return date.toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-  });
+  if (start && end && start !== end) return `${start} - ${end}`;
+  if (start) return start;
+  if (end) return end;
+  return "Date";
 });
 
 const evaluationGap = computed(() => {
@@ -160,6 +165,105 @@ function getEventStatusColor(status) {
   if (status === "READY") return "info";
   return "neutral";
 }
+
+function getQueryValue(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parseDateParam(value) {
+  const stringValue = getQueryValue(value)?.toString() || "";
+  const match = stringValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) return "";
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return "";
+  }
+
+  return stringValue;
+}
+
+function formatDateInput(dateValue) {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0");
+  const day = String(dateValue.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getMonthRange(year, month) {
+  const start = new Date(year, month - 1, 1);
+  const end = new Date(year, month, 0);
+
+  return {
+    dateFrom: formatDateInput(start),
+    dateTo: formatDateInput(end),
+  };
+}
+
+function getInitialReportRange(dateFromValue, dateToValue, yearValue, monthValue) {
+  const dateFrom = parseDateParam(dateFromValue);
+  const dateTo = parseDateParam(dateToValue || dateFromValue);
+
+  if (dateFrom || dateTo) {
+    return {
+      dateFrom: dateFrom || dateTo,
+      dateTo: dateTo || dateFrom,
+    };
+  }
+
+  const legacyYear = Number(getQueryValue(yearValue));
+  const legacyMonth = Number(getQueryValue(monthValue));
+
+  if (
+    legacyYear &&
+    !Number.isNaN(legacyYear) &&
+    legacyMonth &&
+    !Number.isNaN(legacyMonth) &&
+    legacyMonth >= 1 &&
+    legacyMonth <= 12
+  ) {
+    return getMonthRange(legacyYear, legacyMonth);
+  }
+
+  const now = new Date();
+
+  return getMonthRange(now.getFullYear(), now.getMonth() + 1);
+}
+
+function getReportQueryString() {
+  const params = new URLSearchParams();
+
+  if (reportRange.dateFrom) params.set("dateFrom", reportRange.dateFrom);
+  if (reportRange.dateTo) params.set("dateTo", reportRange.dateTo);
+
+  return params.toString();
+}
+
+function getReportsTo() {
+  const queryString = getReportQueryString();
+
+  return queryString ? `/reports?${queryString}` : "/reports";
+}
+
+function formatDateFilterValue(dateValue) {
+  if (!dateValue) return "";
+
+  const [year, month, day] = dateValue.toString().split("-");
+
+  if (!year || !month || !day) return dateValue.toString();
+
+  return `${day}/${month}/${year}`;
+}
 </script>
 
 <template>
@@ -173,14 +277,14 @@ function getEventStatusColor(status) {
           variant="ghost"
           icon="i-lucide-arrow-left"
           class="mb-2"
-          :to="`/reports?year=${year}&month=${month}`"
+          :to="getReportsTo()"
         >
           Back to Reports
         </UButton>
 
         <h1 class="text-2xl font-semibold">Staff Report Detail</h1>
         <p class="text-sm text-muted">
-          Monthly performance detail, evaluation checks, and event history.
+          Performance detail, evaluation checks, and event history.
         </p>
       </div>
 

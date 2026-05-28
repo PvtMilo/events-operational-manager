@@ -164,7 +164,7 @@ const links = computed(() => {
       class="bg-elevated/25"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
-      <template #header="{ collapsed, collapse }">
+      <template #header="{ collapsed }">
         <div class="flex items-center justify-between gap-2 px-2 py-3">
           <p class="cursor-pointer font-semibold" @click="handleCollapse">
             {{ collapsed ? "EO" : "EventOps Manager" }}

@@ -5,5 +5,9 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/ui', 'nuxt-auth-utils'],
 
+  colorMode: {
+    preference: 'light',
+  },
+
   css: ['~/assets/css/main.css'],
 })

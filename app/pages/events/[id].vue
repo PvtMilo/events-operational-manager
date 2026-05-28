@@ -125,6 +125,8 @@ const teamAssignmentStatusOptions = [
   { label: "CONFIRMED", value: "CONFIRMED" },
 ];
 
+const eventStatusesRequiringPic = ["SCHEDULED", "ONGOING"];
+
 const serviceTypeOptions = computed(() => {
   return (serviceTypesData.value?.data || []).map((item) => ({
     label: item.name,
@@ -459,10 +461,14 @@ function getEventTimeWindow(event) {
   return { start, end };
 }
 
-function canAutoSetOngoing() {
-  return activeAssignments.value.some((assignment) => {
+function hasPicAssignment(assignments) {
+  return assignments.some((assignment) => {
     return assignment.roleInEvent === "PIC";
   });
+}
+
+function canAutoSetOngoing() {
+  return hasPicAssignment(activeAssignments.value);
 }
 
 function canAutoSetPendingEvaluation() {
@@ -725,6 +731,25 @@ async function handleUpdateEvent() {
 
 async function handleUpdateStatus() {
   statusErrorMessage.value = "";
+
+  if (eventStatusesRequiringPic.includes(selectedStatus.value)) {
+    if (hasTeamChanges.value) {
+      statusErrorMessage.value =
+        "Save team before updating event status";
+      return;
+    }
+
+    if (!activeAssignments.value.length) {
+      statusErrorMessage.value = `Event must have assigned staff before set to ${selectedStatus.value}`;
+      return;
+    }
+
+    if (!hasPicAssignment(activeAssignments.value)) {
+      statusErrorMessage.value = `Event must have at least 1 PIC before set to ${selectedStatus.value}`;
+      return;
+    }
+  }
+
   isUpdatingStatus.value = true;
 
   try {

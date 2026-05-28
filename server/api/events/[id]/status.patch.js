@@ -5,6 +5,8 @@ import {
   allowedEventStatuses,
 } from "../../../utils/event-status-automation";
 
+const eventStatusesRequiringPic = ["SCHEDULED", "ONGOING"];
+
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
   const body = await readBody(event);
@@ -56,21 +58,23 @@ export default defineEventHandler(async (event) => {
     return assignment.roleInEvent === "PIC";
   });
 
-  if (status === "ONGOING") {
+  if (eventStatusesRequiringPic.includes(status)) {
     if (!hasAnyAssignment) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Event must have assigned staff before set to ONGOING",
+        statusMessage: `Event must have assigned staff before set to ${status}`,
       });
     }
 
     if (!hasPic) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Event must have at least 1 PIC before set to ONGOING",
+        statusMessage: `Event must have at least 1 PIC before set to ${status}`,
       });
     }
+  }
 
+  if (status === "ONGOING") {
     if (!["SCHEDULED", "ONGOING", "READY"].includes(eventData.status)) {
       throw createError({
         statusCode: 400,

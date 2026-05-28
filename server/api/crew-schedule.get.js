@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { syncAutomaticEventStatuses } from "../utils/event-status-automation";
 
 const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 
@@ -78,6 +79,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Unauthorized",
     });
   }
+
+  await syncAutomaticEventStatuses();
 
   const query = getQuery(event);
 

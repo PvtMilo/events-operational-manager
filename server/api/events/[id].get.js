@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { syncAutomaticEventStatusById } from "../../utils/event-status-automation";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -9,6 +10,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Event id is required",
     });
   }
+
+  await syncAutomaticEventStatusById(id);
 
   const eventData = await prisma.event.findUnique({
     where: {

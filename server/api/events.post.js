@@ -1,5 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { createEventLog } from "../utils/event-log";
+import { allowedEventStatuses } from "../utils/event-status-automation";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -65,6 +66,13 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: "Start time and end time are required",
+    });
+  }
+
+  if (!allowedEventStatuses.includes(status)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Invalid event status",
     });
   }
 

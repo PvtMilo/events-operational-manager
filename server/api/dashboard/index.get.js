@@ -1,4 +1,5 @@
 import { prisma } from "../../utils/prisma";
+import { syncAutomaticEventStatuses } from "../../utils/event-status-automation";
 
 const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 
@@ -121,6 +122,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Unauthorized",
     });
   }
+
+  await syncAutomaticEventStatuses();
 
   const todayKey = getJakartaDateKey();
   const tomorrowKey = addDaysToDateKey(todayKey, 1);

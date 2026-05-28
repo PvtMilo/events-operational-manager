@@ -34,6 +34,7 @@ async function refreshAvailabilityInPlace() {
 
 const selectedStatus = ref("");
 const isUpdatingStatus = ref(false);
+const isAutoUpdatingStatus = ref(false);
 const statusErrorMessage = ref("");
 const selectedLoadingStatus = ref("NOT_PREPARED");
 const isUpdatingLoadingStatus = ref(false);
@@ -82,7 +83,6 @@ const availableStaffSearch = ref("");
 const assignmentForms = ref({});
 const savingAssignmentId = ref("");
 const assignmentErrorMessage = ref("");
-const addingStaffId = ref("");
 const draftTeam = ref([]);
 const originalTeamSignature = ref("");
 const isSavingTeam = ref(false);
@@ -102,7 +102,6 @@ const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 const eventStatusOptions = [
   { label: "DRAFTED", value: "DRAFTED" },
   { label: "SCHEDULED", value: "SCHEDULED" },
-  { label: "READY", value: "READY" },
   { label: "ONGOING", value: "ONGOING" },
   { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
   { label: "COMPLETED", value: "COMPLETED" },
@@ -119,13 +118,6 @@ const loadingStatusOptions = [
 const roleOptions = [
   { label: "PIC", value: "PIC" },
   { label: "CREW", value: "CREW" },
-];
-
-const assignmentStatusOptions = [
-  { label: "ASSIGNED", value: "ASSIGNED" },
-  { label: "CONFIRMED", value: "CONFIRMED" },
-  { label: "REPLACED", value: "REPLACED" },
-  { label: "CANCELLED", value: "CANCELLED" },
 ];
 
 const teamAssignmentStatusOptions = [
@@ -392,6 +384,22 @@ watch(
   { immediate: true },
 );
 
+let automaticStatusIntervalId = null;
+
+onMounted(() => {
+  syncAutomaticStatusFromTime();
+  automaticStatusIntervalId = window.setInterval(
+    syncAutomaticStatusFromTime,
+    30000,
+  );
+});
+
+onUnmounted(() => {
+  if (automaticStatusIntervalId) {
+    window.clearInterval(automaticStatusIntervalId);
+  }
+});
+
 function formatDateInput(dateValue) {
   if (!dateValue) return "";
 
@@ -425,9 +433,101 @@ function getStatusColor(status) {
   if (status === "CANCELLED") return "error";
   if (status === "PENDING_EVALUATION") return "warning";
   if (status === "ONGOING") return "primary";
-  if (status === "READY") return "info";
+    if (status === "SCHEDULED") return "secondary";
 
   return "neutral";
+}
+
+function getEventDateTime(dateValue, timeValue) {
+  if (!dateValue || !timeValue) return null;
+
+  const dateKey = new Date(dateValue).toISOString().slice(0, 10);
+
+  return new Date(`${dateKey}T${timeValue}:00`);
+}
+
+function getEventTimeWindow(event) {
+  const start = getEventDateTime(event?.eventDate, event?.startTime);
+  const end = getEventDateTime(event?.eventDate, event?.endTime);
+
+  if (!start || !end) return { start: null, end: null };
+
+  if (end <= start) {
+    end.setDate(end.getDate() + 1);
+  }
+
+  return { start, end };
+}
+
+function canAutoSetOngoing() {
+  return activeAssignments.value.some((assignment) => {
+    return assignment.roleInEvent === "PIC";
+  });
+}
+
+function canAutoSetPendingEvaluation() {
+  return activeAssignments.value.length > 0;
+}
+
+function getAutomaticStatusSequence(event) {
+  if (!event) return [];
+
+  const { start, end } = getEventTimeWindow(event);
+
+  if (!start || !end) return [];
+
+  const now = new Date();
+
+  if (event.status === "SCHEDULED") {
+    if (now >= end && canAutoSetOngoing() && canAutoSetPendingEvaluation()) {
+      return ["ONGOING", "PENDING_EVALUATION"];
+    }
+
+    if (now >= start && canAutoSetOngoing()) {
+      return ["ONGOING"];
+    }
+  }
+
+  if (
+    event.status === "ONGOING" &&
+    now >= end &&
+    canAutoSetPendingEvaluation()
+  ) {
+    return ["PENDING_EVALUATION"];
+  }
+
+  return [];
+}
+
+async function syncAutomaticStatusFromTime() {
+  if (isAutoUpdatingStatus.value || isUpdatingStatus.value) return;
+
+  const statusSequence = getAutomaticStatusSequence(currentEvent.value);
+
+  if (!statusSequence.length) return;
+
+  isAutoUpdatingStatus.value = true;
+
+  try {
+    for (const status of statusSequence) {
+      await $fetch(`/api/events/${eventId}/status`, {
+        method: "PATCH",
+        body: {
+          status,
+        },
+      });
+    }
+
+    await refreshEventDetailInPlace();
+    await refreshAvailabilityInPlace();
+  } catch (error) {
+    statusErrorMessage.value =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      "Failed to update event status";
+  } finally {
+    isAutoUpdatingStatus.value = false;
+  }
 }
 
 function getLoadingStatusColor(status) {
@@ -1120,12 +1220,13 @@ async function handleSubmitEvaluationBundle() {
                   v-model="selectedStatus"
                   :items="eventStatusOptions"
                   class="w-full"
+                  :disabled="isAutoUpdatingStatus"
                 />
               </UFormField>
 
               <UButton
                 type="submit"
-                :loading="isUpdatingStatus"
+                :loading="isUpdatingStatus || isAutoUpdatingStatus"
                 icon="i-lucide-refresh-cw"
               >
                 Update

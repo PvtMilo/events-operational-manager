@@ -1,15 +1,9 @@
 import { prisma } from "../../../utils/prisma";
 import { createEventLog } from "../../../utils/event-log";
-
-const allowedStatuses = [
-  "DRAFTED",
-  "SCHEDULED",
-  "READY",
-  "ONGOING",
-  "PENDING_EVALUATION",
-  "COMPLETED",
-  "CANCELLED",
-];
+import {
+  activeEventAssignmentStatuses,
+  allowedEventStatuses,
+} from "../../../utils/event-status-automation";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -24,7 +18,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (!allowedStatuses.includes(status)) {
+  if (!allowedEventStatuses.includes(status)) {
     throw createError({
       statusCode: 400,
       statusMessage: "Invalid event status",
@@ -52,10 +46,8 @@ export default defineEventHandler(async (event) => {
 
   const previousStatus = eventData.status;
 
-  const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
-
   const activeAssignments = eventData.assignments.filter((assignment) => {
-    return activeAssignmentStatuses.includes(assignment.assignmentStatus);
+    return activeEventAssignmentStatuses.includes(assignment.assignmentStatus);
   });
 
   const hasAnyAssignment = activeAssignments.length > 0;
@@ -63,15 +55,6 @@ export default defineEventHandler(async (event) => {
   const hasPic = activeAssignments.some((assignment) => {
     return assignment.roleInEvent === "PIC";
   });
-
-  if (status === "READY") {
-    if (!hasPic) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Event must have at least 1 PIC before set to READY",
-      });
-    }
-  }
 
   if (status === "ONGOING") {
     if (!hasAnyAssignment) {
@@ -88,10 +71,10 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (!["READY", "ONGOING"].includes(eventData.status)) {
+    if (!["SCHEDULED", "ONGOING", "READY"].includes(eventData.status)) {
       throw createError({
         statusCode: 400,
-        statusMessage: "Event must be READY before set to ONGOING",
+        statusMessage: "Event must be SCHEDULED before set to ONGOING",
       });
     }
   }

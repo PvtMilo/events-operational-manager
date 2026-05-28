@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { syncAutomaticEventStatuses } from "../utils/event-status-automation";
 
 function getMonthRange(year, month) {
   if (!year || !month) return null;
@@ -37,6 +38,8 @@ function addDays(date, days) {
 }
 
 export default defineEventHandler(async (event) => {
+  await syncAutomaticEventStatuses();
+
   const query = getQuery(event);
 
   const search = query.search?.toString().trim() || "";

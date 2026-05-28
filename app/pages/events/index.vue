@@ -80,7 +80,6 @@ const statusOptions = [
   { label: "All Status", value: "ALL" },
   { label: "DRAFTED", value: "DRAFTED" },
   { label: "SCHEDULED", value: "SCHEDULED" },
-  { label: "READY", value: "READY" },
   { label: "ONGOING", value: "ONGOING" },
   { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
   { label: "COMPLETED", value: "COMPLETED" },
@@ -90,7 +89,6 @@ const statusOptions = [
 const eventStatusOptions = [
   { label: "DRAFTED", value: "DRAFTED" },
   { label: "SCHEDULED", value: "SCHEDULED" },
-  { label: "READY", value: "READY" },
   { label: "ONGOING", value: "ONGOING" },
   { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
   { label: "COMPLETED", value: "COMPLETED" },
@@ -174,7 +172,6 @@ function getStatusColor(status) {
   if (status === "CANCELLED") return "error";
   if (status === "PENDING_EVALUATION") return "warning";
   if (status === "ONGOING") return "primary";
-  if (status === "READY") return "info";
   return "neutral";
 }
 

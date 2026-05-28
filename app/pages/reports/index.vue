@@ -346,7 +346,7 @@ function getReviewColor(item) {
 
     <UCard>
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <UFormField label="Date Range" class="w-full md:max-w-sm">
+        <UFormField class="w-full md:max-w-sm">
           <UPopover :content="{ align: 'start' }">
             <UButton
               type="button"

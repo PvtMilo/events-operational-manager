@@ -6,8 +6,19 @@ definePageMeta({
 
 const now = new Date();
 
+const displayDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
 function formatDateInput(date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function getMonthStart(date) {
@@ -223,7 +234,7 @@ function getStatusColor(status) {
 function formatDate(dateValue) {
   if (!dateValue) return "-";
 
-  return new Date(dateValue).toLocaleDateString();
+  return displayDateFormatter.format(new Date(dateValue));
 }
 
 function formatDateRange(row) {

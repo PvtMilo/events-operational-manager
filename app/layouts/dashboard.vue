@@ -14,6 +14,10 @@ async function handleLogout() {
   await navigateTo("/login");
 }
 
+function handleCollapse() {
+  collapsed.value = !collapsed.value;
+}
+
 const links = computed(() => {
   const isStaff = user.value?.role === "STAFF";
 
@@ -162,9 +166,9 @@ const links = computed(() => {
     >
       <template #header="{ collapsed, collapse }">
         <div class="flex items-center justify-between gap-2 px-2 py-3">
-          <p v-if="!collapsed" class="font-semibold">EventOps Manager</p>
-
-          <p v-else class="font-semibold">EO</p>
+          <p class="cursor-pointer font-semibold" @click="handleCollapse">
+            {{ collapsed ? "EO" : "EventOps Manager" }}
+          </p>
         </div>
       </template>
 

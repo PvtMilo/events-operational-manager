@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   if (process.env.DEMO_MODE === "true") {
     throw createError({
       statusCode: 403,
-      statusMessage: "This action is disabled in demo mode",
+      statusMessage: "Hard delete is disabled in demo mode",
     });
   }
 

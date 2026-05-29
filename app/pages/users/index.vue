@@ -6,7 +6,10 @@ definePageMeta({
 
 const { user } = useUserSession();
 const config = useRuntimeConfig();
-const isDemoMode = computed(() => config.public.demoMode === true);
+const isDemoMode = computed(() => {
+  return config.public.demoMode === true || config.public.demoMode === "true";
+});
+const demoModeMessage = "This action is disabled in demo mode.";
 
 const name = ref("");
 const email = ref("");
@@ -148,6 +151,11 @@ function cancelEdit() {
 }
 
 function startResetPassword(user) {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   resetPasswordUserId.value = user.id;
   resetPasswordUserName.value = user.name;
   newPassword.value = "";
@@ -168,6 +176,11 @@ function cancelResetPassword() {
 async function handleResetPassword() {
   resetPasswordErrorMessage.value = "";
   resetPasswordSuccessMessage.value = "";
+
+  if (isDemoMode.value) {
+    resetPasswordErrorMessage.value = demoModeMessage;
+    return;
+  }
 
   if (!newPassword.value || newPassword.value.length < 8) {
     resetPasswordErrorMessage.value =
@@ -279,7 +292,7 @@ async function handleUpdate() {
 
 async function handleHardDeleteUser(id) {
   if (isDemoMode.value) {
-    alert("This action is disabled in demo mode.");
+    alert(demoModeMessage);
     return;
   }
 
@@ -325,8 +338,11 @@ function getUserActionItems(item) {
       onSelect: () => startEdit(item),
     },
     {
-      label: "Reset Password",
+      label: isDemoMode.value
+        ? "Reset Password (Disabled in Demo)"
+        : "Reset Password",
       icon: "i-lucide-key-round",
+      disabled: isDemoMode.value,
       onSelect: () => startResetPassword(item),
     },
   ];
@@ -494,6 +510,10 @@ function getUserActionItems(item) {
             <UInput v-model="newPassword" type="password" class="w-full" />
           </UFormField>
 
+          <p v-if="isDemoMode" class="text-sm text-amber-600">
+            Reset password is disabled in demo mode.
+          </p>
+
           <p v-if="resetPasswordErrorMessage" class="text-sm text-red-500">
             {{ resetPasswordErrorMessage }}
           </p>
@@ -519,8 +539,9 @@ function getUserActionItems(item) {
             type="submit"
             color="primary"
             :loading="isResettingPassword"
+            :disabled="isDemoMode"
           >
-            Reset Password
+            {{ isDemoMode ? "Disabled in Demo" : "Reset Password" }}
           </UButton>
         </div>
       </template>

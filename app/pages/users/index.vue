@@ -9,7 +9,7 @@ const config = useRuntimeConfig();
 const isDemoMode = computed(() => {
   return config.public.demoMode === true || config.public.demoMode === "true";
 });
-const demoModeMessage = "This action is disabled in demo mode.";
+const demoModeMessage = "Users are view-only in demo mode.";
 
 const name = ref("");
 const email = ref("");
@@ -128,11 +128,21 @@ async function goToNextPage() {
 }
 
 function openCreateUserModal() {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   errorMessage.value = "";
   isCreateUserModalOpen.value = true;
 }
 
 function startEdit(user) {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   editingId.value = user.id;
   editName.value = user.name;
   editRole.value = user.role;
@@ -213,6 +223,11 @@ async function handleResetPassword() {
 async function handleCreate() {
   errorMessage.value = "";
 
+  if (isDemoMode.value) {
+    errorMessage.value = demoModeMessage;
+    return;
+  }
+
   if (!name.value.trim()) {
     errorMessage.value = "Name is required";
     return;
@@ -260,6 +275,11 @@ async function handleCreate() {
 
 async function handleUpdate() {
   editErrorMessage.value = "";
+
+  if (isDemoMode.value) {
+    editErrorMessage.value = demoModeMessage;
+    return;
+  }
 
   if (!editName.value.trim()) {
     editErrorMessage.value = "Name is required";
@@ -373,10 +393,24 @@ function getUserActionItems(item) {
         </p>
       </div>
 
-      <UButton icon="i-lucide-plus" color="primary" @click="openCreateUserModal">
-        Add User
+      <UButton
+        icon="i-lucide-plus"
+        color="primary"
+        :disabled="isDemoMode"
+        @click="openCreateUserModal"
+      >
+        {{ isDemoMode ? "Add User Disabled in Demo" : "Add User" }}
       </UButton>
     </div>
+
+    <UAlert
+      v-if="isDemoMode"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-lock"
+      title="Demo Mode"
+      description="Users are view-only in demo mode. Creating, editing, deleting, and password reset actions are disabled."
+    />
 
     <UModal
       v-model:open="isCreateUserModalOpen"
@@ -434,8 +468,9 @@ function getUserActionItems(item) {
             type="submit"
             color="primary"
             :loading="isSubmitting"
+            :disabled="isDemoMode"
           >
-            Save User
+            {{ isDemoMode ? "Disabled in Demo" : "Save User" }}
           </UButton>
         </div>
       </template>
@@ -487,8 +522,9 @@ function getUserActionItems(item) {
             type="submit"
             color="primary"
             :loading="isUpdating"
+            :disabled="isDemoMode"
           >
-            Update User
+            {{ isDemoMode ? "Disabled in Demo" : "Update User" }}
           </UButton>
         </div>
       </template>
@@ -689,6 +725,7 @@ function getUserActionItems(item) {
               </td>
               <td class="py-3 pr-4">
                 <UDropdownMenu
+                  v-if="!isDemoMode"
                   :items="getUserActionItems(user)"
                   :content="{ align: 'end' }"
                 >
@@ -700,6 +737,9 @@ function getUserActionItems(item) {
                     aria-label="User actions"
                   />
                 </UDropdownMenu>
+                <span v-else class="text-xs text-muted">
+                  View only
+                </span>
               </td>
             </tr>
           </tbody>

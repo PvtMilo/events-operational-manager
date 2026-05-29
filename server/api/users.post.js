@@ -13,6 +13,13 @@ const allowedRoles = [
 export default defineEventHandler(async (event) => {
   await denyStaffUsers(event);
 
+  if (process.env.DEMO_MODE === "true") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Create user is disabled in demo mode",
+    });
+  }
+
   const body = await readBody(event);
 
   const name = body?.name?.trim();

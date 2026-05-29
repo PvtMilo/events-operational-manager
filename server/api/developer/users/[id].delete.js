@@ -4,6 +4,13 @@ import { requireDeveloper } from "../../../utils/permission";
 export default defineEventHandler(async (event) => {
   const currentUser = await requireDeveloper(event);
 
+  if (process.env.DEMO_MODE === "true") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "This action is disabled in demo mode",
+    });
+  }
+
   const id = getRouterParam(event, "id");
 
   if (!id) {

@@ -5,6 +5,8 @@ definePageMeta({
 });
 
 const { user } = useUserSession();
+const config = useRuntimeConfig();
+const isDemoMode = computed(() => config.public.demoMode === true);
 
 const name = ref("");
 const email = ref("");
@@ -276,6 +278,11 @@ async function handleUpdate() {
 }
 
 async function handleHardDeleteUser(id) {
+  if (isDemoMode.value) {
+    alert("This action is disabled in demo mode.");
+    return;
+  }
+
   const confirmed = confirm(
     "HARD DELETE this user? This action cannot be undone.",
   );
@@ -326,9 +333,10 @@ function getUserActionItems(item) {
 
   if (user.value?.role === "DEVELOPER" && user.value?.id !== item.id) {
     items.push({
-      label: "Hard Delete",
+      label: isDemoMode.value ? "Hard Delete (Disabled in Demo)" : "Hard Delete",
       icon: "i-lucide-trash-2",
       color: "error",
+      disabled: isDemoMode.value,
       onSelect: () => handleHardDeleteUser(item.id),
     });
   }

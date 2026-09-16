@@ -83,12 +83,6 @@ async function handleLogin() {
           </button>
         </div>
       </form>
-
-      <div class="bg-slate-100 p-4 text-xs text-slate-600">
-        <p class="font-semibold text-slate-800">Demo Account</p>
-        <p class="mt-1">Email: admin@eventops.test</p>
-        <p>Password: admin12345</p>
-      </div>
     </div>
   </main>
 </template>

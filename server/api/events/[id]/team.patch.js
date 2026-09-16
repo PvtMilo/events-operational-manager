@@ -1,5 +1,8 @@
 import { prisma } from "../../../utils/prisma";
-import { getEventDutyWindow, isTimeOverlap } from "../../../utils/availability";
+import {
+  assertNoStaffTimeConflict,
+  lockStaffRows,
+} from "../../../utils/availability";
 import { createEventLog } from "../../../utils/event-log";
 
 const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
@@ -92,70 +95,34 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { dutyStart: targetStart, dutyEnd: targetEnd } =
-    getEventDutyWindow(targetEvent);
-
-  for (const item of team) {
-    const otherAssignments = await prisma.eventAssignment.findMany({
-      where: {
-        staffId: item.staffId,
-        eventId: {
-          not: eventId,
-        },
-        assignmentStatus: {
-          in: activeAssignmentStatuses,
-        },
-        event: {
-          status: {
-            notIn: ["CANCELLED", "COMPLETED"],
-          },
-        },
-      },
-      include: {
-        event: true,
-      },
-    });
-
-    for (const assignment of otherAssignments) {
-      if (!assignment.event) continue;
-
-      const { dutyStart: existingStart, dutyEnd: existingEnd } =
-        getEventDutyWindow(assignment.event);
-
-      const hasOverlap = isTimeOverlap(
-        targetStart,
-        targetEnd,
-        existingStart,
-        existingEnd,
-      );
-
-      if (hasOverlap) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: `Time conflict with event: ${assignment.event.eventName}`,
-        });
-      }
-    }
-  }
-
-  const existingAssignments = await prisma.eventAssignment.findMany({
-    where: {
-      eventId,
-    },
-    include: {
-      staff: true,
-    },
-  });
-
-  const existingByStaffId = new Map(
-    existingAssignments.map((assignment) => [assignment.staffId, assignment]),
-  );
-
   const created = [];
   const updated = [];
   const cancelled = [];
 
   await prisma.$transaction(async (tx) => {
+    await lockStaffRows(tx, [...selectedStaffIds]);
+
+    for (const item of team) {
+      await assertNoStaffTimeConflict(tx, {
+        staffId: item.staffId,
+        eventId,
+        eventData: targetEvent,
+      });
+    }
+
+    const existingAssignments = await tx.eventAssignment.findMany({
+      where: {
+        eventId,
+      },
+      include: {
+        staff: true,
+      },
+    });
+
+    const existingByStaffId = new Map(
+      existingAssignments.map((assignment) => [assignment.staffId, assignment]),
+    );
+
     for (const item of team) {
       const existing = existingByStaffId.get(item.staffId);
       const notes = item.notes?.trim() || null;

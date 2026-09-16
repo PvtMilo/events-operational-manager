@@ -1,4 +1,9 @@
 import { prisma } from "../../utils/prisma";
+import {
+  assertNoStaffTimeConflict,
+  lockStaffRows,
+} from "../../utils/availability";
+import { activeEventAssignmentStatuses } from "../../utils/event-status-automation";
 import { createEventLog } from "../../utils/event-log";
 
 const allowedRoles = ["PIC", "CREW"];
@@ -45,6 +50,7 @@ export default defineEventHandler(async (event) => {
     },
     include: {
       staff: true,
+      event: true,
     },
   });
 
@@ -55,18 +61,33 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const updatedAssignment = await prisma.eventAssignment.update({
-    where: {
-      id,
-    },
-    data: {
-      roleInEvent,
-      assignmentStatus,
-      notes,
-    },
-    include: {
-      staff: true,
-    },
+  const isReactivating =
+    activeEventAssignmentStatuses.includes(assignmentStatus) &&
+    !activeEventAssignmentStatuses.includes(assignment.assignmentStatus);
+
+  const updatedAssignment = await prisma.$transaction(async (tx) => {
+    if (isReactivating) {
+      await lockStaffRows(tx, [assignment.staffId]);
+      await assertNoStaffTimeConflict(tx, {
+        staffId: assignment.staffId,
+        eventId: assignment.eventId,
+        eventData: assignment.event,
+      });
+    }
+
+    return await tx.eventAssignment.update({
+      where: {
+        id,
+      },
+      data: {
+        roleInEvent,
+        assignmentStatus,
+        notes,
+      },
+      include: {
+        staff: true,
+      },
+    });
   });
 
   await createEventLog(event, {

@@ -27,6 +27,7 @@ RUN apt-get update -y \
 ENV NODE_ENV=production
 ENV NITRO_HOST=0.0.0.0
 ENV PORT=8080
+ENV TZ=Asia/Jakarta
 
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/node_modules ./node_modules

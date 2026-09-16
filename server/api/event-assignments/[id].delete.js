@@ -1,4 +1,6 @@
 import { prisma } from "../../utils/prisma";
+import { lockEventRows } from "../../utils/availability";
+import { assertEventKeepsPic } from "../../utils/event-lifecycle";
 import { createEventLog } from "../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
@@ -25,14 +27,32 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const updatedAssignment = await prisma.eventAssignment.update({
-    where: { id },
-    data: {
-      assignmentStatus: "CANCELLED",
-    },
-    include: {
-      staff: true,
-    },
+  const updatedAssignment = await prisma.$transaction(async (tx) => {
+    await lockEventRows(tx, [assignment.eventId]);
+
+    const eventData = await tx.event.findUnique({
+      where: {
+        id: assignment.eventId,
+      },
+      include: {
+        assignments: true,
+      },
+    });
+
+    assertEventKeepsPic(
+      eventData,
+      eventData.assignments.filter((item) => item.id !== id),
+    );
+
+    return await tx.eventAssignment.update({
+      where: { id },
+      data: {
+        assignmentStatus: "CANCELLED",
+      },
+      include: {
+        staff: true,
+      },
+    });
   });
 
   await createEventLog(event, {

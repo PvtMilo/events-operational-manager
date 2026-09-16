@@ -1,9 +1,13 @@
 import { prisma } from "../../utils/prisma";
 import {
-  assertNoStaffTimeConflict,
+  assertStaffCanTakeEvent,
+  lockEventRows,
   lockStaffRows,
 } from "../../utils/availability";
-import { activeEventAssignmentStatuses } from "../../utils/event-status-automation";
+import {
+  activeEventAssignmentStatuses,
+  assertEventKeepsPic,
+} from "../../utils/event-lifecycle";
 import { createEventLog } from "../../utils/event-log";
 
 const allowedRoles = ["PIC", "CREW"];
@@ -50,7 +54,6 @@ export default defineEventHandler(async (event) => {
     },
     include: {
       staff: true,
-      event: true,
     },
   });
 
@@ -61,17 +64,37 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const isReactivating =
-    activeEventAssignmentStatuses.includes(assignmentStatus) &&
-    !activeEventAssignmentStatuses.includes(assignment.assignmentStatus);
-
   const updatedAssignment = await prisma.$transaction(async (tx) => {
+    await lockEventRows(tx, [assignment.eventId]);
+
+    const eventData = await tx.event.findUnique({
+      where: {
+        id: assignment.eventId,
+      },
+      include: {
+        assignments: true,
+      },
+    });
+
+    const current = eventData.assignments.find((item) => item.id === id);
+
+    const remainingAssignments = eventData.assignments.map((item) => {
+      return item.id === id ? { ...item, roleInEvent, assignmentStatus } : item;
+    });
+
+    assertEventKeepsPic(eventData, remainingAssignments);
+
+    const isReactivating =
+      activeEventAssignmentStatuses.includes(assignmentStatus) &&
+      !activeEventAssignmentStatuses.includes(current.assignmentStatus);
+
     if (isReactivating) {
       await lockStaffRows(tx, [assignment.staffId]);
-      await assertNoStaffTimeConflict(tx, {
+      await assertStaffCanTakeEvent(tx, {
         staffId: assignment.staffId,
+        staffName: assignment.staff?.name,
         eventId: assignment.eventId,
-        eventData: assignment.event,
+        eventData,
       });
     }
 

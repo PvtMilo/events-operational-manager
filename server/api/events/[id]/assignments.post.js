@@ -1,6 +1,7 @@
 import { prisma } from "../../../utils/prisma";
 import {
-  assertNoStaffTimeConflict,
+  assertStaffCanTakeEvent,
+  lockEventRows,
   lockStaffRows,
 } from "../../../utils/availability";
 import { createEventLog } from "../../../utils/event-log";
@@ -68,7 +69,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const assignment = await prisma.$transaction(async (tx) => {
+    await lockEventRows(tx, [eventId]);
     await lockStaffRows(tx, [staffId]);
+
+    const currentEvent = await tx.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
 
     const existingAssignment = await tx.eventAssignment.findUnique({
       where: {
@@ -86,7 +94,11 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    await assertNoStaffTimeConflict(tx, { staffId, eventId, eventData });
+    await assertStaffCanTakeEvent(tx, {
+      staffId,
+      eventId,
+      eventData: currentEvent,
+    });
 
     return await tx.eventAssignment.create({
       data: {

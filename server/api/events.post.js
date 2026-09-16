@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { createEventLog } from "../utils/event-log";
-import { allowedEventStatuses } from "../utils/event-status-automation";
+import { assertValidEventSchedule } from "../utils/availability";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
   const loadingTime = body?.loadingTime || null;
 
   const location = body?.location?.trim() || null;
-  const status = body?.status || "DRAFTED";
 
   const vehicleName = body?.vehicleName?.trim() || null;
   const driverName = body?.driverName?.trim() || null;
@@ -48,12 +47,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (!allowedEventStatuses.includes(status)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Invalid event status",
-    });
-  }
+  assertValidEventSchedule({
+    eventDate,
+    startTime,
+    endTime,
+    loadingDate,
+    loadingTime,
+  });
 
   const createdEvent = await prisma.event.create({
     data: {
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
       loadingDate: loadingDate ? new Date(loadingDate) : null,
       loadingTime,
       location,
-      status,
+      status: "DRAFTED",
       vehicleName,
       driverName,
       vendorSewa,

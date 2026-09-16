@@ -18,7 +18,6 @@ const endTime = ref("");
 const loadingDate = ref("");
 const loadingTime = ref("");
 const location = ref("");
-const status = ref("DRAFTED");
 const vehicleName = ref("");
 const driverName = ref("");
 const vendorSewa = ref("");
@@ -80,15 +79,7 @@ const statusOptions = [
   { label: "All Status", value: "ALL" },
   { label: "DRAFTED", value: "DRAFTED" },
   { label: "SCHEDULED", value: "SCHEDULED" },
-  { label: "ONGOING", value: "ONGOING" },
-  { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
-  { label: "COMPLETED", value: "COMPLETED" },
-  { label: "CANCELLED", value: "CANCELLED" },
-];
-
-const eventStatusOptions = [
-  { label: "DRAFTED", value: "DRAFTED" },
-  { label: "SCHEDULED", value: "SCHEDULED" },
+  { label: "READY", value: "READY" },
   { label: "ONGOING", value: "ONGOING" },
   { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
   { label: "COMPLETED", value: "COMPLETED" },
@@ -172,6 +163,8 @@ function getStatusColor(status) {
   if (status === "CANCELLED") return "error";
   if (status === "PENDING_EVALUATION") return "warning";
   if (status === "ONGOING") return "primary";
+  if (status === "READY") return "info";
+  if (status === "SCHEDULED") return "secondary";
   return "neutral";
 }
 
@@ -225,13 +218,16 @@ function getEventActionItems(event) {
       icon: "i-lucide-copy",
       onSelect: () => handleDuplicateEvent(event.id),
     },
-    {
+  ];
+
+  if (!["COMPLETED", "CANCELLED"].includes(event.status)) {
+    items.push({
       label: "Cancel",
       icon: "i-lucide-ban",
       color: "warning",
       onSelect: () => handleDelete(event.id),
-    },
-  ];
+    });
+  }
 
   if (user.value?.role === "DEVELOPER") {
     items.push({
@@ -360,7 +356,6 @@ async function handleCreate() {
         loadingDate: loadingDate.value || null,
         loadingTime: loadingTime.value || null,
         location: location.value,
-        status: status.value,
         vehicleName: vehicleName.value,
         driverName: driverName.value,
         vendorSewa: vendorSewa.value,
@@ -380,7 +375,6 @@ async function handleCreate() {
     loadingDate.value = "";
     loadingTime.value = "";
     location.value = "";
-    status.value = "DRAFTED";
     vehicleName.value = "";
     driverName.value = "";
     vendorSewa.value = "";
@@ -548,13 +542,6 @@ async function handleHardDeleteEvent(id) {
               <USelect v-model="salesId" :items="salesOptions" class="w-full" />
             </UFormField>
 
-            <UFormField label="Status">
-              <USelect
-                v-model="status"
-                :items="eventStatusOptions"
-                class="w-full"
-              />
-            </UFormField>
 
             <UFormField label="Event Date" required>
               <UInput v-model="eventDate" type="date" class="w-full" />

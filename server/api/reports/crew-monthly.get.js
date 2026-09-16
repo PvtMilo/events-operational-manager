@@ -23,6 +23,9 @@ export default defineEventHandler(async (event) => {
         in: ["ASSIGNED", "CONFIRMED"],
       },
       event: {
+        status: {
+          not: "CANCELLED",
+        },
         eventDate: {
           gte: range.start,
           lt: range.end,
@@ -37,6 +40,9 @@ export default defineEventHandler(async (event) => {
   const evaluations = await prisma.staffEventEvaluation.findMany({
     where: {
       event: {
+        status: {
+          not: "CANCELLED",
+        },
         eventDate: {
           gte: range.start,
           lt: range.end,

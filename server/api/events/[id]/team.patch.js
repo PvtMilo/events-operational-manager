@@ -1,8 +1,10 @@
 import { prisma } from "../../../utils/prisma";
 import {
-  assertNoStaffTimeConflict,
+  assertStaffCanTakeEvent,
+  lockEventRows,
   lockStaffRows,
 } from "../../../utils/availability";
+import { assertEventKeepsPic } from "../../../utils/event-lifecycle";
 import { createEventLog } from "../../../utils/event-log";
 
 const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
@@ -100,13 +102,23 @@ export default defineEventHandler(async (event) => {
   const cancelled = [];
 
   await prisma.$transaction(async (tx) => {
+    await lockEventRows(tx, [eventId]);
     await lockStaffRows(tx, [...selectedStaffIds]);
 
+    const currentEvent = await tx.event.findUnique({
+      where: {
+        id: eventId,
+      },
+    });
+
+    assertEventKeepsPic(currentEvent, team);
+
     for (const item of team) {
-      await assertNoStaffTimeConflict(tx, {
+      await assertStaffCanTakeEvent(tx, {
         staffId: item.staffId,
+        staffName: staffList.find((staff) => staff.id === item.staffId)?.name,
         eventId,
-        eventData: targetEvent,
+        eventData: currentEvent,
       });
     }
 

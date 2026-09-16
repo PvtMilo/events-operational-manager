@@ -1,5 +1,9 @@
 import { prisma } from "../../utils/prisma";
 import { createEventLog } from "../../utils/event-log";
+import {
+  canTransitionEventStatus,
+  cancelActiveAssignments,
+} from "../../utils/event-lifecycle";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -22,12 +26,34 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const updatedEvent = await prisma.event.update({
-    where: { id },
-    data: {
-      status: "CANCELLED",
+  if (eventData.status === "CANCELLED") {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Event is already cancelled",
+    });
+  }
+
+  if (!canTransitionEventStatus(eventData.status, "CANCELLED")) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `${eventData.status} event cannot be cancelled`,
+    });
+  }
+
+  const { updatedEvent, cancelledAssignments } = await prisma.$transaction(
+    async (tx) => {
+      const cancelled = await cancelActiveAssignments(tx, id);
+
+      const updated = await tx.event.update({
+        where: { id },
+        data: {
+          status: "CANCELLED",
+        },
+      });
+
+      return { updatedEvent: updated, cancelledAssignments: cancelled };
     },
-  });
+  );
 
   await createEventLog(event, {
     eventId: id,
@@ -36,6 +62,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       previousStatus: eventData.status,
       newStatus: "CANCELLED",
+      cancelledAssignments,
     },
   });
 

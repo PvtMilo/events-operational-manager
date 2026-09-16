@@ -37,6 +37,9 @@ export default defineEventHandler(async (event) => {
         in: ["ASSIGNED", "CONFIRMED"],
       },
       event: {
+        status: {
+          not: "CANCELLED",
+        },
         eventDate: {
           gte: range.start,
           lt: range.end,
@@ -63,6 +66,9 @@ export default defineEventHandler(async (event) => {
     where: {
       staffId,
       event: {
+        status: {
+          not: "CANCELLED",
+        },
         eventDate: {
           gte: range.start,
           lt: range.end,

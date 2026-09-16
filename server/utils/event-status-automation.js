@@ -1,57 +1,23 @@
 import { prisma } from "./prisma";
+import { getEventTimeWindow } from "./availability";
+import {
+  getActiveAssignments as filterActiveAssignments,
+  hasActivePic,
+} from "./event-lifecycle";
 
-export const activeEventAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
-
-export const allowedEventStatuses = [
-  "DRAFTED",
-  "SCHEDULED",
-  "ONGOING",
-  "PENDING_EVALUATION",
-  "COMPLETED",
-  "CANCELLED",
-];
-
-function combineEventDateAndTime(dateValue, timeValue) {
-  if (!dateValue || !timeValue) return null;
-
-  const dateKey = new Date(dateValue).toISOString().slice(0, 10);
-
-  return new Date(`${dateKey}T${timeValue}:00`);
-}
-
-export function getEventTimeWindow(eventData) {
-  const start = combineEventDateAndTime(
-    eventData?.eventDate,
-    eventData?.startTime,
-  );
-  const end = combineEventDateAndTime(eventData?.eventDate, eventData?.endTime);
-
-  if (!start || !end) return { start: null, end: null };
-
-  if (end <= start) {
-    end.setDate(end.getDate() + 1);
-  }
-
-  return { start, end };
-}
+const autoAdvanceSourceStatuses = ["SCHEDULED", "READY", "ONGOING"];
 
 export function getActiveEventAssignments(eventData) {
-  return (eventData?.assignments || []).filter((assignment) => {
-    return activeEventAssignmentStatuses.includes(assignment.assignmentStatus);
-  });
+  return filterActiveAssignments(eventData?.assignments);
 }
 
 export function canAutoAdvanceEvent(eventData, targetStatus) {
-  const activeAssignments = getActiveEventAssignments(eventData);
-
   if (targetStatus === "ONGOING") {
-    return activeAssignments.some((assignment) => {
-      return assignment.roleInEvent === "PIC";
-    });
+    return hasActivePic(eventData?.assignments);
   }
 
   if (targetStatus === "PENDING_EVALUATION") {
-    return activeAssignments.length > 0;
+    return getActiveEventAssignments(eventData).length > 0;
   }
 
   return true;
@@ -64,7 +30,7 @@ export function getAutomaticEventStatus(eventData, now = new Date()) {
 
   if (!start || !end) return null;
 
-  if (eventData.status === "SCHEDULED") {
+  if (["SCHEDULED", "READY"].includes(eventData.status)) {
     if (
       now >= end &&
       canAutoAdvanceEvent(eventData, "ONGOING") &&
@@ -151,7 +117,7 @@ export async function syncAutomaticEventStatuses() {
   const candidates = await prisma.event.findMany({
     where: {
       status: {
-        in: ["SCHEDULED", "ONGOING"],
+        in: autoAdvanceSourceStatuses,
       },
     },
     include: {

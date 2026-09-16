@@ -5,6 +5,11 @@ definePageMeta({
 });
 
 const { user } = useUserSession();
+const config = useRuntimeConfig();
+const isDemoMode = computed(() => {
+  return config.public.demoMode === true || config.public.demoMode === "true";
+});
+const demoModeMessage = "Users are view-only in demo mode.";
 
 const name = ref("");
 const email = ref("");
@@ -123,11 +128,21 @@ async function goToNextPage() {
 }
 
 function openCreateUserModal() {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   errorMessage.value = "";
   isCreateUserModalOpen.value = true;
 }
 
 function startEdit(user) {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   editingId.value = user.id;
   editName.value = user.name;
   editRole.value = user.role;
@@ -146,6 +161,11 @@ function cancelEdit() {
 }
 
 function startResetPassword(user) {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   resetPasswordUserId.value = user.id;
   resetPasswordUserName.value = user.name;
   newPassword.value = "";
@@ -166,6 +186,11 @@ function cancelResetPassword() {
 async function handleResetPassword() {
   resetPasswordErrorMessage.value = "";
   resetPasswordSuccessMessage.value = "";
+
+  if (isDemoMode.value) {
+    resetPasswordErrorMessage.value = demoModeMessage;
+    return;
+  }
 
   if (!newPassword.value || newPassword.value.length < 8) {
     resetPasswordErrorMessage.value =
@@ -197,6 +222,11 @@ async function handleResetPassword() {
 
 async function handleCreate() {
   errorMessage.value = "";
+
+  if (isDemoMode.value) {
+    errorMessage.value = demoModeMessage;
+    return;
+  }
 
   if (!name.value.trim()) {
     errorMessage.value = "Name is required";
@@ -246,6 +276,11 @@ async function handleCreate() {
 async function handleUpdate() {
   editErrorMessage.value = "";
 
+  if (isDemoMode.value) {
+    editErrorMessage.value = demoModeMessage;
+    return;
+  }
+
   if (!editName.value.trim()) {
     editErrorMessage.value = "Name is required";
     return;
@@ -276,6 +311,11 @@ async function handleUpdate() {
 }
 
 async function handleHardDeleteUser(id) {
+  if (isDemoMode.value) {
+    alert(demoModeMessage);
+    return;
+  }
+
   const confirmed = confirm(
     "HARD DELETE this user? This action cannot be undone.",
   );
@@ -318,17 +358,21 @@ function getUserActionItems(item) {
       onSelect: () => startEdit(item),
     },
     {
-      label: "Reset Password",
+      label: isDemoMode.value
+        ? "Reset Password (Disabled in Demo)"
+        : "Reset Password",
       icon: "i-lucide-key-round",
+      disabled: isDemoMode.value,
       onSelect: () => startResetPassword(item),
     },
   ];
 
   if (user.value?.role === "DEVELOPER" && user.value?.id !== item.id) {
     items.push({
-      label: "Hard Delete",
+      label: isDemoMode.value ? "Hard Delete (Disabled in Demo)" : "Hard Delete",
       icon: "i-lucide-trash-2",
       color: "error",
+      disabled: isDemoMode.value,
       onSelect: () => handleHardDeleteUser(item.id),
     });
   }
@@ -349,10 +393,24 @@ function getUserActionItems(item) {
         </p>
       </div>
 
-      <UButton icon="i-lucide-plus" color="primary" @click="openCreateUserModal">
-        Add User
+      <UButton
+        icon="i-lucide-plus"
+        color="primary"
+        :disabled="isDemoMode"
+        @click="openCreateUserModal"
+      >
+        {{ isDemoMode ? "Add User Disabled in Demo" : "Add User" }}
       </UButton>
     </div>
+
+    <UAlert
+      v-if="isDemoMode"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-lock"
+      title="Demo Mode"
+      description="Users are view-only in demo mode. Creating, editing, deleting, and password reset actions are disabled."
+    />
 
     <UModal
       v-model:open="isCreateUserModalOpen"
@@ -410,8 +468,9 @@ function getUserActionItems(item) {
             type="submit"
             color="primary"
             :loading="isSubmitting"
+            :disabled="isDemoMode"
           >
-            Save User
+            {{ isDemoMode ? "Disabled in Demo" : "Save User" }}
           </UButton>
         </div>
       </template>
@@ -463,8 +522,9 @@ function getUserActionItems(item) {
             type="submit"
             color="primary"
             :loading="isUpdating"
+            :disabled="isDemoMode"
           >
-            Update User
+            {{ isDemoMode ? "Disabled in Demo" : "Update User" }}
           </UButton>
         </div>
       </template>
@@ -485,6 +545,10 @@ function getUserActionItems(item) {
           <UFormField label="New Password" required>
             <UInput v-model="newPassword" type="password" class="w-full" />
           </UFormField>
+
+          <p v-if="isDemoMode" class="text-sm text-amber-600">
+            Reset password is disabled in demo mode.
+          </p>
 
           <p v-if="resetPasswordErrorMessage" class="text-sm text-red-500">
             {{ resetPasswordErrorMessage }}
@@ -511,8 +575,9 @@ function getUserActionItems(item) {
             type="submit"
             color="primary"
             :loading="isResettingPassword"
+            :disabled="isDemoMode"
           >
-            Reset Password
+            {{ isDemoMode ? "Disabled in Demo" : "Reset Password" }}
           </UButton>
         </div>
       </template>
@@ -660,6 +725,7 @@ function getUserActionItems(item) {
               </td>
               <td class="py-3 pr-4">
                 <UDropdownMenu
+                  v-if="!isDemoMode"
                   :items="getUserActionItems(user)"
                   :content="{ align: 'end' }"
                 >
@@ -671,6 +737,9 @@ function getUserActionItems(item) {
                     aria-label="User actions"
                   />
                 </UDropdownMenu>
+                <span v-else class="text-xs text-muted">
+                  View only
+                </span>
               </td>
             </tr>
           </tbody>

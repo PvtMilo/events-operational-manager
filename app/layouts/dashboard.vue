@@ -1,9 +1,11 @@
 <script setup>
 const { user, clear } = useUserSession();
 const colorMode = useColorMode();
+const config = useRuntimeConfig();
 
 const open = ref(false);
 const collapsed = ref(false);
+const isDemoMode = computed(() => config.public.demoMode === true);
 
 async function handleLogout() {
   await $fetch("/api/auth/logout", {
@@ -118,10 +120,18 @@ const links = computed(() => {
       ],
     },
     {
-      label: "Change Password",
+      label: isDemoMode.value
+        ? "Change Password (Disabled in Demo)"
+        : "Change Password",
       icon: "i-lucide-key-round",
-      to: "/change-password",
+      disabled: isDemoMode.value,
+      to: isDemoMode.value ? undefined : "/change-password",
       onSelect: () => {
+        if (isDemoMode.value) {
+          alert("This action is disabled in demo mode.");
+          return;
+        }
+
         open.value = false;
       },
     },

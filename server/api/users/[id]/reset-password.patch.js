@@ -61,6 +61,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  if (process.env.DEMO_MODE === "true") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Reset password is disabled in demo mode",
+    });
+  }
+
   const passwordHash = await hashAppPassword(newPassword);
 
   await prisma.user.update({

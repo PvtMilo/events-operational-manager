@@ -1,4 +1,8 @@
 import { prisma } from "../../utils/prisma";
+import {
+  assertNoActiveAssignmentsInBlock,
+  lockStaffRows,
+} from "../../utils/availability";
 
 const allowedRoles = ["DEVELOPER", "ADMIN", "SCHEDULE_MAKER", "HEAD_OPERATIONAL"];
 
@@ -137,50 +141,59 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (status === "ACTIVE") {
-    const overlappingBlock = await prisma.staffAvailabilityBlock.findFirst({
-      where: {
-        id: {
-          not: id,
-        },
-        staffId,
-        status: "ACTIVE",
-        startDate: {
-          lte: endDate,
-        },
-        endDate: {
-          gte: startDate,
-        },
-      },
-    });
+  const updated = await prisma.$transaction(async (tx) => {
+    await lockStaffRows(tx, [staffId, existing.staffId]);
 
-    if (overlappingBlock) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Staff already has active availability block in this date range",
+    if (status === "ACTIVE") {
+      const overlappingBlock = await tx.staffAvailabilityBlock.findFirst({
+        where: {
+          id: {
+            not: id,
+          },
+          staffId,
+          status: "ACTIVE",
+          startDate: {
+            lte: endDate,
+          },
+          endDate: {
+            gte: startDate,
+          },
+        },
+      });
+
+      if (overlappingBlock) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Staff already has active availability block in this date range",
+        });
+      }
+
+      await assertNoActiveAssignmentsInBlock(tx, {
+        staffId,
+        block: { startDate, endDate, isFullDay, startTime, endTime },
       });
     }
-  }
 
-  const updated = await prisma.staffAvailabilityBlock.update({
-    where: {
-      id,
-    },
-    data: {
-      staffId,
-      type,
-      status,
-      startDate,
-      endDate,
-      isFullDay,
-      startTime: isFullDay ? null : startTime,
-      endTime: isFullDay ? null : endTime,
-      reason: normalizeText(body?.reason),
-      notes: normalizeText(body?.notes),
-    },
-    include: {
-      staff: true,
-    },
+    return await tx.staffAvailabilityBlock.update({
+      where: {
+        id,
+      },
+      data: {
+        staffId,
+        type,
+        status,
+        startDate,
+        endDate,
+        isFullDay,
+        startTime: isFullDay ? null : startTime,
+        endTime: isFullDay ? null : endTime,
+        reason: normalizeText(body?.reason),
+        notes: normalizeText(body?.notes),
+      },
+      include: {
+        staff: true,
+      },
+    });
   });
 
   return {

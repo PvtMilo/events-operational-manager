@@ -234,7 +234,6 @@ export default defineEventHandler(async (event) => {
     prisma.event.count({
       where: {
         status: "PENDING_EVALUATION",
-        eventDate: monthRange,
       },
     }),
 

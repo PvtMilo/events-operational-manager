@@ -1,11 +1,13 @@
 import { prisma } from "../../../utils/prisma";
 import { createEventLog } from "../../../utils/event-log";
 import {
-  activeEventAssignmentStatuses,
   allowedEventStatuses,
-} from "../../../utils/event-status-automation";
-
-const eventStatusesRequiringPic = ["SCHEDULED", "ONGOING"];
+  canTransitionEventStatus,
+  cancelActiveAssignments,
+  eventStatusesRequiringPic,
+  getActiveAssignments,
+  hasActivePic,
+} from "../../../utils/event-lifecycle";
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -48,25 +50,32 @@ export default defineEventHandler(async (event) => {
 
   const previousStatus = eventData.status;
 
-  const activeAssignments = eventData.assignments.filter((assignment) => {
-    return activeEventAssignmentStatuses.includes(assignment.assignmentStatus);
-  });
+  if (status === previousStatus) {
+    return {
+      success: true,
+      message: `Event is already ${status}`,
+      data: eventData,
+    };
+  }
 
-  const hasAnyAssignment = activeAssignments.length > 0;
+  if (!canTransitionEventStatus(previousStatus, status)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Cannot change status from ${previousStatus} to ${status}`,
+    });
+  }
 
-  const hasPic = activeAssignments.some((assignment) => {
-    return assignment.roleInEvent === "PIC";
-  });
+  const activeAssignments = getActiveAssignments(eventData.assignments);
 
   if (eventStatusesRequiringPic.includes(status)) {
-    if (!hasAnyAssignment) {
+    if (!activeAssignments.length) {
       throw createError({
         statusCode: 400,
         statusMessage: `Event must have assigned staff before set to ${status}`,
       });
     }
 
-    if (!hasPic) {
+    if (!hasActivePic(eventData.assignments)) {
       throw createError({
         statusCode: 400,
         statusMessage: `Event must have at least 1 PIC before set to ${status}`,
@@ -74,42 +83,15 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (status === "ONGOING") {
-    if (!["SCHEDULED", "ONGOING", "READY"].includes(eventData.status)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: "Event must be SCHEDULED before set to ONGOING",
-      });
-    }
-  }
-
-  if (status === "PENDING_EVALUATION") {
-    if (!hasAnyAssignment) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          "Event must have assigned staff before set to PENDING_EVALUATION",
-      });
-    }
-
-    if (!["ONGOING", "PENDING_EVALUATION"].includes(eventData.status)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          "Event must be ONGOING before set to PENDING_EVALUATION",
-      });
-    }
+  if (status === "PENDING_EVALUATION" && !activeAssignments.length) {
+    throw createError({
+      statusCode: 400,
+      statusMessage:
+        "Event must have assigned staff before set to PENDING_EVALUATION",
+    });
   }
 
   if (status === "COMPLETED") {
-    if (!["PENDING_EVALUATION", "COMPLETED"].includes(eventData.status)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage:
-          "Event must be PENDING_EVALUATION before set to COMPLETED",
-      });
-    }
-
     if (!eventData.eventEvaluation) {
       throw createError({
         statusCode: 400,
@@ -152,14 +134,23 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const updatedEvent = await prisma.event.update({
-    where: {
-      id: eventId,
+  const { updatedEvent, cancelledAssignments } = await prisma.$transaction(
+    async (tx) => {
+      const cancelled =
+        status === "CANCELLED" ? await cancelActiveAssignments(tx, eventId) : 0;
+
+      const updated = await tx.event.update({
+        where: {
+          id: eventId,
+        },
+        data: {
+          status,
+        },
+      });
+
+      return { updatedEvent: updated, cancelledAssignments: cancelled };
     },
-    data: {
-      status,
-    },
-  });
+  );
 
   await createEventLog(event, {
     eventId,
@@ -168,6 +159,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       previousStatus,
       newStatus: status,
+      ...(status === "CANCELLED" ? { cancelledAssignments } : {}),
     },
   });
 

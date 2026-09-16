@@ -1,74 +1,23 @@
 import { prisma } from "../../../utils/prisma";
 import {
   getEventDutyWindow,
+  isAvailabilityBlockOverlap,
   isSameDate,
   isTimeOverlap,
 } from "../../../utils/availability";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function getMonthRange(dateValue) {
   const date = new Date(dateValue);
 
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
 
   return {
     start,
     end,
   };
-}
-
-function getStartOfDay(dateValue) {
-  const date = new Date(dateValue);
-  date.setHours(0, 0, 0, 0);
-
-  return date;
-}
-
-function getEndOfDay(dateValue) {
-  const date = new Date(dateValue);
-  date.setHours(23, 59, 59, 999);
-
-  return date;
-}
-
-function applyTimeToDate(dateValue, timeValue, fallbackType = "start") {
-  const date = new Date(dateValue);
-
-  if (!timeValue) {
-    if (fallbackType === "end") {
-      date.setHours(23, 59, 59, 999);
-    } else {
-      date.setHours(0, 0, 0, 0);
-    }
-
-    return date;
-  }
-
-  const [hours, minutes] = timeValue.split(":").map(Number);
-
-  date.setHours(hours || 0, minutes || 0, 0, 0);
-
-  return date;
-}
-
-function getAvailabilityBlockWindow(block) {
-  if (block.isFullDay) {
-    return {
-      blockStart: getStartOfDay(block.startDate),
-      blockEnd: getEndOfDay(block.endDate),
-    };
-  }
-
-  return {
-    blockStart: applyTimeToDate(block.startDate, block.startTime, "start"),
-    blockEnd: applyTimeToDate(block.endDate, block.endTime, "end"),
-  };
-}
-
-function isAvailabilityBlockOverlap(block, targetStart, targetEnd) {
-  const { blockStart, blockEnd } = getAvailabilityBlockWindow(block);
-
-  return isTimeOverlap(targetStart, targetEnd, blockStart, blockEnd);
 }
 
 function getAvailabilityBlockLabel(block) {
@@ -108,9 +57,6 @@ export default defineEventHandler(async (event) => {
   const { start: monthStart, end: monthEnd } = getMonthRange(
     targetEvent.eventDate,
   );
-
-  const targetDutyStartDateOnly = getStartOfDay(targetStart);
-  const targetDutyEndDateOnly = getEndOfDay(targetEnd);
 
   const staffList = await prisma.staff.findMany({
     where: {
@@ -170,10 +116,10 @@ export default defineEventHandler(async (event) => {
       },
       status: "ACTIVE",
       startDate: {
-        lte: targetDutyEndDateOnly,
+        lte: new Date(targetEnd.getTime() + DAY_MS),
       },
       endDate: {
-        gte: targetDutyStartDateOnly,
+        gte: new Date(targetStart.getTime() - DAY_MS),
       },
     },
   });
@@ -203,13 +149,7 @@ export default defineEventHandler(async (event) => {
     let unavailableBlock = null;
 
     for (const block of staffAvailabilityBlocks) {
-      const hasBlockOverlap = isAvailabilityBlockOverlap(
-        block,
-        targetStart,
-        targetEnd,
-      );
-
-      if (hasBlockOverlap) {
+      if (isAvailabilityBlockOverlap(block, targetStart, targetEnd)) {
         availabilityStatus = "UNAVAILABLE";
         unavailableBlock = {
           id: block.id,

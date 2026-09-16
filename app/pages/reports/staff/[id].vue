@@ -162,6 +162,7 @@ function getEventStatusColor(status) {
   if (status === "CANCELLED") return "error";
   if (status === "PENDING_EVALUATION") return "warning";
   if (status === "ONGOING") return "primary";
+  if (status === "READY") return "info";
   return "neutral";
 }
 

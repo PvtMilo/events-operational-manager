@@ -1,5 +1,20 @@
 import { prisma } from "../../utils/prisma";
 import { createEventLog } from "../../utils/event-log";
+import {
+  assertStaffCanTakeEvent,
+  assertValidEventSchedule,
+  getDateKey,
+  lockEventRows,
+  lockStaffRows,
+} from "../../utils/availability";
+import { getActiveAssignments } from "../../utils/event-lifecycle";
+
+function isSameDateValue(dateA, dateB) {
+  if (!dateA && !dateB) return true;
+  if (!dateA || !dateB) return false;
+
+  return getDateKey(dateA) === getDateKey(dateB);
+}
 
 export default defineEventHandler(async (event) => {
   const eventId = getRouterParam(event, "id");
@@ -74,6 +89,14 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  assertValidEventSchedule({
+    eventDate,
+    startTime,
+    endTime,
+    loadingDate,
+    loadingTime,
+  });
+
   const existingEvent = await prisma.event.findUnique({
     where: {
       id: eventId,
@@ -87,28 +110,93 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const updatedEvent = await prisma.event.update({
-    where: {
-      id: eventId,
-    },
-    data: {
-      eventName,
-      clientName,
-      clientPhone,
-      serviceTypeId,
-      equipmentSetup,
-      salesId,
-      eventDate: new Date(eventDate),
-      startTime,
-      endTime,
-      loadingDate: loadingDate ? new Date(loadingDate) : null,
-      loadingTime,
-      location,
-      vehicleName,
-      driverName,
-      vendorSewa,
-      notes,
-    },
+  // Only a newly chosen sales must be active; existing links to a since-deactivated sales stay valid.
+  if (salesId && salesId !== existingEvent.salesId) {
+    const sales = await prisma.sales.findUnique({
+      where: {
+        id: salesId,
+      },
+    });
+
+    if (!sales) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Sales not found",
+      });
+    }
+
+    if (sales.status !== "ACTIVE") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Sales ${sales.name} is inactive and cannot be assigned`,
+      });
+    }
+  }
+
+  const nextSchedule = {
+    eventDate: new Date(eventDate),
+    startTime,
+    endTime,
+    loadingDate: loadingDate ? new Date(loadingDate) : null,
+    loadingTime,
+  };
+
+  const scheduleChanged =
+    !isSameDateValue(existingEvent.eventDate, nextSchedule.eventDate) ||
+    existingEvent.startTime !== startTime ||
+    existingEvent.endTime !== endTime ||
+    !isSameDateValue(existingEvent.loadingDate, nextSchedule.loadingDate) ||
+    (existingEvent.loadingTime || null) !== loadingTime;
+
+  const updatedEvent = await prisma.$transaction(async (tx) => {
+    if (scheduleChanged) {
+      await lockEventRows(tx, [eventId]);
+
+      const activeAssignments = getActiveAssignments(
+        await tx.eventAssignment.findMany({
+          where: {
+            eventId,
+          },
+          include: {
+            staff: true,
+          },
+        }),
+      );
+
+      await lockStaffRows(
+        tx,
+        activeAssignments.map((assignment) => assignment.staffId),
+      );
+
+      for (const assignment of activeAssignments) {
+        await assertStaffCanTakeEvent(tx, {
+          staffId: assignment.staffId,
+          staffName: assignment.staff?.name,
+          eventId,
+          eventData: { ...existingEvent, ...nextSchedule },
+        });
+      }
+    }
+
+    return await tx.event.update({
+      where: {
+        id: eventId,
+      },
+      data: {
+        eventName,
+        clientName,
+        clientPhone,
+        serviceTypeId,
+        equipmentSetup,
+        salesId,
+        ...nextSchedule,
+        location,
+        vehicleName,
+        driverName,
+        vendorSewa,
+        notes,
+      },
+    });
   });
 
   await createEventLog(event, {
@@ -118,6 +206,19 @@ export default defineEventHandler(async (event) => {
     metadata: {
       eventName: updatedEvent.eventName,
       clientName: updatedEvent.clientName,
+      scheduleChanged,
+      ...(scheduleChanged
+        ? {
+            previousSchedule: {
+              eventDate: existingEvent.eventDate,
+              startTime: existingEvent.startTime,
+              endTime: existingEvent.endTime,
+              loadingDate: existingEvent.loadingDate,
+              loadingTime: existingEvent.loadingTime,
+            },
+            newSchedule: nextSchedule,
+          }
+        : {}),
     },
   });
 

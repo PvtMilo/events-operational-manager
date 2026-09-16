@@ -24,6 +24,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const eventCount = await prisma.event.count({
+    where: {
+      serviceTypeId: id,
+    },
+  });
+
+  if (eventCount > 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Service type is used by ${eventCount} event(s); hard delete those events first`,
+    });
+  }
+
   await prisma.serviceType.delete({
     where: { id },
   });

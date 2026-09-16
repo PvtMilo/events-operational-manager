@@ -1,5 +1,9 @@
 import { prisma } from "../../../utils/prisma";
-import { getEventDutyWindow, isTimeOverlap } from "../../../utils/availability";
+import {
+  assertStaffCanTakeEvent,
+  lockEventRows,
+  lockStaffRows,
+} from "../../../utils/availability";
 import { createEventLog } from "../../../utils/event-log";
 
 export default defineEventHandler(async (event) => {
@@ -64,77 +68,50 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const existingAssignment = await prisma.eventAssignment.findUnique({
-    where: {
-      eventId_staffId: {
-        eventId,
-        staffId,
-      },
-    },
-  });
+  const assignment = await prisma.$transaction(async (tx) => {
+    await lockEventRows(tx, [eventId]);
+    await lockStaffRows(tx, [staffId]);
 
-  if (existingAssignment) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Staff already assigned to this event",
+    const currentEvent = await tx.event.findUnique({
+      where: {
+        id: eventId,
+      },
     });
-  }
 
-  const { dutyStart: targetStart, dutyEnd: targetEnd } =
-    getEventDutyWindow(eventData);
-
-  const otherAssignments = await prisma.eventAssignment.findMany({
-    where: {
-      staffId,
-      eventId: {
-        not: eventId,
-      },
-      assignmentStatus: {
-        in: ["ASSIGNED", "CONFIRMED"],
-      },
-      event: {
-        status: {
-          notIn: ["CANCELLED", "COMPLETED"],
+    const existingAssignment = await tx.eventAssignment.findUnique({
+      where: {
+        eventId_staffId: {
+          eventId,
+          staffId,
         },
       },
-    },
-    include: {
-      event: true,
-    },
-  });
+    });
 
-  for (const assignment of otherAssignments) {
-    if (!assignment.event) continue;
-
-    const { dutyStart: existingStart, dutyEnd: existingEnd } =
-      getEventDutyWindow(assignment.event);
-
-    const hasOverlap = isTimeOverlap(
-      targetStart,
-      targetEnd,
-      existingStart,
-      existingEnd
-    );
-
-    if (hasOverlap) {
+    if (existingAssignment) {
       throw createError({
         statusCode: 400,
-        statusMessage: `Time conflict with event: ${assignment.event.eventName}`,
+        statusMessage: "Staff already assigned to this event",
       });
     }
-  }
 
-  const assignment = await prisma.eventAssignment.create({
-    data: {
-      eventId,
+    await assertStaffCanTakeEvent(tx, {
       staffId,
-      roleInEvent,
-      assignmentStatus: "ASSIGNED",
-      notes,
-    },
-    include: {
-      staff: true,
-    },
+      eventId,
+      eventData: currentEvent,
+    });
+
+    return await tx.eventAssignment.create({
+      data: {
+        eventId,
+        staffId,
+        roleInEvent,
+        assignmentStatus: "ASSIGNED",
+        notes,
+      },
+      include: {
+        staff: true,
+      },
+    });
   });
 
   await createEventLog(event, {

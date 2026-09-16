@@ -14,6 +14,13 @@ const allowedStatuses = ["ACTIVE", "INACTIVE"];
 export default defineEventHandler(async (event) => {
   await denyStaffUsers(event);
 
+  if (process.env.DEMO_MODE === "true") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "Edit user is disabled in demo mode",
+    });
+  }
+
   const id = getRouterParam(event, "id");
   const body = await readBody(event);
 

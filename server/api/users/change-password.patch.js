@@ -12,6 +12,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  if (process.env.DEMO_MODE === "true") {
+    throw createError({
+      statusCode: 403,
+      statusMessage: "This action is disabled in demo mode",
+    });
+  }
+
   const currentPassword = body?.currentPassword;
   const newPassword = body?.newPassword;
 

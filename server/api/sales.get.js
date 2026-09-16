@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const search = query.search?.toString().trim() || "";
   const status = query.status?.toString() || "";
   const page = Number(query.page || 1);
-  const limit = 20;
+  const limit = Math.min(Math.max(Number(query.limit) || 20, 1), 1000);
   const skip = (page - 1) * limit;
 
   const where = {};

@@ -7,14 +7,21 @@ definePageMeta({
 const currentPassword = ref("");
 const newPassword = ref("");
 const confirmNewPassword = ref("");
+const config = useRuntimeConfig();
 
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const isDemoMode = computed(() => config.public.demoMode === true);
 
 async function handleChangePassword() {
   errorMessage.value = "";
   successMessage.value = "";
+
+  if (isDemoMode.value) {
+    errorMessage.value = "This action is disabled in demo mode.";
+    return;
+  }
 
   if (!currentPassword.value) {
     errorMessage.value = "Current password is required";
@@ -69,12 +76,21 @@ async function handleChangePassword() {
 
       <UCard>
         <form class="space-y-5" @submit.prevent="handleChangePassword">
+          <UAlert
+            v-if="isDemoMode"
+            color="warning"
+            variant="soft"
+            icon="i-lucide-shield-alert"
+            title="This action is disabled in demo mode."
+          />
+
           <UFormField label="Current Password" required>
             <UInput
               v-model="currentPassword"
               type="password"
               autocomplete="current-password"
               icon="i-lucide-lock-keyhole"
+              :disabled="isDemoMode"
               class="w-full"
             />
           </UFormField>
@@ -89,6 +105,7 @@ async function handleChangePassword() {
               type="password"
               autocomplete="new-password"
               icon="i-lucide-key-round"
+              :disabled="isDemoMode"
               class="w-full"
             />
           </UFormField>
@@ -99,6 +116,7 @@ async function handleChangePassword() {
               type="password"
               autocomplete="new-password"
               icon="i-lucide-key-round"
+              :disabled="isDemoMode"
               class="w-full"
             />
           </UFormField>
@@ -125,6 +143,7 @@ async function handleChangePassword() {
               color="primary"
               icon="i-lucide-save"
               :loading="isSubmitting"
+              :disabled="isDemoMode"
             >
               Change Password
             </UButton>

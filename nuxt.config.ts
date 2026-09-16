@@ -9,5 +9,11 @@ export default defineNuxtConfig({
     preference: 'light',
   },
 
+  runtimeConfig: {
+    public: {
+      demoMode: process.env.NUXT_PUBLIC_DEMO_MODE === "true",
+    },
+  },
+
   css: ['~/assets/css/main.css'],
 })

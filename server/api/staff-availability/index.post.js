@@ -1,4 +1,8 @@
 import { prisma } from "../../utils/prisma";
+import {
+  assertNoActiveAssignmentsInBlock,
+  lockStaffRows,
+} from "../../utils/availability";
 
 const allowedRoles = ["DEVELOPER", "ADMIN", "SCHEDULE_MAKER", "HEAD_OPERATIONAL"];
 
@@ -114,41 +118,50 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const overlappingBlock = await prisma.staffAvailabilityBlock.findFirst({
-    where: {
-      staffId,
-      status: "ACTIVE",
-      startDate: {
-        lte: endDate,
-      },
-      endDate: {
-        gte: startDate,
-      },
-    },
-  });
+  const block = await prisma.$transaction(async (tx) => {
+    await lockStaffRows(tx, [staffId]);
 
-  if (overlappingBlock) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: "Staff already has active availability block in this date range",
+    const overlappingBlock = await tx.staffAvailabilityBlock.findFirst({
+      where: {
+        staffId,
+        status: "ACTIVE",
+        startDate: {
+          lte: endDate,
+        },
+        endDate: {
+          gte: startDate,
+        },
+      },
     });
-  }
 
-  const block = await prisma.staffAvailabilityBlock.create({
-    data: {
+    if (overlappingBlock) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Staff already has active availability block in this date range",
+      });
+    }
+
+    await assertNoActiveAssignmentsInBlock(tx, {
       staffId,
-      type,
-      startDate,
-      endDate,
-      isFullDay,
-      startTime: isFullDay ? null : startTime,
-      endTime: isFullDay ? null : endTime,
-      reason: normalizeText(body?.reason),
-      notes: normalizeText(body?.notes),
-    },
-    include: {
-      staff: true,
-    },
+      block: { startDate, endDate, isFullDay, startTime, endTime },
+    });
+
+    return await tx.staffAvailabilityBlock.create({
+      data: {
+        staffId,
+        type,
+        startDate,
+        endDate,
+        isFullDay,
+        startTime: isFullDay ? null : startTime,
+        endTime: isFullDay ? null : endTime,
+        reason: normalizeText(body?.reason),
+        notes: normalizeText(body?.notes),
+      },
+      include: {
+        staff: true,
+      },
+    });
   });
 
   return {

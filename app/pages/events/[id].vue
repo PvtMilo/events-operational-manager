@@ -15,7 +15,7 @@ const {
 } = await useFetch(`/api/events/${eventId}`);
 
 const { data: serviceTypesData } = await useFetch("/api/service-types");
-const { data: salesData } = await useFetch("/api/sales");
+const { data: salesData } = await useFetch("/api/sales?status=ACTIVE&limit=1000");
 const { data: availabilityData } = await useFetch(
   `/api/events/${eventId}/staff-availability`,
 );
@@ -102,6 +102,7 @@ const activeAssignmentStatuses = ["ASSIGNED", "CONFIRMED"];
 const eventStatusOptions = [
   { label: "DRAFTED", value: "DRAFTED" },
   { label: "SCHEDULED", value: "SCHEDULED" },
+  { label: "READY", value: "READY" },
   { label: "ONGOING", value: "ONGOING" },
   { label: "PENDING_EVALUATION", value: "PENDING_EVALUATION" },
   { label: "COMPLETED", value: "COMPLETED" },
@@ -125,7 +126,25 @@ const teamAssignmentStatusOptions = [
   { label: "CONFIRMED", value: "CONFIRMED" },
 ];
 
-const eventStatusesRequiringPic = ["SCHEDULED", "ONGOING"];
+const eventStatusesRequiringPic = ["SCHEDULED", "READY", "ONGOING"];
+
+// Mirrors allowedEventStatusTransitions in server/utils/event-lifecycle.js
+const eventStatusTransitions = {
+  DRAFTED: ["SCHEDULED", "CANCELLED"],
+  SCHEDULED: ["DRAFTED", "READY", "ONGOING", "PENDING_EVALUATION", "CANCELLED"],
+  READY: ["SCHEDULED", "ONGOING", "PENDING_EVALUATION", "CANCELLED"],
+  ONGOING: ["SCHEDULED", "PENDING_EVALUATION", "CANCELLED"],
+  PENDING_EVALUATION: ["ONGOING", "COMPLETED", "CANCELLED"],
+  COMPLETED: ["PENDING_EVALUATION"],
+  CANCELLED: ["DRAFTED"],
+};
+
+const availableStatusOptions = computed(() => {
+  const current = currentEvent.value?.status;
+  const allowed = [current, ...(eventStatusTransitions[current] || [])];
+
+  return eventStatusOptions.filter((option) => allowed.includes(option.value));
+});
 
 const serviceTypeOptions = computed(() => {
   return (serviceTypesData.value?.data || []).map((item) => ({
@@ -135,13 +154,23 @@ const serviceTypeOptions = computed(() => {
 });
 
 const salesOptions = computed(() => {
-  return [
-    { label: "No sales / optional", value: "NONE" },
-    ...(salesData.value?.data || []).map((item) => ({
-      label: item.name,
-      value: item.id,
-    })),
-  ];
+  const activeSales = salesData.value?.data || [];
+  const currentSales = currentEvent.value?.sales;
+
+  const options = activeSales.map((item) => ({
+    label: item.name,
+    value: item.id,
+  }));
+
+  // Keep a since-deactivated sales selectable on the event that already uses it.
+  if (currentSales && !activeSales.some((item) => item.id === currentSales.id)) {
+    options.push({
+      label: `${currentSales.name} (inactive)`,
+      value: currentSales.id,
+    });
+  }
+
+  return [{ label: "No sales / optional", value: "NONE" }, ...options];
 });
 
 const selectedAssignments = computed(() => {
@@ -435,7 +464,8 @@ function getStatusColor(status) {
   if (status === "CANCELLED") return "error";
   if (status === "PENDING_EVALUATION") return "warning";
   if (status === "ONGOING") return "primary";
-    if (status === "SCHEDULED") return "secondary";
+  if (status === "READY") return "info";
+  if (status === "SCHEDULED") return "secondary";
 
   return "neutral";
 }
@@ -445,7 +475,7 @@ function getEventDateTime(dateValue, timeValue) {
 
   const dateKey = new Date(dateValue).toISOString().slice(0, 10);
 
-  return new Date(`${dateKey}T${timeValue}:00`);
+  return new Date(`${dateKey}T${timeValue}:00+07:00`);
 }
 
 function getEventTimeWindow(event) {
@@ -484,7 +514,7 @@ function getAutomaticStatusSequence(event) {
 
   const now = new Date();
 
-  if (event.status === "SCHEDULED") {
+  if (["SCHEDULED", "READY"].includes(event.status)) {
     if (now >= end && canAutoSetOngoing() && canAutoSetPendingEvaluation()) {
       return ["ONGOING", "PENDING_EVALUATION"];
     }
@@ -1291,7 +1321,7 @@ async function handleSubmitEvaluationBundle() {
               <UFormField label="Change Event Status">
                 <USelect
                   v-model="selectedStatus"
-                  :items="eventStatusOptions"
+                  :items="availableStatusOptions"
                   class="w-full"
                   :disabled="isAutoUpdatingStatus"
                 />
@@ -1827,7 +1857,8 @@ async function handleSubmitEvaluationBundle() {
                 <div>
                   <h2 class="text-lg font-semibold">Post Event Data</h2>
                   <p class="text-sm text-muted">
-                    Input actual ribbon usage after the event.
+                    Isi sisa ribbon saat event mulai dan selesai. Total
+                    penggunaan = ribbon awal - ribbon akhir.
                   </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -1847,7 +1878,10 @@ async function handleSubmitEvaluationBundle() {
               @submit.prevent="handleSubmitEvaluationBundle"
             >
               <div class="grid gap-4 md:grid-cols-3">
-                <UFormField label="Ribbon Awal">
+                <UFormField
+                  label="Ribbon Awal"
+                  help="Sisa ribbon saat event mulai"
+                >
                   <UInput
                     v-model="postRibbonStart"
                     type="number"
@@ -1855,7 +1889,10 @@ async function handleSubmitEvaluationBundle() {
                   />
                 </UFormField>
 
-                <UFormField label="Ribbon Akhir">
+                <UFormField
+                  label="Ribbon Akhir"
+                  help="Sisa ribbon saat event selesai"
+                >
                   <UInput
                     v-model="postRibbonEnd"
                     type="number"

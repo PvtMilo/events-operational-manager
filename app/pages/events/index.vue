@@ -323,10 +323,15 @@ async function goToNextPage() {
 
 const { data: eventsData, pending, error, refresh } = await useFetch(eventUrl);
 const { data: serviceTypesData } = await useFetch("/api/service-types");
-const { data: salesData } = await useFetch("/api/sales");
+const { data: salesData } = await useFetch("/api/sales?status=ACTIVE&limit=1000");
 
 async function handleCreate() {
   errorMessage.value = "";
+
+  if (!eventName.value?.trim() || !clientName.value?.trim()) {
+    errorMessage.value = "Event name and client name are required";
+    return;
+  }
 
   if (!serviceTypeId.value) {
     errorMessage.value = "Service type is required";

@@ -110,6 +110,29 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // Only a newly chosen sales must be active; existing links to a since-deactivated sales stay valid.
+  if (salesId && salesId !== existingEvent.salesId) {
+    const sales = await prisma.sales.findUnique({
+      where: {
+        id: salesId,
+      },
+    });
+
+    if (!sales) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Sales not found",
+      });
+    }
+
+    if (sales.status !== "ACTIVE") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Sales ${sales.name} is inactive and cannot be assigned`,
+      });
+    }
+  }
+
   const nextSchedule = {
     eventDate: new Date(eventDate),
     startTime,

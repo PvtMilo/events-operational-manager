@@ -5,8 +5,8 @@ import { assertValidEventSchedule } from "../utils/availability";
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  const eventName = body?.eventName?.trim() || "Untitled Event";
-  const clientName = body?.clientName?.trim() || "Unknown Client";
+  const eventName = body?.eventName?.trim();
+  const clientName = body?.clientName?.trim();
   const clientPhone = body?.clientPhone?.trim() || null;
   const serviceTypeId = body?.serviceTypeId;
   const equipmentSetup = body?.equipmentSetup?.trim() || "Not specified";
@@ -25,6 +25,20 @@ export default defineEventHandler(async (event) => {
   const driverName = body?.driverName?.trim() || null;
   const vendorSewa = body?.vendorSewa?.trim() || null;
   const notes = body?.notes?.trim() || null;
+
+  if (!eventName) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Event name is required",
+    });
+  }
+
+  if (!clientName) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "Client name is required",
+    });
+  }
 
   if (!serviceTypeId) {
     throw createError({
@@ -54,6 +68,28 @@ export default defineEventHandler(async (event) => {
     loadingDate,
     loadingTime,
   });
+
+  if (salesId) {
+    const sales = await prisma.sales.findUnique({
+      where: {
+        id: salesId,
+      },
+    });
+
+    if (!sales) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Sales not found",
+      });
+    }
+
+    if (sales.status !== "ACTIVE") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Sales ${sales.name} is inactive and cannot be assigned to a new event`,
+      });
+    }
+  }
 
   const createdEvent = await prisma.event.create({
     data: {

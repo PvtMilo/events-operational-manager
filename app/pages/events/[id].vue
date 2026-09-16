@@ -15,7 +15,7 @@ const {
 } = await useFetch(`/api/events/${eventId}`);
 
 const { data: serviceTypesData } = await useFetch("/api/service-types");
-const { data: salesData } = await useFetch("/api/sales");
+const { data: salesData } = await useFetch("/api/sales?status=ACTIVE&limit=1000");
 const { data: availabilityData } = await useFetch(
   `/api/events/${eventId}/staff-availability`,
 );
@@ -154,13 +154,23 @@ const serviceTypeOptions = computed(() => {
 });
 
 const salesOptions = computed(() => {
-  return [
-    { label: "No sales / optional", value: "NONE" },
-    ...(salesData.value?.data || []).map((item) => ({
-      label: item.name,
-      value: item.id,
-    })),
-  ];
+  const activeSales = salesData.value?.data || [];
+  const currentSales = currentEvent.value?.sales;
+
+  const options = activeSales.map((item) => ({
+    label: item.name,
+    value: item.id,
+  }));
+
+  // Keep a since-deactivated sales selectable on the event that already uses it.
+  if (currentSales && !activeSales.some((item) => item.id === currentSales.id)) {
+    options.push({
+      label: `${currentSales.name} (inactive)`,
+      value: currentSales.id,
+    });
+  }
+
+  return [{ label: "No sales / optional", value: "NONE" }, ...options];
 });
 
 const selectedAssignments = computed(() => {
